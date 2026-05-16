@@ -229,41 +229,38 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
   const savePrayerEdit = async () => {
     if (editingPrayerIndex === null || !prayerDraft) return
     setIsSaving(true)
+
+    // Optimistic: update card immediately
+    const prevCards = [...prayerCards]
+    setPrayerCards(cards => cards.map((c, i) => i === editingPrayerIndex ? { ...c, waktuMulai: prayerDraft.waktuMulai, waktuSelesai: prayerDraft.waktuSelesai, jurusan: prayerDraft.jurusan } : c))
+    closePrayerEdit()
+
     try {
       const prayerName = prayerDraft.nama
-      // Find the waktu_sholat entry for this prayer type
       const relatedSchedules = rawSchedules.filter(s => s.waktu_sholat?.jenis_sholat?.nama_jenis === prayerName)
       const waktuId = relatedSchedules[0]?.waktu_sholat?.id_waktu
 
-      // Update time via prayer-times endpoint
       if (waktuId) {
         await window.electronAPI.updatePrayerTime({
           id: waktuId,
-          body: {
-            waktu_mulai: prayerDraft.waktuMulai,
-            waktu_selesai: prayerDraft.waktuSelesai,
-          }
+          body: { waktu_mulai: prayerDraft.waktuMulai, waktu_selesai: prayerDraft.waktuSelesai }
         })
       }
 
-      // Update jurusan assignments on each schedule
       const jurusanIds = prayerDraft.jurusan
         .map((name: string) => allJurusan.find(j => j.nama_jurusan === name)?.id_jurusan)
         .filter(Boolean)
 
       if (relatedSchedules.length > 0) {
         await Promise.all(relatedSchedules.map(s =>
-          window.electronAPI.updatePrayerSchedule({
-            id_jadwal: s.id_jadwal,
-            body: { jurusan_ids: jurusanIds }
-          })
+          window.electronAPI.updatePrayerSchedule({ id_jadwal: s.id_jadwal, body: { jurusan_ids: jurusanIds } })
         ))
       }
 
       notify(`Jadwal ${prayerName} berhasil diperbarui`, "success")
-      fetchSchedules()
-      closePrayerEdit()
     } catch (error) {
+      // Rollback
+      setPrayerCards(prevCards)
       notify("Gagal menyimpan perubahan: " + error, "error")
     } finally {
       setIsSaving(false)

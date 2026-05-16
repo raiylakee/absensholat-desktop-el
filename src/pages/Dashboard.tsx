@@ -7,7 +7,6 @@ import { NotificationIcon } from "@/components/notification-icon"
 import { AppSidebar } from "@/components/app-sidebar"
 import { DashboardOverviewSection } from "@/pages/dashboard/components/DashboardOverviewSection"
 import { JadwalSection } from "@/pages/dashboard/components/JadwalSection"
-import { DataSiswaSection } from "@/pages/dashboard/components/DataSiswaSection"
 import { PresensiSection } from "@/pages/dashboard/components/PresensiSection"
 import { ProfileSection } from "@/pages/dashboard/components/ProfileSection"
 import { SettingsSection } from "@/pages/dashboard/components/SettingsSection"
@@ -27,9 +26,8 @@ export default function Dashboard() {
   const { profile } = useCurrentProfile()
 
   const renderSection = () => {
-    if (activeItem === "Dashboard") return <DashboardOverviewSection />
+    if (activeItem === "Dashboard") return <DashboardOverviewSection onNavigate={setActiveItem} />
     if (activeItem === "Jadwal") return <JadwalSection />
-    if (activeItem === "Data Siswa") return <DataSiswaSection />
     if (activeItem === "Kelola Siswa") return <ManageSiswaSection />
     if (activeItem === "Kelola Kelas") return <KelolaKelasSection />
     if (activeItem === "Presensi") return <PresensiSection />
@@ -57,7 +55,7 @@ export default function Dashboard() {
             <Separator orientation="vertical" className="mr-2 h-4!" />
             <h1 className="text-lg font-semibold text-primary">{activeItem}</h1>
             <div className="flex-1 h-full" />
-            <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties} className="flex items-center">
+            <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties} className="flex items-center h-full">
               <NotificationIcon />
               <WindowControls />
             </div>

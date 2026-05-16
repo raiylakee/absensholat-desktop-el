@@ -7,7 +7,6 @@ import { NotificationIcon } from "@/components/notification-icon"
 import { GuruSidebar } from "@/components/guru-sidebar"
 import { DashboardOverviewSection } from "@/pages/dashboard/components/DashboardOverviewSection"
 import { JadwalSection } from "@/pages/dashboard/components/JadwalSection"
-import { DataSiswaSection } from "@/pages/dashboard/components/DataSiswaSection"
 import { PresensiSection } from "@/pages/dashboard/components/PresensiSection"
 import { PengajuanIzinSection } from "@/pages/dashboard/components/PengajuanIzinSection"
 import { LaporanSection } from "@/pages/dashboard/components/LaporanSection"
@@ -34,9 +33,8 @@ export default function GuruDashboard() {
     : undefined
 
   const renderSection = () => {
-    if (activeItem === "Dashboard") return <DashboardOverviewSection />
+    if (activeItem === "Dashboard") return <DashboardOverviewSection onNavigate={setActiveItem} />
     if (activeItem === "Jadwal") return <JadwalSection readOnly />
-    if (activeItem === "Data Siswa") return <DataSiswaSection forcedClass={profile?.className} />
     if (activeItem === "Presensi") return <PresensiSection forcedClass={profile?.className} />
     if (activeItem === "Pengajuan Izin") return <PengajuanIzinSection />
     if (activeItem === "Laporan") return <LaporanSection forcedClass={profile?.className} />
@@ -60,7 +58,7 @@ export default function GuruDashboard() {
             <Separator orientation="vertical" className="mr-2 h-4!" />
             <h1 className="text-lg font-semibold text-primary">{activeItem}</h1>
             <div className="flex-1 h-full" />
-            <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties} className="flex items-center">
+            <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties} className="flex items-center h-full">
               <NotificationIcon />
               <WindowControls />
             </div>

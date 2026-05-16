@@ -9,7 +9,6 @@ import {
   ChevronUp,
   User2,
   UserX,
-  Users,
 } from "lucide-react";
 
 import {
@@ -41,10 +40,6 @@ const mainMenuItems = [
   {
     title: "Jadwal",
     icon: Calendar,
-  },
-  {
-    title: "Data Siswa",
-    icon: Users,
   },
   {
     title: "Kelola Siswa",

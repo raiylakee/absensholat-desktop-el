@@ -17,6 +17,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getChartData: () => ipcRenderer.invoke("get-chart-data"),
   getAttendanceStatistics: () => ipcRenderer.invoke("get-attendance-statistics"),
   getClosestPrayerSchedule: () => ipcRenderer.invoke("get-closest-prayer-schedule"),
+  getDashboardData: () => ipcRenderer.invoke("get-dashboard-data"),
 
   // Prayer Schedules
   getPrayerSchedules: () => ipcRenderer.invoke("get-prayer-schedules"),

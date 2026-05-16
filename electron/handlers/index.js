@@ -2,9 +2,13 @@ const { dialog } = require("electron");
 const fs = require("fs/promises");
 const path = require("path");
 const os = require("os");
+const cache = require("../cache");
 
 const BASE_URL = process.env.API_BASE_URL || (require("electron").app.isPackaged ? "https://absensholat-api.vercel.app" : "http://localhost:3000");
 let authToken = null;
+
+// Initialize cache with userData path
+try { cache.init(require("electron").app.getPath("userData")); } catch {}
 
 function getHardwareId() {
   const configPath = path.join(os.homedir(), ".absensholat-hwid");
@@ -20,6 +24,67 @@ function getHardwareId() {
 
 const hardwareId = getHardwareId();
 
+// --- Task 1: Timeout + Retry with exponential backoff ---
+const TIMEOUT_MS = 5000;
+const MAX_RETRIES = 3;
+const BASE_DELAY = 500;
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function isRetryable(err, status) {
+  if (err && err.name === "AbortError") return true;
+  if (err && err instanceof TypeError) return true; // network error
+  if (status === 429 || (status >= 500 && status < 600)) return true;
+  return false;
+}
+
+async function fetchWithTimeout(url, opts) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...opts, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchWithRetry(url, opts) {
+  let lastError;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetchWithTimeout(url, opts);
+      if (!isRetryable(null, res.status) || attempt === MAX_RETRIES) return res;
+      lastError = new Error(`Status ${res.status}`);
+    } catch (err) {
+      lastError = err;
+      if (!isRetryable(err, null) || attempt === MAX_RETRIES) throw err;
+    }
+    await sleep(BASE_DELAY * Math.pow(2, attempt));
+  }
+  throw lastError;
+}
+
+// --- Cache invalidation patterns ---
+const INVALIDATION_MAP = {
+  "/students": ["/students", "/analytics/"],
+  "/prayer-schedules": ["/prayer-schedules", "/prayer-times"],
+  "/prayer-times": ["/prayer-times", "/prayer-schedules"],
+  "/jurusan": ["/jurusan", "/dhuha-schedules"],
+  "/pengajuan-izin": ["/pengajuan-izin"],
+  "/admin/management/kelas": ["/admin/management/kelas", "/kelas"],
+  "/admin/device-management": ["/admin/device-management"],
+  "/profile/devices": ["/profile/devices"],
+};
+
+function invalidateRelated(endpoint) {
+  for (const [pattern, targets] of Object.entries(INVALIDATION_MAP)) {
+    if (endpoint.includes(pattern)) {
+      targets.forEach(t => cache.invalidate(t));
+      return;
+    }
+  }
+}
+
 async function apiRequest(method, endpoint, { body, query, raw } = {}) {
   let url = `${BASE_URL}${endpoint}`;
   if (query) {
@@ -30,14 +95,25 @@ async function apiRequest(method, endpoint, { body, query, raw } = {}) {
     if (params) url += `?${params}`;
   }
 
+  // Task 3: Check cache for GET requests
+  if (method === "GET" && !raw) {
+    const cached = cache.get(url);
+    if (cached) return cached;
+  }
+
   const opts = { method, headers: {} };
+  // Task 2: Enable compression
+  opts.headers["Accept-Encoding"] = "gzip, deflate, br";
+  // Task 7: Ensure keep-alive (default in undici, explicit header for clarity)
+  opts.headers["Connection"] = "keep-alive";
   if (authToken) opts.headers["Authorization"] = `Bearer ${authToken}`;
   if (body && method !== "GET") {
     opts.headers["Content-Type"] = "application/json";
     opts.body = JSON.stringify(body);
   }
 
-  const res = await fetch(url, opts);
+  // Task 1: Use fetchWithRetry instead of bare fetch
+  const res = await fetchWithRetry(url, opts);
 
   if (raw) return { status: res.status, buffer: Buffer.from(await res.arrayBuffer()) };
 
@@ -49,6 +125,13 @@ async function apiRequest(method, endpoint, { body, query, raw } = {}) {
     const msg = data?.message || data?.error || data?.details || `Operasi gagal (status ${res.status})`;
     throw new Error(msg);
   }
+
+  // Task 3: Store in cache for GET requests
+  if (method === "GET") cache.set(url, data);
+
+  // Invalidate cache on mutations
+  if (method !== "GET") invalidateRelated(endpoint);
+
   return data;
 }
 
@@ -116,6 +199,16 @@ function register(ipcMain) {
   ipcMain.handle("get-closest-prayer-schedule", handler(async () =>
     apiRequest("GET", "/api/v2/prayer-schedules/closest")
   ));
+
+  // Task 4: Parallelized dashboard data fetch
+  ipcMain.handle("get-dashboard-data", handler(async () => {
+    const [charts, attendance, closestPrayer] = await Promise.all([
+      apiRequest("GET", "/api/v2/analytics/charts"),
+      apiRequest("GET", "/api/v2/analytics/attendance"),
+      apiRequest("GET", "/api/v2/prayer-schedules/closest"),
+    ]);
+    return { charts, attendance, closestPrayer };
+  }));
 
   // === Prayer Schedules ===
   ipcMain.handle("get-prayer-schedules", handler(async () =>

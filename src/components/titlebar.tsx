@@ -69,11 +69,11 @@ export function Titlebar({ hideNotifications }: TitlebarProps = {}) {
         <span className="pointer-events-none text-sm font-semibold text-primary">Absensholat</span>
       </div>
       {!hideNotifications && (
-        <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+        <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties} className="h-full">
           <NotificationIcon />
         </div>
       )}
-      <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+      <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties} className="h-full">
         <WindowControls />
       </div>
     </div>

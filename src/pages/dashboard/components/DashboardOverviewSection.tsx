@@ -2,18 +2,8 @@ import { useEffect, useState } from "react"
 import { BookMarked, CircuitBoard, QrCode, Users, Wrench, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
 import { extractData } from "@/lib/api-utils"
-import { QRCodeSVG } from "qrcode.react"
-import { notify } from "@/lib/notify"
-import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-  LineChart, Line, XAxis, YAxis, CartesianGrid,
-  BarChart, Bar,
-} from "recharts"
-import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
-import type { ChartConfig } from "@/components/ui/chart"
 
 import logoRpl from "@/assets/logo-rpl 3.png"
 import logoTei from "@/assets/logo-tei 2.png"
@@ -59,32 +49,6 @@ interface ClosestPrayerData {
   next: JadwalSholat | null
 }
 
-interface DailyTrendPoint {
-  date: string
-  hadir: number
-  izin: number
-  sakit: number
-  alpha: number
-}
-
-interface PrayerBreakdownPoint {
-  prayer: string
-  hadir: number
-  izin: number
-  sakit: number
-  alpha: number
-}
-
-interface ChartData {
-  daily_trend: DailyTrendPoint[]
-  prayer_breakdown: PrayerBreakdownPoint[]
-}
-
-interface StudentStatusCount {
-  class_status: string
-  count: number
-}
-
 const logoMap: Record<string, string> = {
   RPL: logoRpl, TKJ: logoTkj, DKV: logoDkv, TEI: logoTei,
   AN: logoAn, BC: logoBc, MT: logoMt, TAV: logoTav,
@@ -101,56 +65,20 @@ const gradientMap: Record<string, string> = {
   TAV: "from-lime-500 to-lime-600 shadow-lime-200/50",
 }
 
-const attendanceChartConfig = {
-  hadir: { label: "Hadir", color: "#10b981" },
-  izin: { label: "Izin", color: "#f59e0b" },
-  sakit: { label: "Sakit", color: "#3b82f6" },
-  alpha: { label: "Alpha", color: "#ef4444" },
-} satisfies ChartConfig
-
-const STATUS_COLORS: Record<string, string> = {
-  aktif: "#3b82f6",
-  naik_kelas: "#10b981",
-  tinggal_kelas: "#f59e0b",
-  keluar: "#ef4444",
-  alumni: "#8b5cf6",
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  aktif: "Aktif",
-  naik_kelas: "Naik Kelas",
-  tinggal_kelas: "Tinggal Kelas",
-  keluar: "Keluar",
-  alumni: "Alumni",
-}
-
-export function DashboardOverviewSection() {
-  const [selectedSchedule, setSelectedSchedule] = useState<{ title: string; time: string } | null>(null)
+export function DashboardOverviewSection({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const [isLoading, setIsLoading] = useState(true)
   const [statsData, setStatsData] = useState<any>(null)
   const [closestData, setClosestData] = useState<ClosestPrayerData | null>(null)
-  const [qrToken, setQrToken] = useState<string | null>(null)
-  const [isGeneratingQR, setIsGeneratingQR] = useState(false)
-  const [chartData, setChartData] = useState<ChartData | null>(null)
-  const [studentStatusData, setStudentStatusData] = useState<StudentStatusCount[]>([])
 
   const fetchDashboardData = async () => {
     setIsLoading(true)
     try {
-      const [statsRes, closestRes, chartRes, filtersRes]: [any, any, any, any] = await Promise.all([
+      const [statsRes, closestRes]: [any, any] = await Promise.all([
         window.electronAPI.getAttendanceStatistics(),
         window.electronAPI.getClosestPrayerSchedule(),
-        window.electronAPI.getChartData(),
-        window.electronAPI.getStudentFilters(),
       ])
       setStatsData(extractData(statsRes))
       setClosestData(extractData<ClosestPrayerData>(closestRes))
-
-      const cd = extractData<ChartData>(chartRes)
-      if (cd) setChartData(cd)
-
-      const filters = extractData<any>(filtersRes)
-      if (filters?.by_status) setStudentStatusData(filters.by_status)
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error)
     } finally {
@@ -163,26 +91,6 @@ export function DashboardOverviewSection() {
     const interval = setInterval(fetchDashboardData, 60000)
     return () => clearInterval(interval)
   }, [])
-
-  const generateQRToken = async () => {
-    setIsGeneratingQR(true)
-    try {
-      const response = await window.electronAPI.generateQrToken() as { data?: { token?: string }; token?: string }
-      const token = response?.data?.token ?? response?.token ?? (typeof response === "string" ? response : null)
-      if (!token) throw new Error("Token tidak ditemukan dalam respons")
-      setQrToken(token as string)
-    } catch (error) {
-      notify(`Gagal membuat QR Code: ${error instanceof Error ? error.message : String(error)}`, "error")
-    } finally {
-      setIsGeneratingQR(false)
-    }
-  }
-
-  const handleOpenQRDialog = (schedule: { title: string; time: string }) => {
-    setSelectedSchedule(schedule)
-    setQrToken(null)
-    generateQRToken()
-  }
 
   const todayLabel = new Date().toLocaleDateString("id-ID", {
     weekday: "long",
@@ -197,25 +105,6 @@ export function DashboardOverviewSection() {
     { title: "Total Izin / Sakit", value: ((statsData?.total_izin_hari_ini || 0) + (statsData?.total_sakit_hari_ini || 0)).toString(), icon: Wrench, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-900/20", sub: todayLabel },
     { title: "Total Alpha", value: statsData?.total_alpha_hari_ini?.toString() || "0", icon: CircuitBoard, color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/20", sub: todayLabel },
   ]
-
-  const todayDonutData = statsData ? [
-    { name: "Hadir", value: statsData.total_kehadiran_hari_ini || 0, color: "#10b981" },
-    { name: "Izin", value: statsData.total_izin_hari_ini || 0, color: "#f59e0b" },
-    { name: "Sakit", value: statsData.total_sakit_hari_ini || 0, color: "#3b82f6" },
-    { name: "Alpha", value: statsData.total_alpha_hari_ini || 0, color: "#ef4444" },
-  ].filter(d => d.value > 0) : []
-
-  const totalToday = todayDonutData.reduce((s, d) => s + d.value, 0)
-  const hadirPct = totalToday > 0 ? Math.round(((statsData?.total_kehadiran_hari_ini || 0) / totalToday) * 100) : 0
-
-  const studentDonutData = studentStatusData
-    .filter(s => s.count > 0)
-    .map(s => ({
-      name: STATUS_LABELS[s.class_status] ?? s.class_status,
-      value: s.count,
-      color: STATUS_COLORS[s.class_status] ?? "#94a3b8",
-      key: s.class_status,
-    }))
 
   const currentPrayer = closestData?.current
   const nextPrayer = closestData?.next
@@ -270,139 +159,6 @@ export function DashboardOverviewSection() {
         ))}
       </div>
 
-      {/* Today's donut + Student status donut */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Kehadiran Hari Ini</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {todayDonutData.length === 0 ? (
-              <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">Belum ada data kehadiran hari ini</div>
-            ) : (
-              <div className="flex items-center gap-6">
-                <div className="relative flex-shrink-0">
-                  <ResponsiveContainer width={160} height={160}>
-                    <PieChart>
-                      <Pie data={todayDonutData} cx="50%" cy="50%" innerRadius={50} outerRadius={72} dataKey="value" strokeWidth={2}>
-                        {todayDonutData.map((entry, i) => (
-                          <Cell key={i} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-2xl font-bold">{hadirPct}%</span>
-                    <span className="text-[10px] text-muted-foreground">Hadir</span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2 text-sm">
-                  {todayDonutData.map((d) => (
-                    <div key={d.name} className="flex items-center gap-2">
-                      <span className="size-3 rounded-sm flex-shrink-0" style={{ backgroundColor: d.color }} />
-                      <span className="text-muted-foreground">{d.name}</span>
-                      <span className="font-semibold ml-auto pl-4">{d.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="border shadow-sm">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Status Siswa</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {studentDonutData.length === 0 ? (
-              <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">Belum ada data siswa</div>
-            ) : (
-              <div className="flex items-center gap-6">
-                <div className="relative flex-shrink-0">
-                  <ResponsiveContainer width={160} height={160}>
-                    <PieChart>
-                      <Pie data={studentDonutData} cx="50%" cy="50%" innerRadius={50} outerRadius={72} dataKey="value" strokeWidth={2}>
-                        {studentDonutData.map((entry, i) => (
-                          <Cell key={i} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-2xl font-bold">{studentDonutData.reduce((s, d) => s + d.value, 0)}</span>
-                    <span className="text-[10px] text-muted-foreground">Total</span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2 text-sm">
-                  {studentDonutData.map((d) => (
-                    <div key={d.key} className="flex items-center gap-2">
-                      <span className="size-3 rounded-sm flex-shrink-0" style={{ backgroundColor: d.color }} />
-                      <span className="text-muted-foreground">{d.name}</span>
-                      <span className="font-semibold ml-auto pl-4">{d.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* 7-day trend line chart */}
-      <Card className="border shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Tren Kehadiran 7 Hari Terakhir</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!chartData?.daily_trend?.length ? (
-            <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">Belum ada data tren</div>
-          ) : (
-            <ChartContainer config={attendanceChartConfig} className="h-56 w-full">
-              <LineChart data={chartData.daily_trend} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Line type="monotone" dataKey="hadir" stroke="var(--color-hadir)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="izin" stroke="var(--color-izin)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="sakit" stroke="var(--color-sakit)" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="alpha" stroke="var(--color-alpha)" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ChartContainer>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Prayer breakdown bar chart */}
-      <Card className="border shadow-sm">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Kehadiran per Jenis Sholat (7 Hari)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!chartData?.prayer_breakdown?.length ? (
-            <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">Belum ada data per jenis sholat</div>
-          ) : (
-            <ChartContainer config={attendanceChartConfig} className="h-56 w-full">
-              <BarChart data={chartData.prayer_breakdown} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="prayer" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
-                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Bar dataKey="hadir" fill="var(--color-hadir)" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="izin" fill="var(--color-izin)" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="sakit" fill="var(--color-sakit)" radius={[3, 3, 0, 0]} />
-                <Bar dataKey="alpha" fill="var(--color-alpha)" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ChartContainer>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Prayer schedule + Dhuha schedule */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="border shadow-sm">
@@ -420,8 +176,8 @@ export function DashboardOverviewSection() {
                 </div>
                 <p className="text-sm text-muted-foreground">{prayerTime}</p>
               </div>
-              {activePrayer && (
-                <Button variant="default" size="icon-sm" onClick={() => handleOpenQRDialog({ title: prayerTitle, time: prayerTime })} className="rounded-full shadow-lg shadow-primary/20">
+              {activePrayer && onNavigate && (
+                <Button variant="default" size="icon-sm" onClick={() => onNavigate("QR Code")} className="rounded-full shadow-lg shadow-primary/20">
                   <QrCode className="size-4" />
                   <span className="sr-only">Show QR Code</span>
                 </Button>
@@ -464,44 +220,6 @@ export function DashboardOverviewSection() {
           </CardContent>
         </Card>
       </div>
-
-      <Dialog open={Boolean(selectedSchedule)} onOpenChange={(open) => {
-        if (!open) { setSelectedSchedule(null); setQrToken(null) }
-      }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{selectedSchedule ? `QR Presensi ${selectedSchedule.title}` : "QR Presensi"}</DialogTitle>
-            <DialogDescription>
-              {selectedSchedule ? `${selectedSchedule.time} • Scan QR ini untuk melakukan presensi.` : "Scan QR ini untuk melakukan presensi."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col items-center justify-center gap-6 py-8">
-            {isGeneratingQR ? (
-              <div className="flex flex-col items-center justify-center gap-3">
-                <Spinner size="lg" />
-                <p className="text-sm text-muted-foreground">Membuat QR Code...</p>
-              </div>
-            ) : qrToken ? (
-              <div className="relative group">
-                <div className="absolute -inset-4 bg-primary/20 rounded-[2rem] blur-2xl group-hover:bg-primary/30 transition-all duration-500" />
-                <div className="relative flex items-center justify-center size-56 rounded-3xl bg-white p-4 shadow-2xl ring-1 ring-slate-200">
-                  <QRCodeSVG value={qrToken} size={224} />
-                </div>
-              </div>
-            ) : (
-              <div className="relative group">
-                <div className="absolute -inset-4 bg-primary/20 rounded-[2rem] blur-2xl group-hover:bg-primary/30 transition-all duration-500" />
-                <div className="relative flex items-center justify-center size-56 rounded-3xl bg-white p-4 shadow-2xl ring-1 ring-slate-200">
-                  <QrCode className="size-full text-slate-900" strokeWidth={1.5} />
-                </div>
-              </div>
-            )}
-            <p className="text-xs text-center text-muted-foreground max-w-[200px]">
-              QR ini akan diperbarui secara otomatis setiap sesi sholat dimulai.
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

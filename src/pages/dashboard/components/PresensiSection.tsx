@@ -22,6 +22,8 @@ interface IzinDetail {
   tanggal_awal: string
   tanggal_akhir: string
   bukti_foto_url?: string
+  status?: string
+  catatan_verifikasi?: string | null
 }
 
 interface PresensiSectionProps {
@@ -121,6 +123,8 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
             tanggal_awal: match.tanggal_awal,
             tanggal_akhir: match.tanggal_akhir,
             bukti_foto_url: match.bukti_foto_url,
+            status: match.status,
+            catatan_verifikasi: match.catatan_verifikasi,
           })
         }
       } catch {
@@ -299,11 +303,12 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
       </Card>
 
       <Dialog open={Boolean(detailPresensi)} onOpenChange={(open) => { if (!open) { setDetailPresensi(null); setIzinDetail(null) } }}>
-        <DialogContent>
+        <DialogContent className="max-h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Detail Izin Presensi</DialogTitle>
             <DialogDescription>Informasi pengajuan izin siswa.</DialogDescription>
           </DialogHeader>
+          <div className="overflow-y-auto flex-1 min-h-0">
           {isLoadingIzin ? (
             <div className="flex justify-center py-4"><Spinner /></div>
           ) : izinDetail ? (
@@ -322,8 +327,14 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Keterangan</p>
-                <p>{izinDetail.keterangan}</p>
+                <p className="whitespace-pre-wrap break-words">{izinDetail.keterangan}</p>
               </div>
+              {izinDetail.status === "ditolak" && izinDetail.catatan_verifikasi && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Alasan Penolakan</p>
+                  <p className="whitespace-pre-wrap break-words text-red-600">{izinDetail.catatan_verifikasi}</p>
+                </div>
+              )}
               {izinDetail.bukti_foto_url ? (
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">Bukti</p>
@@ -354,6 +365,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
           ) : (
             <p className="text-sm text-muted-foreground">Data pengajuan izin tidak ditemukan.</p>
           )}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

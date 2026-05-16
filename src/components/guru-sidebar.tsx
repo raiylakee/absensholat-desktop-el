@@ -7,7 +7,6 @@ import {
   Settings,
   ChevronUp,
   User2,
-  Users,
   LogOut,
 } from "lucide-react";
 
@@ -40,10 +39,6 @@ const guruMenuItems = [
   {
     title: "Jadwal",
     icon: Calendar,
-  },
-  {
-    title: "Data Siswa",
-    icon: Users,
   },
   {
     title: "Presensi",

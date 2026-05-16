@@ -16,6 +16,7 @@ interface ElectronAPI {
   getChartData: () => Promise<any>;
   getAttendanceStatistics: () => Promise<any>;
   getClosestPrayerSchedule: () => Promise<any>;
+  getDashboardData: () => Promise<{ charts: any; attendance: any; closestPrayer: any }>;
 
   // Prayer
   getPrayerSchedules: () => Promise<any>;

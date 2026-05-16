@@ -49,7 +49,7 @@ export default function SiswaDashboard() {
             <Separator orientation="vertical" className="mr-2 h-4!" />
             <h1 className="text-lg font-semibold text-primary">{activeItem}</h1>
             <div className="flex-1 h-full" />
-            <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties} className="flex items-center">
+            <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties} className="flex items-center h-full">
               <NotificationIcon />
               <WindowControls />
             </div>

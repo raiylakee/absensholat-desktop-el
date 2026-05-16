@@ -103,6 +103,11 @@ export async function fetchNotificationsFromAPI(): Promise<NotificationEntry[]> 
         return null;
       }
 
+      // Skip spammy login notifications from automated agents (curl, etc.)
+      if (/baru saja login dari (curl|wget|python|httpie)/i.test(message)) {
+        return null;
+      }
+
       const entry: NotificationEntry = {
         id: item.id || generateId(),
         message,

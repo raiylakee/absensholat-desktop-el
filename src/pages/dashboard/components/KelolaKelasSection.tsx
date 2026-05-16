@@ -11,6 +11,31 @@ import { notify } from "@/lib/notify"
 import { extractData } from "@/lib/api-utils"
 import { AttendanceHistoryPanel } from "./AttendanceHistoryPanel"
 
+import logoRpl from "@/assets/logo-rpl 3.png"
+import logoTei from "@/assets/logo-tei 2.png"
+import logoDkv from "@/assets/logo-dkv 2.png"
+import logoTkj from "@/assets/logo-tkj 2.png"
+import logoAn from "@/assets/logo-an 2.png"
+import logoBc from "@/assets/logo-bc 2.png"
+import logoMt from "@/assets/logo-mt 2.png"
+import logoTav from "@/assets/logo-tav 2.png"
+
+const logoMap: Record<string, string> = {
+  RPL: logoRpl, TKJ: logoTkj, DKV: logoDkv, TEI: logoTei,
+  AN: logoAn, BC: logoBc, MT: logoMt, TAV: logoTav,
+}
+
+const colorMap: Record<string, string> = {
+  RPL: "text-orange-600",
+  TKJ: "text-yellow-600",
+  DKV: "text-sky-600",
+  TEI: "text-emerald-600",
+  AN: "text-rose-600",
+  BC: "text-red-600",
+  MT: "text-green-600",
+  TAV: "text-lime-600",
+}
+
 interface ClassManagementItem {
   id_kelas: number
   id_staff_wali: number | null
@@ -234,7 +259,8 @@ export function KelolaKelasSection() {
           Object.keys(classesByMajor).sort().map(major => (
             <div key={major} className="space-y-4">
               <div className="flex items-center gap-2 border-b pb-2">
-                <h2 className="text-lg font-bold text-primary">{major}</h2>
+                <img src={logoMap[major] || logoRpl} alt={major} className="size-6 object-contain" />
+                <h2 className={`text-lg font-bold ${colorMap[major] || "text-primary"}`}>{major}</h2>
                 <Badge variant="secondary" className="font-normal">{classesByMajor[major].length} Kelas</Badge>
               </div>
               

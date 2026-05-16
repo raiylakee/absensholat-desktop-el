@@ -106,20 +106,27 @@ export function ManageSiswaSection() {
 
   const fetchFilters = async () => {
     try {
-      const filters: any = await window.electronAPI.getStudentFilters()
+      const [majorsRes, classesRes, yearsRes]: any = await Promise.all([
+        window.electronAPI.getMajors(),
+        window.electronAPI.getClasses(),
+        window.electronAPI.getAcademicYears(),
+      ])
       if (!isMounted.current) return
-      if (filters.majors) setDynamicMajorOptions(filters.majors)
-      if (filters.classes) {
-        setDynamicClassOptions(filters.classes)
+      const majors = extractData(majorsRes)
+      const classes = extractData(classesRes)
+      const years = extractData(yearsRes)
+      if (Array.isArray(majors)) setDynamicMajorOptions(majors)
+      if (Array.isArray(classes)) {
+        setDynamicClassOptions(classes)
         const map: Record<string, string[]> = {}
-        filters.classes.forEach((c: any) => {
+        classes.forEach((c: any) => {
           const major = c.jurusan || "General"
           if (!map[major]) map[major] = []
           map[major].push(c.label)
         })
         setDynamicClassMap(map)
       }
-      if (filters.years) setDynamicYearOptions(filters.years)
+      if (Array.isArray(years)) setDynamicYearOptions(years)
     } catch (error) {
       if (!isMounted.current) return
       console.error("Gagal mengambil filter:", error)

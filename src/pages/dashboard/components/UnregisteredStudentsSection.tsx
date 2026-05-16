@@ -99,7 +99,7 @@ export function UnregisteredStudentsSection() {
       }
       if (name.trim()) params.search = name.trim()
       if (jurusan) params.jurusan = jurusan
-      if (waliKelas) params.wali_kelas = waliKelas
+      if (waliKelas) params.wali_kelas_id = waliKelas
 
       const response: any = await window.electronAPI.getUnregisteredStudents(params)
       const data = extractData(response);
@@ -218,13 +218,13 @@ export function UnregisteredStudentsSection() {
                   <SelectValue placeholder="Semua Jurusan">
                     {!jurusanFilter || jurusanFilter === "__all__"
                       ? "Semua Jurusan"
-                      : majorOptions.find((m) => m.id_jurusan.toString() === jurusanFilter)?.nama_jurusan || "Semua Jurusan"}
+                      : jurusanFilter}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all__">Semua Jurusan</SelectItem>
                   {majorOptions.map((major) => (
-                    <SelectItem key={major.id_jurusan} value={major.id_jurusan.toString()}>
+                    <SelectItem key={major.id_jurusan} value={major.nama_jurusan}>
                       {major.nama_jurusan}
                     </SelectItem>
                   ))}

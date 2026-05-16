@@ -25,6 +25,62 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
 import { extractData, normalizeAttendance } from "@/lib/api-utils"
+import {
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  BarChart, Bar,
+} from "recharts"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
+import type { ChartConfig } from "@/components/ui/chart"
+
+interface DailyTrendPoint {
+  date: string
+  hadir: number
+  izin: number
+  sakit: number
+  alpha: number
+}
+
+interface PrayerBreakdownPoint {
+  prayer: string
+  hadir: number
+  izin: number
+  sakit: number
+  alpha: number
+}
+
+interface ChartDataState {
+  daily_trend: DailyTrendPoint[]
+  prayer_breakdown: PrayerBreakdownPoint[]
+}
+
+interface StudentStatusCount {
+  class_status: string
+  count: number
+}
+
+const attendanceChartConfig = {
+  hadir: { label: "Hadir", color: "#10b981" },
+  izin: { label: "Izin", color: "#f59e0b" },
+  sakit: { label: "Sakit", color: "#3b82f6" },
+  alpha: { label: "Alpha", color: "#ef4444" },
+} satisfies ChartConfig
+
+const STATUS_COLORS: Record<string, string> = {
+  aktif: "#3b82f6",
+  naik_kelas: "#10b981",
+  tinggal_kelas: "#f59e0b",
+  keluar: "#ef4444",
+  alumni: "#8b5cf6",
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  aktif: "Aktif",
+  naik_kelas: "Naik Kelas",
+  tinggal_kelas: "Tinggal Kelas",
+  keluar: "Keluar",
+  alumni: "Alumni",
+}
 
 interface LaporanSectionProps {
   forcedClass?: string
@@ -52,6 +108,50 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
   const [downloadFormat, setDownloadFormat] = useState("excel")
   const [downloadClasses, setDownloadClasses] = useState<string[]>(["All"])
   const [isDownloading, setIsDownloading] = useState(false)
+
+  // Chart state
+  const [chartData, setChartData] = useState<ChartDataState | null>(null)
+  const [studentStatusData, setStudentStatusData] = useState<StudentStatusCount[]>([])
+  const [statsData, setStatsData] = useState<any>(null)
+
+  useEffect(() => {
+    const fetchChartData = async () => {
+      try {
+        const [chartRes, filtersRes, statsRes]: [any, any, any] = await Promise.all([
+          window.electronAPI.getChartData(),
+          window.electronAPI.getStudentFilters(),
+          window.electronAPI.getAttendanceStatistics(),
+        ])
+        const cd = extractData<ChartDataState>(chartRes)
+        if (cd) setChartData(cd)
+        const filters = extractData<any>(filtersRes)
+        if (filters?.by_status) setStudentStatusData(filters.by_status)
+        setStatsData(extractData(statsRes))
+      } catch (error) {
+        console.error("Failed to fetch chart data:", error)
+      }
+    }
+    fetchChartData()
+  }, [])
+
+  const todayDonutData = statsData ? [
+    { name: "Hadir", value: statsData.total_kehadiran_hari_ini || 0, color: "#10b981" },
+    { name: "Izin", value: statsData.total_izin_hari_ini || 0, color: "#f59e0b" },
+    { name: "Sakit", value: statsData.total_sakit_hari_ini || 0, color: "#3b82f6" },
+    { name: "Alpha", value: statsData.total_alpha_hari_ini || 0, color: "#ef4444" },
+  ].filter(d => d.value > 0) : []
+
+  const totalToday = todayDonutData.reduce((s, d) => s + d.value, 0)
+  const hadirPct = totalToday > 0 ? Math.round(((statsData?.total_kehadiran_hari_ini || 0) / totalToday) * 100) : 0
+
+  const studentDonutData = studentStatusData
+    .filter(s => s.count > 0)
+    .map(s => ({
+      name: STATUS_LABELS[s.class_status] ?? s.class_status,
+      value: s.count,
+      color: STATUS_COLORS[s.class_status] ?? "#94a3b8",
+      key: s.class_status,
+    }))
 
   const fetchHistory = async () => {
     setIsLoading(true)
@@ -230,6 +330,133 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
 
   return (
     <div className="space-y-6">
+      {/* Charts */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="border shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Kehadiran Hari Ini</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {todayDonutData.length === 0 ? (
+              <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">Belum ada data kehadiran hari ini</div>
+            ) : (
+              <div className="flex items-center gap-6">
+                <div className="relative flex-shrink-0">
+                  <ResponsiveContainer width={160} height={160}>
+                    <PieChart>
+                      <Pie data={todayDonutData} cx="50%" cy="50%" innerRadius={50} outerRadius={72} dataKey="value" strokeWidth={2}>
+                        {todayDonutData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-2xl font-bold">{hadirPct}%</span>
+                    <span className="text-[10px] text-muted-foreground">Hadir</span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 text-sm">
+                  {todayDonutData.map((d) => (
+                    <div key={d.name} className="flex items-center gap-2">
+                      <span className="size-3 rounded-sm flex-shrink-0" style={{ backgroundColor: d.color }} />
+                      <span className="text-muted-foreground">{d.name}</span>
+                      <span className="font-semibold ml-auto pl-4">{d.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border shadow-sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Status Siswa</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {studentDonutData.length === 0 ? (
+              <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">Belum ada data siswa</div>
+            ) : (
+              <div className="flex items-center gap-6">
+                <div className="relative flex-shrink-0">
+                  <ResponsiveContainer width={160} height={160}>
+                    <PieChart>
+                      <Pie data={studentDonutData} cx="50%" cy="50%" innerRadius={50} outerRadius={72} dataKey="value" strokeWidth={2}>
+                        {studentDonutData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                    <span className="text-2xl font-bold">{studentDonutData.reduce((s, d) => s + d.value, 0)}</span>
+                    <span className="text-[10px] text-muted-foreground">Total</span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 text-sm">
+                  {studentDonutData.map((d) => (
+                    <div key={d.key} className="flex items-center gap-2">
+                      <span className="size-3 rounded-sm flex-shrink-0" style={{ backgroundColor: d.color }} />
+                      <span className="text-muted-foreground">{d.name}</span>
+                      <span className="font-semibold ml-auto pl-4">{d.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Tren Kehadiran 7 Hari Terakhir</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!chartData?.daily_trend?.length ? (
+            <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">Belum ada data tren</div>
+          ) : (
+            <ChartContainer config={attendanceChartConfig} className="h-56 w-full">
+              <LineChart data={chartData.daily_trend} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
+                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Line type="monotone" dataKey="hadir" stroke="var(--color-hadir)" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="izin" stroke="var(--color-izin)" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="sakit" stroke="var(--color-sakit)" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="alpha" stroke="var(--color-alpha)" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ChartContainer>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Kehadiran per Jenis Sholat (7 Hari)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {!chartData?.prayer_breakdown?.length ? (
+            <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">Belum ada data per jenis sholat</div>
+          ) : (
+            <ChartContainer config={attendanceChartConfig} className="h-56 w-full">
+              <BarChart data={chartData.prayer_breakdown} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="prayer" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
+                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 11 }} allowDecimals={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Bar dataKey="hadir" fill="var(--color-hadir)" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="izin" fill="var(--color-izin)" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="sakit" fill="var(--color-sakit)" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="alpha" fill="var(--color-alpha)" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          )}
+        </CardContent>
+      </Card>
+
       <Card className="border">
         <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col">

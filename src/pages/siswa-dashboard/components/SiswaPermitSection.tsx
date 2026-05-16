@@ -23,6 +23,7 @@ interface PengajuanIzin {
   keterangan: string
   created_at: string
   bukti_foto_url?: string
+  catatan_verifikasi?: string | null
 }
 
 export function SiswaPermitSection() {
@@ -244,6 +245,9 @@ export function SiswaPermitSection() {
                     <Paperclip className="size-3" />
                     <span>Bukti terlampir</span>
                   </div>
+                )}
+                {req.status === "ditolak" && req.catatan_verifikasi && (
+                  <p className="text-xs text-red-600 mt-1">Alasan: {req.catatan_verifikasi}</p>
                 )}
               </div>
             ))

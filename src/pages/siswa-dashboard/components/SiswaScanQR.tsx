@@ -24,14 +24,18 @@ export function SiswaScanQR() {
   const scannerContainerId = "qr-scanner-container"
 
   const verifyToken = useCallback(async (token: string) => {
-    setState("verifying")
+    // Optimistic: show success immediately
+    setState("success")
+    setPrayerName(null)
+    setPrayerDate(null)
     setErrorMessage(null)
     try {
       const response: any = await window.electronAPI.verifyQr({ body: { token } })
-      setState("success")
+      // Confirmed: update with real data
       setPrayerName(response?.data?.jenis_sholat ?? null)
       setPrayerDate(response?.data?.tanggal ?? null)
     } catch (err: any) {
+      // Rollback to error state
       setState("error")
       const msg = typeof err === "string" ? err : err?.message ?? "Verifikasi gagal."
       if (msg.includes("Perangkat tidak sesuai") || msg.includes("DEVICE_MISMATCH")) {
@@ -169,7 +173,7 @@ export function SiswaScanQR() {
         </Button>
       </div>
 
-      <Card className="w-full max-w-md border border-muted bg-muted/5">
+      <Card className="w-full max-w-md border border-muted bg-card">
         <CardContent className="pt-6 flex flex-col items-center justify-center min-h-[350px] gap-6">
           {/* Success state */}
           {state === "success" && (
@@ -230,7 +234,7 @@ export function SiswaScanQR() {
             <div className="w-full flex flex-col items-center gap-4">
               <div
                 id={scannerContainerId}
-                className="w-full max-w-[300px] aspect-square rounded-xl overflow-hidden border-2 border-primary/30 bg-black"
+                className="w-full max-w-[300px] aspect-square rounded-xl overflow-hidden border-2 border-primary/30 bg-black relative"
               />
               {!cameraActive && state === "scanning" && (
                 <div className="flex flex-col items-center gap-2">
@@ -243,7 +247,7 @@ export function SiswaScanQR() {
                   Arahkan kamera ke QR Code presensi
                 </p>
               )}
-              <Button variant="ghost" size="sm" onClick={stopCamera} className="gap-2 text-muted-foreground">
+              <Button variant="ghost" size="sm" onClick={() => switchMode("manual")} className="gap-2 text-muted-foreground">
                 <CameraOff className="size-3" />
                 Matikan Kamera
               </Button>
