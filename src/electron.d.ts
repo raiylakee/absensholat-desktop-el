@@ -1,0 +1,103 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+interface ElectronAPI {
+  // Auth
+  login: (args: any) => Promise<any>;
+  register: (args: any) => Promise<any>;
+  setAuthToken: (args: any) => Promise<void>;
+  clearAuthToken: () => Promise<void>;
+  getCurrentProfile: () => Promise<any>;
+  logout: () => Promise<any>;
+  forgotPassword: (args: any) => Promise<any>;
+  verifyOtp: (args: any) => Promise<any>;
+  resetPassword: (args: any) => Promise<any>;
+  verifyAccount: (args: any) => Promise<any>;
+
+  // Dashboard
+  getChartData: () => Promise<any>;
+  getAttendanceStatistics: () => Promise<any>;
+  getClosestPrayerSchedule: () => Promise<any>;
+
+  // Prayer
+  getPrayerSchedules: () => Promise<any>;
+  createPrayerSchedule: (args: any) => Promise<any>;
+  updatePrayerSchedule: (args: any) => Promise<any>;
+  deletePrayerSchedule: (args: any) => Promise<any>;
+  getPrayerTimes: () => Promise<any>;
+  getPrayerTypes: () => Promise<any>;
+  updatePrayerTime: (args: any) => Promise<any>;
+
+  // Dhuha
+  getDhuhaGroups: () => Promise<any>;
+  createDhuhaGroup: (args: any) => Promise<any>;
+  updateDhuhaGroup: (args: any) => Promise<any>;
+  upsertDhuhaGroupsWeekly: (args: any) => Promise<any>;
+
+  // Students
+  getStudents: (args: any) => Promise<any>;
+  createStudent: (args: any) => Promise<any>;
+  updateStudent: (args: any) => Promise<any>;
+  deleteStudent: (args: any) => Promise<any>;
+  getStudentFilters: () => Promise<any>;
+  getUnregisteredStudents: (args: any) => Promise<any>;
+  updateStudentStatus: (args: any) => Promise<any>;
+  importStudents: (args: any) => Promise<any>;
+  importStudentsJson: (args: any) => Promise<any>;
+  bulkStudentControl: (args: any) => Promise<any>;
+  bulkUpdateStudentFields: (args: any) => Promise<any>;
+  annualRollover: (args: any) => Promise<any>;
+  notifyWaliKelas: (args: any) => Promise<any>;
+
+  // Attendance
+  getAttendanceHistory: (args: any) => Promise<any>;
+  getStudentAttendanceHistory: (args: any) => Promise<any>;
+  generateQrToken: () => Promise<any>;
+  verifyQr: (args: any) => Promise<any>;
+  generateAttendanceCode: () => Promise<any>;
+  verifyAttendanceCode: (args: any) => Promise<any>;
+  exportReport: (args: any) => Promise<any>;
+
+  // Permits
+  getPengajuanIzin: () => Promise<any>;
+  createPengajuanIzin: (args: any) => Promise<any>;
+  deletePengajuanIzin: (args: any) => Promise<any>;
+  updateIzinStatus: (args: any) => Promise<any>;
+  getPengajuanIzinBukti: (args: any) => Promise<any>;
+
+  // Classes
+  getManagementClasses: () => Promise<any>;
+  getManagementClassDetails: (args: any) => Promise<any>;
+  updateClassHomeroom: (args: any) => Promise<any>;
+  getStaffGuruLookup: () => Promise<any>;
+  getAcademicYears: () => Promise<any>;
+  getClasses: () => Promise<any>;
+  getMajors: () => Promise<any>;
+
+  // Devices
+  getAdminDevices: () => Promise<any>;
+  deleteAdminDevice: (args: any) => Promise<any>;
+  createDeviceChangeRequest: (args: any) => Promise<any>;
+  getDeviceChangeRequests: () => Promise<any>;
+  approveDeviceChange: (args: any) => Promise<any>;
+  rejectDeviceChange: (args: any) => Promise<any>;
+  getProfileDevices: () => Promise<any>;
+  deleteProfileDevice: () => Promise<any>;
+
+  // Notifications
+  getNotifications: () => Promise<any>;
+
+  // File/Dialog
+  showOpenDialog: (args?: any) => Promise<string | null>;
+  showSaveDialog: (args?: any) => Promise<string | null>;
+  writeFile: (args: any) => Promise<void>;
+  readFile: (args: any) => Promise<string>;
+
+  // Window
+  windowMinimize: () => Promise<void>;
+  windowMaximize: () => Promise<void>;
+  windowClose: () => Promise<void>;
+  windowStartDrag: () => Promise<void>;
+}
+
+interface Window {
+  electronAPI: ElectronAPI;
+}

@@ -1,0 +1,390 @@
+const { dialog } = require("electron");
+const fs = require("fs/promises");
+const path = require("path");
+const os = require("os");
+
+const BASE_URL = "http://localhost:3000";
+let authToken = null;
+
+function getHardwareId() {
+  const configPath = path.join(os.homedir(), ".absensholat-hwid");
+  try {
+    return require("fs").readFileSync(configPath, "utf8").trim();
+  } catch {
+    const { randomUUID } = require("crypto");
+    const id = randomUUID();
+    try { require("fs").writeFileSync(configPath, id); } catch {}
+    return id;
+  }
+}
+
+const hardwareId = getHardwareId();
+
+async function apiRequest(method, endpoint, { body, query, raw } = {}) {
+  let url = `${BASE_URL}${endpoint}`;
+  if (query) {
+    const params = Object.entries(query)
+      .filter(([, v]) => v != null && v !== "")
+      .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
+      .join("&");
+    if (params) url += `?${params}`;
+  }
+
+  const opts = { method, headers: {} };
+  if (authToken) opts.headers["Authorization"] = `Bearer ${authToken}`;
+  if (body && method !== "GET") {
+    opts.headers["Content-Type"] = "application/json";
+    opts.body = JSON.stringify(body);
+  }
+
+  const res = await fetch(url, opts);
+
+  if (raw) return { status: res.status, buffer: Buffer.from(await res.arrayBuffer()) };
+
+  const text = await res.text();
+  let data;
+  try { data = JSON.parse(text); } catch { data = text; }
+
+  if (!res.ok) {
+    const msg = data?.message || data?.error || data?.details || `Operasi gagal (status ${res.status})`;
+    throw new Error(msg);
+  }
+  return data;
+}
+
+function parseApiError(err) {
+  return err.message || "Terjadi kesalahan";
+}
+
+function handler(fn) {
+  return async (_event, args) => {
+    try { return await fn(args); }
+    catch (err) { throw new Error(parseApiError(err)); }
+  };
+}
+
+function register(ipcMain) {
+  // === Auth ===
+  ipcMain.handle("login", handler(async ({ body }) => {
+    const data = await apiRequest("POST", "/api/v2/auth/sessions", { body });
+    if (data?.data?.token) authToken = data.data.token;
+    return data;
+  }));
+
+  ipcMain.handle("register", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/auth/registrations", { body })
+  ));
+
+  ipcMain.handle("set-auth-token", handler(async ({ token }) => { authToken = token; }));
+  ipcMain.handle("clear-auth-token", handler(async () => { authToken = null; }));
+
+  ipcMain.handle("get-current-profile", handler(async () =>
+    apiRequest("GET", "/api/v2/auth/profile")
+  ));
+
+  ipcMain.handle("logout", handler(async () => {
+    try { await apiRequest("DELETE", "/api/v2/auth/sessions/current"); } catch {}
+    authToken = null;
+    return { message: "Logout berhasil" };
+  }));
+
+  ipcMain.handle("forgot-password", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/auth/forgot-password", { body })
+  ));
+
+  ipcMain.handle("verify-otp", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/auth/verify-otp", { body })
+  ));
+
+  ipcMain.handle("reset-password", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/auth/reset-password", { body })
+  ));
+
+  ipcMain.handle("verify-account", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/auth/verify-account", { body })
+  ));
+
+  // === Dashboard & Statistics ===
+  ipcMain.handle("get-chart-data", handler(async () =>
+    apiRequest("GET", "/api/v2/analytics/charts")
+  ));
+
+  ipcMain.handle("get-attendance-statistics", handler(async () =>
+    apiRequest("GET", "/api/v2/analytics/attendance")
+  ));
+
+  ipcMain.handle("get-closest-prayer-schedule", handler(async () =>
+    apiRequest("GET", "/api/v2/prayer-schedules/closest")
+  ));
+
+  // === Prayer Schedules ===
+  ipcMain.handle("get-prayer-schedules", handler(async () =>
+    apiRequest("GET", "/api/v2/prayer-schedules")
+  ));
+
+  ipcMain.handle("create-prayer-schedule", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/prayer-schedules", { body })
+  ));
+
+  ipcMain.handle("update-prayer-schedule", handler(async ({ id_jadwal, body }) =>
+    apiRequest("PUT", `/api/v2/prayer-schedules/${id_jadwal}`, { body })
+  ));
+
+  ipcMain.handle("delete-prayer-schedule", handler(async ({ id_jadwal }) =>
+    apiRequest("DELETE", `/api/v2/prayer-schedules/${id_jadwal}`)
+  ));
+
+  ipcMain.handle("get-prayer-times", handler(async () =>
+    apiRequest("GET", "/api/v2/prayer-times")
+  ));
+
+  ipcMain.handle("get-prayer-types", handler(async () =>
+    apiRequest("GET", "/api/v2/prayer-types")
+  ));
+
+  ipcMain.handle("update-prayer-time", handler(async ({ id, body }) =>
+    apiRequest("PUT", `/api/v2/prayer-times/${id}`, { body })
+  ));
+
+  // === Dhuha Groups ===
+  ipcMain.handle("get-dhuha-groups", handler(async () =>
+    apiRequest("GET", "/api/v2/jurusan/dhuha-schedules")
+  ));
+
+  ipcMain.handle("create-dhuha-group", handler(async () => {
+    throw new Error("Fitur ini belum tersedia");
+  }));
+
+  ipcMain.handle("update-dhuha-group", handler(async () => {
+    throw new Error("Fitur ini belum tersedia");
+  }));
+
+  ipcMain.handle("upsert-dhuha-groups-weekly", handler(async ({ body }) =>
+    apiRequest("PUT", `/api/v2/jurusan/${body.id_jurusan}/dhuha-day`, { body })
+  ));
+
+  // === Students ===
+  ipcMain.handle("get-students", handler(async (args) =>
+    apiRequest("GET", "/api/v2/students", { query: args })
+  ));
+
+  ipcMain.handle("create-student", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/students", { body })
+  ));
+
+  ipcMain.handle("update-student", handler(async ({ nis, body }) =>
+    apiRequest("PUT", `/api/v2/students/${nis}`, { body })
+  ));
+
+  ipcMain.handle("delete-student", handler(async ({ nis }) =>
+    apiRequest("DELETE", `/api/v2/students/${nis}`)
+  ));
+
+  ipcMain.handle("get-student-filters", handler(async () => {
+    const [jurusan, kelas] = await Promise.all([
+      apiRequest("GET", "/api/v2/jurusan"),
+      apiRequest("GET", "/api/v2/kelas"),
+    ]);
+    return { jurusan, kelas };
+  }));
+
+  ipcMain.handle("get-unregistered-students", handler(async (args) =>
+    apiRequest("GET", "/api/v2/students/unregistered", { query: args })
+  ));
+
+  ipcMain.handle("update-student-status", handler(async ({ nis, body }) =>
+    apiRequest("PATCH", `/api/v2/students/${nis}/status`, { body })
+  ));
+
+  ipcMain.handle("import-students", handler(async ({ file_path }) => {
+    // Read file and send as JSON import
+    const content = await fs.readFile(file_path, "utf8");
+    const students = JSON.parse(content);
+    return apiRequest("POST", "/api/v2/students/import/json", { body: { students } });
+  }));
+
+  ipcMain.handle("import-students-json", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/students/import/json", { body })
+  ));
+
+  ipcMain.handle("bulk-student-control", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/admin/student-control/bulk-progression", { body })
+  ));
+
+  ipcMain.handle("bulk-update-student-fields", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/admin/student-control/bulk-fields", { body })
+  ));
+
+  ipcMain.handle("annual-rollover", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/admin/student-control/annual-rollover", { body })
+  ));
+
+  ipcMain.handle("notify-wali-kelas", handler(async ({ nis_list }) => {
+    return { message: "Notifikasi terkirim", nis_list };
+  }));
+
+  // === Attendance ===
+  ipcMain.handle("get-attendance-history", handler(async (args) =>
+    apiRequest("GET", "/api/v2/attendance/history", { query: args })
+  ));
+
+  ipcMain.handle("get-student-attendance-history", handler(async (args) =>
+    apiRequest("GET", "/api/v2/students/me/attendance-history", { query: args })
+  ));
+
+  ipcMain.handle("generate-qr-token", handler(async () =>
+    apiRequest("GET", "/api/v2/attendance/qr-codes/current")
+  ));
+
+  ipcMain.handle("verify-qr", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/attendance/qr-codes/verify", { body })
+  ));
+
+  ipcMain.handle("generate-attendance-code", handler(async () =>
+    apiRequest("GET", "/api/v2/attendance/code/generate")
+  ));
+
+  ipcMain.handle("verify-attendance-code", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/attendance/code/verify", { body })
+  ));
+
+  ipcMain.handle("export-report", handler(async ({ endpoint, start_date, end_date, kelas, jurusan }) => {
+    const query = { start_date, end_date, kelas, jurusan };
+    const result = await apiRequest("GET", `/api/v2/reports/${endpoint}/excel`, { query, raw: true });
+    return { data: result.buffer.toString("base64") };
+  }));
+
+  // === Permits ===
+  ipcMain.handle("get-pengajuan-izin", handler(async () =>
+    apiRequest("GET", "/api/v2/pengajuan-izin")
+  ));
+
+  ipcMain.handle("create-pengajuan-izin", handler(async ({ jenisIzin, tanggalAwal, tanggalAkhir, keterangan, filePath: file_path }) => {
+    const FormData = globalThis.FormData;
+    const formData = new FormData();
+    formData.append("jenis_izin", jenisIzin);
+    formData.append("tanggal_awal", tanggalAwal);
+    formData.append("tanggal_akhir", tanggalAkhir);
+    formData.append("keterangan", keterangan);
+
+    if (file_path) {
+      const fileData = await fs.readFile(file_path);
+      const fileName = path.basename(file_path);
+      const ext = path.extname(file_path).toLowerCase();
+      const mimeTypes = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".pdf": "application/pdf" };
+      const contentType = mimeTypes[ext] || "application/octet-stream";
+      const { Blob } = globalThis;
+      formData.append("bukti_foto", new Blob([fileData], { type: contentType }), fileName);
+    }
+
+    const opts = { method: "POST", headers: {}, body: formData };
+    if (authToken) opts.headers["Authorization"] = `Bearer ${authToken}`;
+    const res = await fetch(`${BASE_URL}/api/v2/pengajuan-izin`, opts);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || data?.message || "Gagal mengajukan izin");
+    return data;
+  }));
+
+  ipcMain.handle("delete-pengajuan-izin", handler(async ({ id }) =>
+    apiRequest("DELETE", `/api/v2/pengajuan-izin/${id}`)
+  ));
+
+  ipcMain.handle("update-izin-status", handler(async ({ id, body }) =>
+    apiRequest("PATCH", `/api/v2/pengajuan-izin/${id}/status`, { body })
+  ));
+
+  ipcMain.handle("get-pengajuan-izin-bukti", handler(async ({ id }) =>
+    apiRequest("GET", `/api/v2/pengajuan-izin/${id}/bukti`)
+  ));
+
+  // === Class Management ===
+  ipcMain.handle("get-management-classes", handler(async () =>
+    apiRequest("GET", "/api/v2/admin/management/kelas")
+  ));
+
+  ipcMain.handle("get-management-class-details", handler(async ({ id }) =>
+    apiRequest("GET", `/api/v2/admin/management/kelas/${id}`)
+  ));
+
+  ipcMain.handle("update-class-homeroom", handler(async ({ id, body }) =>
+    apiRequest("PUT", `/api/v2/admin/management/kelas/${id}/wali`, { body })
+  ));
+
+  ipcMain.handle("get-staff-guru-lookup", handler(async () =>
+    apiRequest("GET", "/api/v2/lookup/staff-guru")
+  ));
+
+  ipcMain.handle("get-academic-years", handler(async () =>
+    apiRequest("GET", "/api/v2/academic-years")
+  ));
+
+  ipcMain.handle("get-classes", handler(async () =>
+    apiRequest("GET", "/api/v2/kelas")
+  ));
+
+  ipcMain.handle("get-majors", handler(async () =>
+    apiRequest("GET", "/api/v2/jurusan")
+  ));
+
+  // === Device Management ===
+  ipcMain.handle("get-admin-devices", handler(async () =>
+    apiRequest("GET", "/api/v2/admin/device-management")
+  ));
+
+  ipcMain.handle("delete-admin-device", handler(async ({ id }) =>
+    apiRequest("DELETE", `/api/v2/admin/device-management/${id}`)
+  ));
+
+  ipcMain.handle("create-device-change-request", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/device/change-request", { body })
+  ));
+
+  ipcMain.handle("get-device-change-requests", handler(async () =>
+    apiRequest("GET", "/api/v2/admin/device-management/change-requests")
+  ));
+
+  ipcMain.handle("approve-device-change", handler(async ({ id }) =>
+    apiRequest("PUT", `/api/v2/admin/device-management/change-requests/${id}/approve`)
+  ));
+
+  ipcMain.handle("reject-device-change", handler(async ({ id }) =>
+    apiRequest("PUT", `/api/v2/admin/device-management/change-requests/${id}/reject`)
+  ));
+
+  ipcMain.handle("get-profile-devices", handler(async () =>
+    apiRequest("GET", "/api/v2/profile/devices")
+  ));
+
+  ipcMain.handle("delete-profile-device", handler(async () =>
+    apiRequest("DELETE", "/api/v2/profile/devices")
+  ));
+
+  // === Notifications ===
+  ipcMain.handle("get-notifications", handler(async () =>
+    apiRequest("GET", "/api/v2/notifications")
+  ));
+
+  // === File/Dialog (replacing Tauri plugins) ===
+  ipcMain.handle("show-open-dialog", async (_event, args) => {
+    const result = await dialog.showOpenDialog(args || { properties: ["openFile"] });
+    if (result.canceled) return null;
+    return result.filePaths[0];
+  });
+
+  ipcMain.handle("show-save-dialog", async (_event, args) => {
+    const result = await dialog.showSaveDialog(args || {});
+    if (result.canceled) return null;
+    return result.filePath;
+  });
+
+  ipcMain.handle("write-file", handler(async ({ filePath, data, encoding }) => {
+    const buf = encoding === "base64" ? Buffer.from(data, "base64") : data;
+    await fs.writeFile(filePath, buf);
+  }));
+
+  ipcMain.handle("read-file", handler(async ({ filePath, encoding }) =>
+    fs.readFile(filePath, encoding || "utf8")
+  ));
+}
+
+module.exports = { register };

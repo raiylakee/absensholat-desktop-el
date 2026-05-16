@@ -1,0 +1,68 @@
+import type { ReactNode } from "react"
+import { Titlebar } from "@/components/titlebar"
+import logoSholat02 from "@/assets/applogo/Logo Sholat-02.png"
+import inorasi from "@/assets/inorasi.png"
+import ino2 from "@/assets/INO_2.png"
+import rasi2 from "@/assets/RASI_2.png"
+
+type AuthShellProps = {
+  children: ReactNode
+}
+
+export function AuthShell({ children }: AuthShellProps) {
+  return (
+    <div 
+      className="flex h-screen flex-col overflow-hidden bg-background relative"
+      style={{
+        backgroundImage: `url(${inorasi})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      {/* Fade overlay to make background more subtle */}
+      <div className="absolute inset-0 bg-background/85 pointer-events-none" />
+      
+      <Titlebar hideNotifications={true} />
+      
+      <div className="flex flex-1 items-center justify-center px-4 py-8 relative z-10">
+        <div className="w-full max-w-md relative">
+          {/* Decorative INO_2 - left side of card, on top, no fade */}
+          <div className="absolute -left-20 top-1/2 -translate-y-1/2 pointer-events-none z-20">
+            <img 
+              src={ino2}
+              alt="Decorative INO"
+              className="w-40 h-40 object-contain"
+            />
+          </div>
+
+          {/* Decorative RASI_2 - right side of card, on top, no fade */}
+          <div className="absolute -right-20 top-1/2 -translate-y-1/2 pointer-events-none z-20">
+            <img 
+              src={rasi2}
+              alt="Decorative RASI"
+              className="w-40 h-40 object-contain"
+            />
+          </div>
+
+          {/* Login card */}
+          <div className="animate-in fade-in zoom-in-95 duration-500 relative z-10">
+            <div className="mb-8 flex flex-col items-center gap-2">
+              <div className="size-16 rounded-2xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/20 transform hover:scale-110 transition-transform duration-300">
+                <img
+                  src={logoSholat02}
+                  alt="Logo Sholat"
+                  className="w-12 h-12 object-contain"
+                />
+              </div>
+              <h1 className="text-2xl font-bold tracking-tight mt-2">Absensholat</h1>
+              <p className="text-sm text-muted-foreground font-medium">Sistem Absensi Terpadu</p>
+            </div>
+            {children}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
