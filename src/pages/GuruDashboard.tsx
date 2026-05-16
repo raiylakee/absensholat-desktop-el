@@ -54,12 +54,16 @@ export default function GuruDashboard() {
             style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
             className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 pl-4 backdrop-blur supports-[backdrop-filter]:bg-background/60"
           >
-            <SidebarTrigger className="-ml-1 text-primary hover:text-primary/80" />
+            <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+              <SidebarTrigger className="-ml-1 text-primary hover:text-primary/80" />
+            </div>
             <Separator orientation="vertical" className="mr-2 h-4!" />
             <h1 className="text-lg font-semibold text-primary">{activeItem}</h1>
             <div className="flex-1 h-full" />
-            <NotificationIcon />
-            <WindowControls />
+            <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties} className="flex items-center">
+              <NotificationIcon />
+              <WindowControls />
+            </div>
           </header>
 
           <div className="mx-auto w-full max-w-5xl p-6">

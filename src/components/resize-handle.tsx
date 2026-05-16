@@ -11,14 +11,13 @@ const directions = [
 
 export function ResizeHandle() {
   // With frame:false, Electron handles edge resizing natively.
-  // These divs provide visual cursor feedback on the resize zones.
+  // pointer-events-none ensures these don't block titlebar/button clicks.
   return (
     <>
       {directions.map(({ cls, dir }) => (
         <div
           key={dir}
-          className={`fixed z-[9999] ${cls}`}
-          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+          className={`fixed pointer-events-none ${cls}`}
         />
       ))}
     </>

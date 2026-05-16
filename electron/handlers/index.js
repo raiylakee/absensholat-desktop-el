@@ -248,9 +248,9 @@ function register(ipcMain) {
     apiRequest("POST", "/api/v2/attendance/code/verify", { body })
   ));
 
-  ipcMain.handle("export-report", handler(async ({ endpoint, start_date, end_date, kelas, jurusan }) => {
-    const query = { start_date, end_date, kelas, jurusan };
-    const result = await apiRequest("GET", `/api/v2/reports/${endpoint}/excel`, { query, raw: true });
+  ipcMain.handle("export-report", handler(async ({ endpoint, startDate, endDate, kelas, jurusan }) => {
+    const query = { start_date: startDate, end_date: endDate, kelas, jurusan };
+    const result = await apiRequest("GET", endpoint, { query, raw: true });
     return { data: result.buffer.toString("base64") };
   }));
 

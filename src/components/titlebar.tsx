@@ -36,7 +36,10 @@ export function Titlebar({ hideNotifications }: TitlebarProps = {}) {
   const { splashComplete } = useLogoAnimation()
 
   return (
-    <div className="h-10 flex justify-between items-center bg-background border-b select-none z-50 w-full shrink-0">
+    <div
+      style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
+      className="h-10 flex justify-between items-center bg-background border-b select-none z-50 w-full shrink-0"
+    >
       <style>{`
         @keyframes logoEnter {
           from {
@@ -57,10 +60,7 @@ export function Titlebar({ hideNotifications }: TitlebarProps = {}) {
           animation: none;
         }
       `}</style>
-      <div 
-        style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
-        className="flex items-center pl-3 flex-1 h-full cursor-default gap-2"
-      >
+      <div className="flex items-center pl-3 flex-1 h-full cursor-default gap-2">
         <img 
           src={logoSholat02}
           alt="Logo Sholat"
@@ -68,7 +68,11 @@ export function Titlebar({ hideNotifications }: TitlebarProps = {}) {
         />
         <span className="pointer-events-none text-sm font-semibold text-primary">Absensholat</span>
       </div>
-      {!hideNotifications && <NotificationIcon />}
+      {!hideNotifications && (
+        <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+          <NotificationIcon />
+        </div>
+      )}
       <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
         <WindowControls />
       </div>

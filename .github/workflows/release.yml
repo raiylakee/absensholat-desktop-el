@@ -72,12 +72,26 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            platform: linux
-          - os: windows-latest
-            platform: win
+          # macOS - universal (arm64 + x64)
           - os: macos-latest
             platform: mac
+            arch: universal
+          # Windows x64
+          - os: windows-latest
+            platform: win
+            arch: x64
+          # Windows arm64
+          - os: windows-latest
+            platform: win
+            arch: arm64
+          # Linux x64
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+          # Linux arm64
+          - os: ubuntu-latest
+            platform: linux
+            arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -86,14 +100,20 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: latest
           cache: npm
+
+      - name: Install Linux build deps
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build Electron app
-        run: npm run build
+        run: npm run build -- --${{ matrix.platform }} --${{ matrix.arch }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           API_BASE_URL: https://absensholat-api.vercel.app
@@ -101,7 +121,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dist-${{ matrix.platform }}
+          name: dist-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
             dist-electron/*.dmg
             dist-electron/*.zip
@@ -109,6 +129,8 @@ jobs:
             dist-electron/*.msi
             dist-electron/*.AppImage
             dist-electron/*.deb
+            dist-electron/*.rpm
+            dist-electron/*.snap
           if-no-files-found: ignore
 
   release:
@@ -135,11 +157,13 @@ jobs:
 
             ---
             **Downloads**
-            | Platform | Installer |
-            |----------|-----------|
-            | Windows  | `.exe` (NSIS) |
-            | macOS    | `.dmg` |
-            | Linux    | `.deb` or `.AppImage` |
+            | Platform | Architecture | Installer |
+            |----------|-------------|-----------|
+            | Windows  | x64         | `.exe` (NSIS) |
+            | Windows  | arm64       | `.exe` (NSIS) |
+            | macOS    | Universal   | `.dmg` (arm64 + x64) |
+            | Linux    | x64         | `.deb`, `.rpm`, `.AppImage` |
+            | Linux    | arm64       | `.deb`, `.rpm`, `.AppImage` |
           draft: false
           prerelease: false
           files: artifacts/**/*

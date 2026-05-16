@@ -131,12 +131,6 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
   }
 
   const handleDownloadReport = async () => {
-    // PDF is not supported by the backend
-    if (downloadFormat === "pdf") {
-      notify("Format PDF belum didukung", "error")
-      return
-    }
-
     // Map format to endpoint and file extension
     const formatConfig: Record<string, { endpoint: string; extension: string; filterName: string }> = {
       excel: {
@@ -148,6 +142,11 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
         endpoint: "/api/v2/reports/attendances/csv",
         extension: "csv",
         filterName: "CSV Files",
+      },
+      pdf: {
+        endpoint: "/api/v2/reports/attendances/pdf",
+        extension: "pdf",
+        filterName: "PDF Files",
       },
     }
 
@@ -208,7 +207,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
           ? undefined
           : downloadClasses[0]
 
-      const bytes: number[] = await window.electronAPI.exportReport({
+      const result: any = await window.electronAPI.exportReport({
         endpoint: config.endpoint,
         startDate: exportStartDate,
         endDate: exportEndDate,
@@ -216,8 +215,8 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
         jurusan: undefined,
       })
 
-      // Write bytes to the chosen path
-      await window.electronAPI.writeFile({ filePath: savePath, data: Array.from(new Uint8Array(bytes as any)), encoding: 'base64' })
+      // Write base64 data to the chosen path
+      await window.electronAPI.writeFile({ filePath: savePath, data: result.data, encoding: 'base64' })
 
       notify("Laporan berhasil diunduh ke " + savePath, "success")
       setIsDownloadDialogOpen(false)
