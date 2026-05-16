@@ -1,7 +1,7 @@
 {
   "name": "absensholat-desktop-el",
   "productName": "Absensholat Desktop",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Sistem Absensi Sholat Terpadu - Desktop",
   "main": "electron/main.js",
   "private": true,
@@ -13,7 +13,10 @@
   },
   "build": {
     "appId": "com.absensholat.desktop",
-    "files": ["dist/**/*", "electron/**/*"],
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
     "directories": {
       "output": "dist-electron"
     },
