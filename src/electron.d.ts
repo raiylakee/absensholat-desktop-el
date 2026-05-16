@@ -85,6 +85,11 @@ interface ElectronAPI {
   // Notifications
   getNotifications: () => Promise<any>;
 
+  // Profile
+  changePassword: (args: any) => Promise<any>;
+  requestChangeEmail: (args: any) => Promise<any>;
+  verifyChangeEmail: (args: any) => Promise<any>;
+
   // File/Dialog
   showOpenDialog: (args?: any) => Promise<string | null>;
   showSaveDialog: (args?: any) => Promise<string | null>;

@@ -3,7 +3,7 @@ const fs = require("fs/promises");
 const path = require("path");
 const os = require("os");
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = process.env.API_BASE_URL || (require("electron").app.isPackaged ? "https://absensholat-api.vercel.app" : "http://localhost:3000");
 let authToken = null;
 
 function getHardwareId() {
@@ -362,6 +362,19 @@ function register(ipcMain) {
   // === Notifications ===
   ipcMain.handle("get-notifications", handler(async () =>
     apiRequest("GET", "/api/v2/notifications")
+  ));
+
+  // === Profile: Change Password & Email ===
+  ipcMain.handle("change-password", handler(async ({ currentPassword, newPassword }) =>
+    apiRequest("POST", "/api/v2/auth/change-password", { body: { current_password: currentPassword, new_password: newPassword } })
+  ));
+
+  ipcMain.handle("request-change-email", handler(async ({ newEmail }) =>
+    apiRequest("POST", "/api/v2/auth/email-change-requests", { body: { new_email: newEmail } })
+  ));
+
+  ipcMain.handle("verify-change-email", handler(async ({ newEmail, otp }) =>
+    apiRequest("POST", "/api/v2/auth/email-change-requests/verify", { body: { new_email: newEmail, otp } })
   ));
 
   // === File/Dialog (replacing Tauri plugins) ===

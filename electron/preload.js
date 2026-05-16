@@ -86,6 +86,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Notifications
   getNotifications: () => ipcRenderer.invoke("get-notifications"),
 
+  // Profile: Change Password & Email
+  changePassword: (args) => ipcRenderer.invoke("change-password", args),
+  requestChangeEmail: (args) => ipcRenderer.invoke("request-change-email", args),
+  verifyChangeEmail: (args) => ipcRenderer.invoke("verify-change-email", args),
+
   // File/Dialog (replacing Tauri plugins)
   showOpenDialog: (args) => ipcRenderer.invoke("show-open-dialog", args),
   showSaveDialog: (args) => ipcRenderer.invoke("show-save-dialog", args),
