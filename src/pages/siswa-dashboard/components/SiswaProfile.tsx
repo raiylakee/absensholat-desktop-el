@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { KeyRound, Mail } from "lucide-react"
 import { notify } from "@/lib/notify"
 import { type UserProfileData } from "@/lib/auth-session"
+import { UserDeviceCard } from "@/pages/dashboard/components/UserDeviceCard"
 
 function humanizeGender(g?: string): string {
   if (!g) return "-"
@@ -127,6 +128,8 @@ export function SiswaProfile({ user }: { user?: UserProfileData }) {
           </div>
         </CardContent>
       </Card>
+
+      <UserDeviceCard />
 
       <Dialog open={passwordDialogOpen} onOpenChange={(o) => { setPasswordDialogOpen(o); if (!o) { setCurrentPassword(""); setNewPassword(""); setConfirmPassword("") } }}>
         <DialogContent className="sm:max-w-[425px]">

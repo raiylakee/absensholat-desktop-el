@@ -83,6 +83,20 @@ interface ElectronAPI {
   getProfileDevices: () => Promise<any>;
   deleteProfileDevice: () => Promise<any>;
 
+  // Hardware Auth
+  getHardwareId: () => Promise<{ hardware_id: string }>;
+  registerDeviceAuth: (args?: any) => Promise<any>;
+  getDeviceAuthInfo: () => Promise<any>;
+
+  // Guru Management
+  getGuruList: (args?: any) => Promise<any>;
+  createGuru: (args: any) => Promise<any>;
+  updateGuru: (args: any) => Promise<any>;
+  deleteGuru: (args: any) => Promise<any>;
+  assignGuruWaliKelas: (args: any) => Promise<any>;
+  removeGuruWaliKelas: (args: any) => Promise<any>;
+  getWaliKelasList: (args?: any) => Promise<any>;
+
   // Notifications
   getNotifications: () => Promise<any>;
 

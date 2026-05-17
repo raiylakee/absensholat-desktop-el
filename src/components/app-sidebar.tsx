@@ -9,6 +9,7 @@ import {
   ChevronUp,
   User2,
   UserX,
+  Users,
 } from "lucide-react";
 
 import {
@@ -48,6 +49,10 @@ const mainMenuItems = [
   {
     title: "Kelola Kelas",
     icon: Settings,
+  },
+  {
+    title: "Kelola Guru",
+    icon: Users,
   },
   {
     title: "Presensi",

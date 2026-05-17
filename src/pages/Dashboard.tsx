@@ -13,6 +13,7 @@ import { SettingsSection } from "@/pages/dashboard/components/SettingsSection"
 import { LaporanSection } from "@/pages/dashboard/components/LaporanSection"
 import { ManageSiswaSection } from "@/pages/dashboard/components/ManageSiswaSection"
 import { KelolaKelasSection } from "@/pages/dashboard/components/KelolaKelasSection"
+import { KelolaGuruSection } from "@/pages/dashboard/components/KelolaGuruSection"
 import { QRGeneratorSection } from "@/pages/dashboard/components/QRGeneratorSection"
 import { UnregisteredStudentsSection } from "@/pages/dashboard/components/UnregisteredStudentsSection"
 import { PengajuanIzinSection } from "@/pages/dashboard/components/PengajuanIzinSection"
@@ -30,6 +31,7 @@ export default function Dashboard() {
     if (activeItem === "Jadwal") return <JadwalSection />
     if (activeItem === "Kelola Siswa") return <ManageSiswaSection />
     if (activeItem === "Kelola Kelas") return <KelolaKelasSection />
+    if (activeItem === "Kelola Guru") return <KelolaGuruSection />
     if (activeItem === "Presensi") return <PresensiSection />
     if (activeItem === "Laporan") return <LaporanSection />
     if (activeItem === "QR Code") return <QRGeneratorSection />

@@ -72,8 +72,11 @@ const INVALIDATION_MAP = {
   "/jurusan": ["/jurusan", "/dhuha-schedules"],
   "/pengajuan-izin": ["/pengajuan-izin"],
   "/admin/management/kelas": ["/admin/management/kelas", "/kelas"],
+  "/admin/management/guru": ["/admin/management/guru", "/admin/management/wali-kelas", "/lookup/staff-guru"],
+  "/admin/management/wali-kelas": ["/admin/management/wali-kelas", "/admin/management/guru"],
   "/admin/device-management": ["/admin/device-management"],
   "/profile/devices": ["/profile/devices"],
+  "/device-auth": ["/device-auth"],
 };
 
 function invalidateRelated(endpoint) {
@@ -106,6 +109,7 @@ async function apiRequest(method, endpoint, { body, query, raw } = {}) {
   opts.headers["Accept-Encoding"] = "gzip, deflate, br";
   // Task 7: Ensure keep-alive (default in undici, explicit header for clarity)
   opts.headers["Connection"] = "keep-alive";
+  opts.headers["X-Hardware-ID"] = hardwareId;
   if (authToken) opts.headers["Authorization"] = `Bearer ${authToken}`;
   if (body && method !== "GET") {
     opts.headers["Content-Type"] = "application/json";
@@ -150,7 +154,19 @@ function register(ipcMain) {
   // === Auth ===
   ipcMain.handle("login", handler(async ({ body }) => {
     const data = await apiRequest("POST", "/api/v2/auth/sessions", { body });
-    if (data?.data?.token) authToken = data.data.token;
+    if (data?.data?.token) {
+      authToken = data.data.token;
+      // Auto-register device after login; swallow 409 (already registered)
+      try {
+        await apiRequest("POST", "/api/v2/device-auth/register", {
+          body: { hardware_id: hardwareId },
+        });
+      } catch (err) {
+        if (!err.message?.includes("409") && !err.message?.toLowerCase().includes("already")) {
+          console.warn("Device auto-register failed:", err.message);
+        }
+      }
+    }
     return data;
   }));
 
@@ -459,6 +475,48 @@ function register(ipcMain) {
 
   ipcMain.handle("delete-profile-device", handler(async () =>
     apiRequest("DELETE", "/api/v2/profile/devices")
+  ));
+
+  // === Hardware Auth ===
+  ipcMain.handle("get-hardware-id", handler(async () => ({ hardware_id: hardwareId })));
+
+  ipcMain.handle("register-device-auth", handler(async ({ body } = {}) =>
+    apiRequest("POST", "/api/v2/device-auth/register", {
+      body: { hardware_id: hardwareId, ...(body || {}) },
+    })
+  ));
+
+  ipcMain.handle("get-device-auth-info", handler(async () =>
+    apiRequest("GET", "/api/v2/device-auth/info")
+  ));
+
+  // === Guru Management ===
+  ipcMain.handle("get-guru-list", handler(async (args) =>
+    apiRequest("GET", "/api/v2/admin/management/guru", { query: args })
+  ));
+
+  ipcMain.handle("create-guru", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/admin/management/guru", { body })
+  ));
+
+  ipcMain.handle("update-guru", handler(async ({ id, body }) =>
+    apiRequest("PUT", `/api/v2/admin/management/guru/${id}`, { body })
+  ));
+
+  ipcMain.handle("delete-guru", handler(async ({ id }) =>
+    apiRequest("DELETE", `/api/v2/admin/management/guru/${id}`)
+  ));
+
+  ipcMain.handle("assign-guru-wali-kelas", handler(async ({ id, body }) =>
+    apiRequest("PUT", `/api/v2/admin/management/guru/${id}/wali-kelas`, { body })
+  ));
+
+  ipcMain.handle("remove-guru-wali-kelas", handler(async ({ id }) =>
+    apiRequest("DELETE", `/api/v2/admin/management/guru/${id}/wali-kelas`)
+  ));
+
+  ipcMain.handle("get-wali-kelas-list", handler(async (args) =>
+    apiRequest("GET", "/api/v2/admin/management/wali-kelas", { query: args })
   ));
 
   // === Notifications ===

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { KeyRound, Mail } from "lucide-react"
 import { notify } from "@/lib/notify"
 import { DeviceManagementSection } from "./DeviceManagementSection"
+import { UserDeviceCard } from "./UserDeviceCard"
 
 interface UserProfile {
   name: string
@@ -146,7 +147,7 @@ export function ProfileSection({ user }: { user?: UserProfile }) {
         </CardContent>
       </Card>
 
-      <DeviceManagementSection />
+      {currentUser.role === "admin" ? <DeviceManagementSection /> : <UserDeviceCard />}
 
       <Dialog open={passwordDialogOpen} onOpenChange={(o) => { setPasswordDialogOpen(o); if (!o) { setCurrentPassword(""); setNewPassword(""); setConfirmPassword("") } }}>
         <DialogContent className="sm:max-w-[425px]">

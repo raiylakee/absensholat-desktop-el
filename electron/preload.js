@@ -84,6 +84,20 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getProfileDevices: () => ipcRenderer.invoke("get-profile-devices"),
   deleteProfileDevice: () => ipcRenderer.invoke("delete-profile-device"),
 
+  // Hardware Auth
+  getHardwareId: () => ipcRenderer.invoke("get-hardware-id"),
+  registerDeviceAuth: (args) => ipcRenderer.invoke("register-device-auth", args),
+  getDeviceAuthInfo: () => ipcRenderer.invoke("get-device-auth-info"),
+
+  // Guru Management
+  getGuruList: (args) => ipcRenderer.invoke("get-guru-list", args),
+  createGuru: (args) => ipcRenderer.invoke("create-guru", args),
+  updateGuru: (args) => ipcRenderer.invoke("update-guru", args),
+  deleteGuru: (args) => ipcRenderer.invoke("delete-guru", args),
+  assignGuruWaliKelas: (args) => ipcRenderer.invoke("assign-guru-wali-kelas", args),
+  removeGuruWaliKelas: (args) => ipcRenderer.invoke("remove-guru-wali-kelas", args),
+  getWaliKelasList: (args) => ipcRenderer.invoke("get-wali-kelas-list", args),
+
   // Notifications
   getNotifications: () => ipcRenderer.invoke("get-notifications"),
 
