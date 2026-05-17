@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, DragEvent } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -9,7 +9,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Spinner } from "@/components/ui/spinner"
 import { format } from "date-fns"
-import { Calendar as CalendarIcon, Stethoscope, Briefcase, Paperclip, X } from "lucide-react"
+import { Calendar as CalendarIcon, Stethoscope, Briefcase, Paperclip, X, Upload } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { notify } from "@/lib/notify"
 import { extractData } from "@/lib/api-utils"
@@ -37,6 +37,37 @@ export function SiswaPermitSection() {
   const [requests, setRequests] = useState<PengajuanIzin[]>([])
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
   const isMounted = useRef(true)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "pdf"]
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+    const file = e.dataTransfer.files[0]
+    if (!file) return
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? ""
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      notify("Format file tidak didukung. Gunakan JPG, PNG, atau PDF.", "error")
+      return
+    }
+    // In Electron, dropped files have a `path` property with the native file path
+    const nativePath = (file as any).path as string
+    if (nativePath) {
+      setFilePath(nativePath)
+      setFileName(file.name)
+    }
+  }
+
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }
 
   const fetchRequests = async () => {
     setIsLoadingHistory(true)
@@ -201,10 +232,24 @@ export function SiswaPermitSection() {
                 </button>
               </div>
             ) : (
-              <Button type="button" variant="outline" className="w-full" onClick={handlePickFile}>
-                <Paperclip className="mr-2 size-4" />
-                Lampirkan Surat / Foto
-              </Button>
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 transition-colors cursor-pointer",
+                  isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"
+                )}
+                onClick={handlePickFile}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handlePickFile() }}
+              >
+                <Upload className={cn("size-8", isDragging ? "text-primary" : "text-muted-foreground")} />
+                <p className="text-sm text-muted-foreground text-center">
+                  {isDragging ? "Lepaskan file di sini" : "Seret file ke sini atau klik untuk memilih"}
+                </p>
+              </div>
             )}
             <p className="text-xs text-muted-foreground">Format: JPG, PNG, atau PDF. Maks 5 MB.</p>
           </div>

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, nativeImage } = require("electron");
 const path = require("path");
 const handlers = require("./handlers");
 
@@ -12,6 +12,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
+    icon: path.join(__dirname, '../build/icon.icns')
   });
 
   if (process.env.NODE_ENV === "development") {
@@ -35,6 +36,9 @@ function createWindow() {
 
 app.whenReady().then(() => {
   handlers.register(ipcMain);
+  if (process.platform === 'darwin' && app.dock) {
+    app.dock.setIcon(path.join(__dirname, '../build/icon.icns'));
+  }
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
