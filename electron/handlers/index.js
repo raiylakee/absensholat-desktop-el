@@ -252,9 +252,18 @@ function register(ipcMain) {
     throw new Error("Fitur ini belum tersedia");
   }));
 
-  ipcMain.handle("upsert-dhuha-groups-weekly", handler(async ({ body }) =>
-    apiRequest("PUT", `/api/v2/jurusan/${body.id_jurusan}/dhuha-day`, { body })
-  ));
+  ipcMain.handle("upsert-dhuha-groups-weekly", handler(async ({ body }) => {
+    const rows = body.rows;
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error("rows kosong");
+    await Promise.all(
+      rows.map(row =>
+        apiRequest("PUT", `/api/v2/jurusan/${row.id_jurusan}/dhuha-day`, {
+          body: { hari_dhuha: row.hari },
+        })
+      )
+    );
+    return { message: "Jadwal berhasil disimpan" };
+  }));
 
   // === Students ===
   ipcMain.handle("get-students", handler(async (args) =>
