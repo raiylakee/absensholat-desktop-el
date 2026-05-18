@@ -54,6 +54,9 @@ export function SiswaSidebar({ activeItem, setActiveItem, user }: SiswaSidebarPr
   const navigate = useNavigate();
   const currentUserName = user?.name ?? "Ahmad Fadli";
   const currentUserClass = user?.className || user?.nis || "-";
+  const avatarInitials = currentUserName.trim().split(/\s+/).filter(Boolean).length > 1
+    ? `${currentUserName.trim().split(/\s+/)[0][0]}${currentUserName.trim().split(/\s+/)[1][0]}`.toUpperCase()
+    : currentUserName.slice(0, 2).toUpperCase();
 
   const handleLogout = async () => {
     try {
@@ -113,8 +116,8 @@ export function SiswaSidebar({ activeItem, setActiveItem, user }: SiswaSidebarPr
               <DropdownMenuTrigger
                 render={
                   <SidebarMenuButton size="lg">
-                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                      <User2 className="size-4" />
+                    <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
+                      {avatarInitials}
                     </div>
                     <div className="flex flex-col gap-0.5 leading-none">
                       <span className="font-medium text-sm text-sidebar-foreground">{currentUserName}</span>

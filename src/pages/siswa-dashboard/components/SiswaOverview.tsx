@@ -1,12 +1,17 @@
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
-import { Calendar, FileText, AlertCircle, ClipboardList, History } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Calendar, Download, FileText, AlertCircle, ClipboardList, History, Printer } from "lucide-react"
 import { PrayerNotification } from "./PrayerNotification"
 import { extractData, normalizeAttendance } from "@/lib/api-utils"
 import type { UserProfileData } from "@/lib/auth-session"
+import { useDownloadAction } from "@/hooks/use-download-action"
+import { usePrintAction } from "@/hooks/use-print-action"
+import { arrayToCsv } from "@/lib/export-filename"
+import { PrintHeader } from "@/components/print-header"
 
 interface SiswaOverviewProps {
   setActiveItem: (item: string) => void
@@ -32,6 +37,31 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const isMounted = useRef(true)
+
+  const { isDownloading, download } = useDownloadAction()
+  const { print } = usePrintAction()
+
+  const handleDownload = useCallback(() => {
+    download({
+      filenameOptions: {
+        dataType: 'riwayat-absensi-saya',
+        format: 'csv',
+      },
+      fetchData: async () => {
+        const normalized = historyData.map(normalizeAttendance)
+        const headers = ['Tanggal', 'Jenis Sholat', 'Waktu', 'Status']
+        const rows = normalized.map((r) => [
+          r.tanggal,
+          r.jenisSholat ?? '',
+          r.waktu ?? '',
+          r.status ?? '',
+        ])
+        const csv = arrayToCsv(headers, rows)
+        return { data: csv, encoding: 'utf8' as const }
+      },
+      dialogFilters: [{ name: 'CSV', extensions: ['csv'] }],
+    })
+  }, [download, historyData])
 
   const fetchData = () => {
     setIsLoading(true)
@@ -212,13 +242,72 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
 
       <Card className="border shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <History className="size-5 text-primary" />
-            Riwayat Absensi
-          </CardTitle>
-          <CardDescription>Catatan kehadiran Anda selama 30 hari terakhir</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <History className="size-5 text-primary" />
+                Riwayat Absensi
+              </CardTitle>
+              <CardDescription>Catatan kehadiran Anda selama 30 hari terakhir</CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger render={<span />}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownload}
+                      disabled={isLoading || isDownloading || normalizedHistory.length === 0}
+                    >
+                      {isDownloading ? (
+                        <Spinner size="sm" className="mr-2" />
+                      ) : (
+                        <Download className="size-4 mr-2" />
+                      )}
+                      Unduh Riwayat
+                    </Button>
+                  </TooltipTrigger>
+                  {(isLoading || normalizedHistory.length === 0) && (
+                    <TooltipContent>
+                      {isLoading
+                        ? "Data sedang dimuat"
+                        : "Tidak ada data untuk diunduh"}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger render={<span />}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={print}
+                      disabled={isLoading || normalizedHistory.length === 0}
+                    >
+                      <Printer className="size-4 mr-2" />
+                      Cetak Riwayat
+                    </Button>
+                  </TooltipTrigger>
+                  {(isLoading || normalizedHistory.length === 0) && (
+                    <TooltipContent>
+                      {isLoading
+                        ? "Data sedang dimuat"
+                        : "Tidak ada data untuk dicetak"}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
+          <PrintHeader
+            title="Riwayat Absensi Saya"
+            studentName={user?.name}
+            nis={user?.nis}
+          />
           {isLoading ? (
             <div className="flex items-center justify-center py-10">
               <Spinner size="md" />

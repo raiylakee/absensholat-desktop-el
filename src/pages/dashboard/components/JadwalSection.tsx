@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Pencil, Clock } from "lucide-react"
+import { Pencil, Clock, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { MAJOR_OPTIONS, initialJadwalRows, initialPrayerCards } from "@/pages/dashboard/constants"
 import type { JadwalRow, PrayerCard, JadwalCell } from "@/pages/dashboard/types"
@@ -48,6 +49,13 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
   const [prayerCards, setPrayerCards] = useState<PrayerCard[]>(initialPrayerCards)
   const [editingPrayerIndex, setEditingPrayerIndex] = useState<number | null>(null)
   const [prayerDraft, setPrayerDraft] = useState<any | null>(null)
+
+  // Create prayer type state
+  const [createPrayerOpen, setCreatePrayerOpen] = useState(false)
+  const [newPrayerName, setNewPrayerName] = useState("")
+  const [newPrayerStart, setNewPrayerStart] = useState("06:00")
+  const [newPrayerEnd, setNewPrayerEnd] = useState("07:00")
+  const [isCreating, setIsCreating] = useState(false)
 
   const [dynamicMajorOptions, setDynamicMajorOptions] = useState<string[]>(MAJOR_OPTIONS)
   const isMounted = useRef(true)
@@ -267,6 +275,48 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
     }
   }
 
+  const handleCreatePrayer = async () => {
+    if (!newPrayerName.trim()) { notify("Nama jenis sholat wajib diisi", "error"); return }
+    setIsCreating(true)
+    try {
+      // Create prayer type
+      const typeRes: any = await window.electronAPI.createPrayerType({ body: { nama_jenis: newPrayerName.trim(), butuh_giliran: false } })
+      const typeData = typeRes?.data ?? typeRes
+      const idJenis = typeData?.id_jenis
+      if (!idJenis) throw new Error("Gagal membuat jenis sholat")
+
+      // Create prayer time for this type
+      await window.electronAPI.createPrayerTime({ body: { id_jenis: idJenis, waktu_mulai: newPrayerStart, waktu_selesai: newPrayerEnd } })
+
+      notify(`Jadwal ${newPrayerName} berhasil ditambahkan`, "success")
+      setCreatePrayerOpen(false)
+      setNewPrayerName("")
+      setNewPrayerStart("06:00")
+      setNewPrayerEnd("07:00")
+      await fetchSchedules()
+    } catch (err: any) {
+      notify(err.message || "Gagal menambahkan jadwal sholat", "error")
+    } finally {
+      setIsCreating(false)
+    }
+  }
+
+  const handleDeletePrayer = async (prayer: PrayerCard) => {
+    if (!confirm(`Hapus jadwal ${prayer.nama}?`)) return
+    try {
+      // Find the prayer type id from raw schedules
+      const related = rawSchedules.find(s => s.waktu_sholat?.jenis_sholat?.nama_jenis === prayer.nama)
+      const idJenis = related?.waktu_sholat?.jenis_sholat?.id_jenis
+      if (idJenis) {
+        await window.electronAPI.deletePrayerType({ id: idJenis })
+        notify(`Jadwal ${prayer.nama} berhasil dihapus`, "success")
+        await fetchSchedules()
+      }
+    } catch (err: any) {
+      notify(err.message || "Gagal menghapus jadwal", "error")
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
@@ -341,30 +391,44 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        {prayerCards.map((prayer, index) => (
-          <Card key={prayer.nama} className="border">
-            <CardHeader className="flex-row items-start justify-between">
-              <CardTitle>{prayer.nama}</CardTitle>
-              {!readOnly && (
-                <Button variant="outline" size="icon-sm" onClick={() => openPrayerEdit(index)}>
-                  <Pencil className="size-4" />
-                  <span className="sr-only">Edit {prayer.nama}</span>
-                </Button>
-              )}
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex items-center justify-between border-b pb-2">
-                <span className="text-muted-foreground">Waktu</span>
-                <span className="font-medium">{formatWaktuRange(prayer.waktuMulai, prayer.waktuSelesai)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Jurusan</span>
-                <span className="font-medium">{formatJurusan(prayer.jurusan)}</span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Jadwal Sholat</h3>
+          {!readOnly && (
+            <Button size="sm" onClick={() => setCreatePrayerOpen(true)}>
+              <Plus className="mr-2 size-4" /> Tambah Jadwal
+            </Button>
+          )}
+        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {prayerCards.map((prayer, index) => (
+            <Card key={prayer.nama} className="border">
+              <CardHeader className="flex-row items-start justify-between">
+                <CardTitle>{prayer.nama}</CardTitle>
+                {!readOnly && (
+                  <div className="flex gap-1">
+                    <Button variant="outline" size="icon-sm" onClick={() => openPrayerEdit(index)}>
+                      <Pencil className="size-4" />
+                    </Button>
+                    <Button variant="outline" size="icon-sm" className="text-destructive" onClick={() => handleDeletePrayer(prayer)}>
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                )}
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="flex items-center justify-between border-b pb-2">
+                  <span className="text-muted-foreground">Waktu</span>
+                  <span className="font-medium">{formatWaktuRange(prayer.waktuMulai, prayer.waktuSelesai)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Jurusan</span>
+                  <span className="font-medium">{formatJurusan(prayer.jurusan)}</span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
       <Dialog open={editingPrayerIndex !== null} onOpenChange={(open) => !open && closePrayerEdit()}>
@@ -431,6 +495,36 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Prayer Type Dialog */}
+      <Dialog open={createPrayerOpen} onOpenChange={setCreatePrayerOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Tambah Jadwal Sholat</DialogTitle>
+            <DialogDescription>Tambahkan jenis sholat baru beserta waktu pelaksanaannya.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Nama Jenis Sholat <span className="text-destructive">*</span></Label>
+              <Input value={newPrayerName} onChange={(e) => setNewPrayerName(e.target.value)} placeholder="Contoh: Dhuha, Dzuhur, Ashar" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label>Waktu Mulai</Label>
+                <TimePicker value={newPrayerStart} onChange={setNewPrayerStart} />
+              </div>
+              <div className="grid gap-2">
+                <Label>Waktu Selesai</Label>
+                <TimePicker value={newPrayerEnd} onChange={setNewPrayerEnd} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreatePrayerOpen(false)}>Batal</Button>
+            <Button onClick={handleCreatePrayer} disabled={isCreating}>{isCreating ? "Menyimpan..." : "Simpan"}</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

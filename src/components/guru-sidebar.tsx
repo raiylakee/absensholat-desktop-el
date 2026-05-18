@@ -7,6 +7,7 @@ import {
   Settings,
   ChevronUp,
   User2,
+  UserX,
   LogOut,
 } from "lucide-react";
 
@@ -52,6 +53,10 @@ const guruMenuItems = [
     title: "Laporan",
     icon: FileBarChart2,
   },
+  {
+    title: "Siswa Belum Terdaftar",
+    icon: UserX,
+  },
 ];
 
 interface GuruSidebarProps {
@@ -64,6 +69,9 @@ export function GuruSidebar({ activeItem, setActiveItem, user }: GuruSidebarProp
   const navigate = useNavigate();
   const currentUserName = user?.name ?? "Bambang Susilo, S.Pd";
   const currentUserRole = user?.role ?? "Wali Kelas XI RPL 2";
+  const avatarInitials = currentUserName.trim().split(/\s+/).filter(Boolean).length > 1
+    ? `${currentUserName.trim().split(/\s+/)[0][0]}${currentUserName.trim().split(/\s+/)[1][0]}`.toUpperCase()
+    : currentUserName.slice(0, 2).toUpperCase();
 
   const handleLogout = async () => {
     try {
@@ -123,8 +131,8 @@ export function GuruSidebar({ activeItem, setActiveItem, user }: GuruSidebarProp
               <DropdownMenuTrigger
                 render={
                   <SidebarMenuButton size="lg">
-                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                      <User2 className="size-4" />
+                    <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
+                      {avatarInitials}
                     </div>
                     <div className="flex flex-col gap-0.5 leading-none">
                       <span className="font-medium text-sm text-sidebar-foreground">{currentUserName}</span>

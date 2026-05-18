@@ -25,6 +25,9 @@ interface ElectronAPI {
   deletePrayerSchedule: (args: any) => Promise<any>;
   getPrayerTimes: () => Promise<any>;
   getPrayerTypes: () => Promise<any>;
+  createPrayerType: (args: any) => Promise<any>;
+  createPrayerTime: (args: any) => Promise<any>;
+  deletePrayerType: (args: any) => Promise<any>;
   updatePrayerTime: (args: any) => Promise<any>;
 
   // Dhuha
@@ -74,7 +77,7 @@ interface ElectronAPI {
   getMajors: () => Promise<any>;
 
   // Devices
-  getAdminDevices: () => Promise<any>;
+  getAdminDevices: (params?: { role?: string; search?: string }) => Promise<any>;
   deleteAdminDevice: (args: any) => Promise<any>;
   createDeviceChangeRequest: (args: any) => Promise<any>;
   getDeviceChangeRequests: () => Promise<any>;

@@ -258,3 +258,97 @@
     background: color-mix(in oklch, var(--muted-foreground), transparent 60%);
   }
 }
+
+/* ============================================================
+   Print Layout — @media print
+   ============================================================ */
+
+@page {
+  size: A4;
+  margin: 1cm;
+}
+
+@media print {
+  /* Hide non-print elements */
+  [data-sidebar],
+  aside[data-sidebar="sidebar"],
+  nav,
+  .titlebar,
+  [data-print="hidden"],
+  .print-hidden,
+  /* Sonner toasts */
+  [data-sonner-toaster],
+  /* FAB / floating buttons */
+  .floating-faq,
+  /* Pagination controls */
+  [data-pagination],
+  /* Action buttons in headers (not the print/download buttons themselves) */
+  [data-action-bar] {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print-only,
+  [data-print="visible"] {
+    display: block !important;
+  }
+
+  /* Reset body/html for print */
+  html, body {
+    overflow: visible !important;
+    height: auto !important;
+    background: white !important;
+  }
+
+  #root {
+    overflow: visible !important;
+    height: auto !important;
+    background: white !important;
+  }
+
+  /* Table formatting for A4 */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 10pt !important;
+  }
+
+  th, td {
+    border: 1px solid #ccc !important;
+    padding: 4px 6px !important;
+    word-break: break-word !important;
+  }
+
+  /* Avoid page breaks inside rows */
+  tr {
+    page-break-inside: avoid;
+  }
+
+  /* QR Code print formatting — minimum 150x150mm, centered */
+  [data-qr-print] {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-width: 150mm !important;
+    min-height: 150mm !important;
+  }
+
+  [data-qr-print] svg,
+  [data-qr-print] canvas {
+    width: 150mm !important;
+    height: 150mm !important;
+  }
+
+  /* Hide checkbox and action columns in tables during print */
+  .print\:hidden,
+  [data-print-hidden] {
+    display: none !important;
+  }
+
+  /* Card/container adjustments */
+  .card,
+  [data-card] {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+}

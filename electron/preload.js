@@ -26,6 +26,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
   deletePrayerSchedule: (args) => ipcRenderer.invoke("delete-prayer-schedule", args),
   getPrayerTimes: () => ipcRenderer.invoke("get-prayer-times"),
   getPrayerTypes: () => ipcRenderer.invoke("get-prayer-types"),
+  createPrayerType: (args) => ipcRenderer.invoke("create-prayer-type", args),
+  createPrayerTime: (args) => ipcRenderer.invoke("create-prayer-time", args),
+  deletePrayerType: (args) => ipcRenderer.invoke("delete-prayer-type", args),
   updatePrayerTime: (args) => ipcRenderer.invoke("update-prayer-time", args),
 
   // Dhuha Groups
@@ -75,7 +78,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getMajors: () => ipcRenderer.invoke("get-majors"),
 
   // Device Management
-  getAdminDevices: () => ipcRenderer.invoke("get-admin-devices"),
+  getAdminDevices: (args) => ipcRenderer.invoke("get-admin-devices", args),
   deleteAdminDevice: (args) => ipcRenderer.invoke("delete-admin-device", args),
   createDeviceChangeRequest: (args) => ipcRenderer.invoke("create-device-change-request", args),
   getDeviceChangeRequests: () => ipcRenderer.invoke("get-device-change-requests"),

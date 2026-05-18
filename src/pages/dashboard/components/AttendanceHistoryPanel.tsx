@@ -9,6 +9,17 @@ import {
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { Badge } from "@/components/ui/badge"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { Download, Printer } from "lucide-react"
+import { useDownloadAction } from "@/hooks/use-download-action"
+import { usePrintAction } from "@/hooks/use-print-action"
+import { arrayToCsv } from "@/lib/export-filename"
+import { PrintHeader } from "@/components/print-header"
 
 interface AbsensiStaffItem {
   id_absen: number
@@ -50,6 +61,26 @@ export function AttendanceHistoryPanel({
   const [records, setRecords] = useState<AbsensiStaffItem[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { isDownloading, download } = useDownloadAction()
+  const { print } = usePrintAction()
+
+  const handleDownload = useCallback(() => {
+    download({
+      filenameOptions: {
+        dataType: 'riwayat-kehadiran',
+        format: 'csv',
+        studentName,
+        nis,
+      },
+      fetchData: async () => {
+        const headers = ['Tanggal', 'Hari', 'Jenis Sholat', 'Status']
+        const rows = records.map((r) => [r.tanggal, r.hari, r.jenis_sholat, r.status])
+        const csv = arrayToCsv(headers, rows)
+        return { data: csv, encoding: 'utf8' as const }
+      },
+      dialogFilters: [{ name: 'CSV', extensions: ['csv'] }],
+    })
+  }, [download, records, studentName, nis])
 
   const fetchHistory = useCallback(async () => {
     setIsLoading(true)
@@ -106,13 +137,65 @@ export function AttendanceHistoryPanel({
     <Sheet open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose() }}>
       <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Riwayat Kehadiran</SheetTitle>
-          <SheetDescription>
-            {studentName} — NIS: {nis}
-          </SheetDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <SheetTitle>Riwayat Kehadiran</SheetTitle>
+              <SheetDescription>
+                {studentName} — NIS: {nis}
+              </SheetDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger render={<span />}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownload}
+                      disabled={isLoading || isDownloading}
+                      aria-label="Unduh Riwayat"
+                    >
+                      <Download className="h-4 w-4 mr-1" />
+                      Unduh Riwayat
+                    </Button>
+                  </TooltipTrigger>
+                  {isLoading && (
+                    <TooltipContent>
+                      <p>Data sedang dimuat, harap tunggu</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger render={<span />}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={print}
+                      disabled={isLoading}
+                      aria-label="Cetak Riwayat"
+                    >
+                      <Printer className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {isLoading
+                      ? "Data sedang dimuat, harap tunggu"
+                      : "Cetak Riwayat"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
         </SheetHeader>
 
         <div className="px-4 pb-4">
+          <PrintHeader
+            title="Riwayat Kehadiran"
+            studentName={studentName}
+            nis={nis}
+          />
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-12">
               <Spinner size="lg" />

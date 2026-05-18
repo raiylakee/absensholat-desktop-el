@@ -4,6 +4,7 @@ import {
   ClipboardCheck,
   FileBarChart2,
   LayoutDashboard,
+  MonitorSmartphone,
   QrCode,
   Settings,
   ChevronUp,
@@ -74,6 +75,10 @@ const mainMenuItems = [
     title: "Siswa Belum Terdaftar",
     icon: UserX,
   },
+  {
+    title: "Perangkat Siswa",
+    icon: MonitorSmartphone,
+  },
 ];
 
 interface AppSidebarProps {
@@ -86,6 +91,9 @@ export function AppSidebar({ activeItem, setActiveItem, user }: AppSidebarProps)
   const navigate = useNavigate();
   const currentUserName = user?.name ?? "Admin User";
   const currentUserEmail = user?.email || user?.username || "admin@example.com";
+  const avatarInitials = currentUserName.trim().split(/\s+/).filter(Boolean).length > 1
+    ? `${currentUserName.trim().split(/\s+/)[0][0]}${currentUserName.trim().split(/\s+/)[1][0]}`.toUpperCase()
+    : currentUserName.slice(0, 2).toUpperCase();
 
   const handleLogout = async () => {
     try {
@@ -145,8 +153,8 @@ export function AppSidebar({ activeItem, setActiveItem, user }: AppSidebarProps)
               <DropdownMenuTrigger
                 render={
                   <SidebarMenuButton size="lg">
-                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                      <User2 className="size-4" />
+                    <div className="flex aspect-square size-8 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground text-xs font-semibold">
+                      {avatarInitials}
                     </div>
                     <div className="flex flex-col gap-0.5 leading-none">
                       <span className="font-medium text-sidebar-foreground">{currentUserName}</span>

@@ -22,7 +22,7 @@ import logoTav from "@/assets/logo-tav 2.png"
 
 const logoMap: Record<string, string> = {
   RPL: logoRpl, TKJ: logoTkj, DKV: logoDkv, TEI: logoTei,
-  AN: logoAn, BC: logoBc, MT: logoMt, TAV: logoTav,
+  AN: logoAn, AM: logoAn, BC: logoBc, MT: logoMt, TMT: logoMt, TAV: logoTav,
 }
 
 const colorMap: Record<string, string> = {
@@ -30,10 +30,12 @@ const colorMap: Record<string, string> = {
   TKJ: "text-yellow-600",
   DKV: "text-sky-600",
   TEI: "text-emerald-600",
-  AN: "text-rose-600",
+  AN: "text-red-600",
+  AM: "text-pink-600",
   BC: "text-red-600",
   MT: "text-green-600",
-  TAV: "text-lime-600",
+  TMT: "text-green-600",
+  TAV: "text-green-600",
 }
 
 interface ClassManagementItem {
@@ -127,19 +129,13 @@ export function KelolaKelasSection() {
       await window.electronAPI.updateClassHomeroom({ id: id_kelas, body: { id_staff } })
       notify("Wali kelas berhasil diperbarui", "success")
       
-      // Update local state
-      const teacher = teachers.find(t => t.id_staff === id_staff)
-      setClasses(prev => prev.map(c => 
-        c.id_kelas === id_kelas 
-          ? { ...c, id_staff_wali: id_staff, wali_kelas: teacher?.nama || null } 
-          : c
-      ))
-      
       setPendingWaliKelas(prev => {
         const next = { ...prev }
         delete next[id_kelas]
         return next
       })
+      // Refetch to get consistent state (staff may have been removed from another class)
+      fetchData()
     } catch (error: any) {
       const errMsg = typeof error === "string" ? error : ""
       if (errMsg.includes("sudah") || errMsg.includes("409") || errMsg.includes("conflict")) {
@@ -323,11 +319,7 @@ export function KelolaKelasSection() {
                                   onValueChange={(val) => val !== null && handleSetWaliKelas(kelas.id_kelas, parseInt(val))}
                                 >
                                   <SelectTrigger className={isPending ? "border-yellow-500 ring-yellow-500/20" : ""}>
-                                    <SelectValue placeholder="Pilih Guru...">
-                                      {currentStaffId
-                                        ? teachers.find(t => t.id_staff === currentStaffId)?.nama || "Pilih Guru..."
-                                        : "Pilih Guru..."}
-                                    </SelectValue>
+                                    <SelectValue placeholder="Pilih Guru..." />
                                   </SelectTrigger>
                                   <SelectContent>
                                     {teachers.map(t => (

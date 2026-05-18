@@ -10,6 +10,7 @@ import { JadwalSection } from "@/pages/dashboard/components/JadwalSection"
 import { PresensiSection } from "@/pages/dashboard/components/PresensiSection"
 import { PengajuanIzinSection } from "@/pages/dashboard/components/PengajuanIzinSection"
 import { LaporanSection } from "@/pages/dashboard/components/LaporanSection"
+import { UnregisteredStudentsSection } from "@/pages/dashboard/components/UnregisteredStudentsSection"
 import { ProfileSection } from "@/pages/dashboard/components/ProfileSection"
 import { SettingsSection } from "@/pages/dashboard/components/SettingsSection"
 import { PlaceholderSection } from "@/pages/dashboard/components/PlaceholderSection"
@@ -38,6 +39,7 @@ export default function GuruDashboard() {
     if (activeItem === "Presensi") return <PresensiSection forcedClass={profile?.className} />
     if (activeItem === "Pengajuan Izin") return <PengajuanIzinSection />
     if (activeItem === "Laporan") return <LaporanSection forcedClass={profile?.className} />
+    if (activeItem === "Siswa Belum Terdaftar") return <UnregisteredStudentsSection forcedClass={profile?.className} />
     if (activeItem === "Profile") return <ProfileSection user={teacherProfile} />
     if (activeItem === "Settings") return <SettingsSection />
     return <PlaceholderSection title={activeItem} />

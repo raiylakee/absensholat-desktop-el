@@ -50,7 +50,7 @@ interface TeacherOption {
   nip: string
 }
 
-export function UnregisteredStudentsSection() {
+export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: string }) {
   const [students, setStudents] = useState<UnregisteredStudent[]>([])
   const [paginationMeta, setPagination] = useState<PaginationMeta | null>(null)
   const [page, setPage] = useState(1)
@@ -103,7 +103,8 @@ export function UnregisteredStudentsSection() {
 
       const response: any = await window.electronAPI.getUnregisteredStudents(params)
       const data = extractData(response);
-      setStudents(Array.isArray(data) ? data : [])
+      const allStudents = Array.isArray(data) ? data : []
+      setStudents(forcedClass ? allStudents.filter((s: any) => s.kelas === forcedClass) : allStudents)
       
       const paginationInfo = extractPagination(response);
       setPagination({
@@ -211,6 +212,7 @@ export function UnregisteredStudentsSection() {
                 />
               </div>
             </div>
+            {!forcedClass && (
             <div className="min-w-[180px]">
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Jurusan</label>
               <Select value={jurusanFilter || "__all__"} onValueChange={handleJurusanChange}>
@@ -231,6 +233,8 @@ export function UnregisteredStudentsSection() {
                 </SelectContent>
               </Select>
             </div>
+            )}
+            {!forcedClass && (
             <div className="min-w-[200px]">
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Wali Kelas</label>
               <Select value={waliKelasFilter || "__all__"} onValueChange={handleWaliKelasChange}>
@@ -251,6 +255,7 @@ export function UnregisteredStudentsSection() {
                 </SelectContent>
               </Select>
             </div>
+            )}
           </div>
 
           {/* Content */}

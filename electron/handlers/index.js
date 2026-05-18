@@ -71,9 +71,9 @@ const INVALIDATION_MAP = {
   "/prayer-times": ["/prayer-times", "/prayer-schedules"],
   "/jurusan": ["/jurusan", "/dhuha-schedules"],
   "/pengajuan-izin": ["/pengajuan-izin"],
-  "/admin/management/kelas": ["/admin/management/kelas", "/kelas"],
-  "/admin/management/guru": ["/admin/management/guru", "/admin/management/wali-kelas", "/lookup/staff-guru"],
-  "/admin/management/wali-kelas": ["/admin/management/wali-kelas", "/admin/management/guru"],
+  "/admin/management/kelas": ["/admin/management/kelas", "/kelas", "/admin/management/guru", "/admin/management/wali-kelas"],
+  "/admin/management/guru": ["/admin/management/guru", "/admin/management/wali-kelas", "/admin/management/kelas", "/lookup/staff-guru"],
+  "/admin/management/wali-kelas": ["/admin/management/wali-kelas", "/admin/management/guru", "/admin/management/kelas"],
   "/admin/device-management": ["/admin/device-management"],
   "/profile/devices": ["/profile/devices"],
   "/device-auth": ["/device-auth"],
@@ -249,6 +249,18 @@ function register(ipcMain) {
 
   ipcMain.handle("get-prayer-types", handler(async () =>
     apiRequest("GET", "/api/v2/prayer-types")
+  ));
+
+  ipcMain.handle("create-prayer-type", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/prayer-types", { body })
+  ));
+
+  ipcMain.handle("create-prayer-time", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/prayer-times", { body })
+  ));
+
+  ipcMain.handle("delete-prayer-type", handler(async ({ id }) =>
+    apiRequest("DELETE", `/api/v2/prayer-types/${id}`)
   ));
 
   ipcMain.handle("update-prayer-time", handler(async ({ id, body }) =>
@@ -445,8 +457,8 @@ function register(ipcMain) {
   ));
 
   // === Device Management ===
-  ipcMain.handle("get-admin-devices", handler(async () =>
-    apiRequest("GET", "/api/v2/admin/device-management")
+  ipcMain.handle("get-admin-devices", handler(async ({ role, search } = {}) =>
+    apiRequest("GET", "/api/v2/admin/device-management", { query: { role, search } })
   ));
 
   ipcMain.handle("delete-admin-device", handler(async ({ id }) =>

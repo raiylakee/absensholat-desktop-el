@@ -45,7 +45,7 @@ export function ProfileSection({ user }: { user?: UserProfile }) {
   const [pwLoading, setPwLoading] = useState(false)
 
   const [newEmail, setNewEmail] = useState("")
-  const [emailPassword, setEmailPassword] = useState("")
+  const [_emailPassword, setEmailPassword] = useState("")
   const [emailLoading, setEmailLoading] = useState(false)
   const [otp, setOtp] = useState("")
   const [otpLoading, setOtpLoading] = useState(false)

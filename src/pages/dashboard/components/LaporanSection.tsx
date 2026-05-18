@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react"
-import { Download, Filter, FileText, FileSpreadsheet, File, Calendar as CalendarIcon } from "lucide-react"
+import { Download, Filter, FileText, FileSpreadsheet, File, Calendar as CalendarIcon, Printer } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,6 +25,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
 import { extractData, normalizeAttendance } from "@/lib/api-utils"
+import { usePrintAction } from "@/hooks/use-print-action"
+import { PrintHeader } from "@/components/print-header"
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { useDownloadAction } from "@/hooks/use-download-action"
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   LineChart, Line, XAxis, YAxis, CartesianGrid,
@@ -107,7 +111,17 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
   const [downloadRange, setDownloadRange] = useState("monthly")
   const [downloadFormat, setDownloadFormat] = useState("excel")
   const [downloadClasses, setDownloadClasses] = useState<string[]>(["All"])
-  const [isDownloading, setIsDownloading] = useState(false)
+  const [customStartDate, setCustomStartDate] = useState<Date | null>(null)
+  const [customEndDate, setCustomEndDate] = useState<Date | null>(null)
+
+  const { isDownloading, download } = useDownloadAction()
+
+  // Print action
+  const { print } = usePrintAction()
+
+  // Validation: custom range requires both dates
+  const isCustomRangeInvalid =
+    downloadRange === "custom" && (!customStartDate || !customEndDate)
 
   // Chart state
   const [chartData, setChartData] = useState<ChartDataState | null>(null)
@@ -232,21 +246,24 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
 
   const handleDownloadReport = async () => {
     // Map format to endpoint and file extension
-    const formatConfig: Record<string, { endpoint: string; extension: string; filterName: string }> = {
+    const formatConfig: Record<string, { endpoint: string; extension: string; filterName: string; exportFormat: 'xlsx' | 'csv' | 'pdf' }> = {
       excel: {
-        endpoint: "/api/v2/reports/attendances/excel",
+        endpoint: "/api/v2/reports/attendance/excel",
         extension: "xlsx",
         filterName: "Excel Files",
+        exportFormat: "xlsx",
       },
       csv: {
         endpoint: "/api/v2/reports/attendances/csv",
         extension: "csv",
         filterName: "CSV Files",
+        exportFormat: "csv",
       },
       pdf: {
-        endpoint: "/api/v2/reports/attendances/pdf",
+        endpoint: "/api/v2/reports/attendance/pdf",
         extension: "pdf",
         filterName: "PDF Files",
+        exportFormat: "pdf",
       },
     }
 
@@ -256,77 +273,89 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
       return
     }
 
-    // Prompt user for save path
-    const savePath = await window.electronAPI.showSaveDialog({
-      filters: [
-        {
-          name: config.filterName,
-          extensions: [config.extension],
-        },
-      ],
-      defaultPath: `laporan-absensi.${config.extension}`,
+    // Determine active filter for filename (jurusan takes priority, then kelas, then forcedClass)
+    const activeFilter =
+      selectedJurusanFilters[0] ||
+      forcedClass ||
+      selectedKelasFilters[0] ||
+      undefined
+
+    await download({
+      filenameOptions: {
+        dataType: "laporan-absensi",
+        format: config.exportFormat,
+        filter: activeFilter,
+      },
+      dialogFilters: [{ name: config.filterName, extensions: [config.extension] }],
+      fetchData: async () => {
+        // Determine date params from downloadRange
+        let exportStartDate: string | undefined
+        let exportEndDate: string | undefined
+
+        if (downloadRange === "custom") {
+          exportStartDate = customStartDate ? format(customStartDate, "yyyy-MM-dd") : undefined
+          exportEndDate = customEndDate ? format(customEndDate, "yyyy-MM-dd") : undefined
+        } else if (downloadRange === "weekly") {
+          const now = new Date()
+          const weekAgo = new Date(now)
+          weekAgo.setDate(now.getDate() - 7)
+          exportStartDate = format(weekAgo, "yyyy-MM-dd")
+          exportEndDate = format(now, "yyyy-MM-dd")
+        } else if (downloadRange === "monthly") {
+          const now = new Date()
+          const monthAgo = new Date(now)
+          monthAgo.setMonth(now.getMonth() - 1)
+          exportStartDate = format(monthAgo, "yyyy-MM-dd")
+          exportEndDate = format(now, "yyyy-MM-dd")
+        } else if (downloadRange === "yearly") {
+          const now = new Date()
+          const yearAgo = new Date(now)
+          yearAgo.setFullYear(now.getFullYear() - 1)
+          exportStartDate = format(yearAgo, "yyyy-MM-dd")
+          exportEndDate = format(now, "yyyy-MM-dd")
+        }
+
+        // Pass active jurusan/kelas filters (Property 8)
+        const exportJurusan =
+          selectedJurusanFilters.length > 0 ? selectedJurusanFilters[0] : undefined
+        const exportKelas =
+          forcedClass ||
+          (selectedKelasFilters.length > 0 ? selectedKelasFilters[0] : undefined) ||
+          (downloadClasses.includes("All") || downloadClasses.length === 0
+            ? undefined
+            : downloadClasses[0])
+
+        const result: any = await window.electronAPI.exportReport({
+          endpoint: config.endpoint,
+          startDate: exportStartDate,
+          endDate: exportEndDate,
+          kelas: exportKelas,
+          jurusan: exportJurusan,
+        })
+
+        return { data: result.data, encoding: "base64" as const }
+      },
     })
 
-    if (!savePath) {
-      // User cancelled the dialog
-      return
-    }
-
-    setIsDownloading(true)
-    try {
-      // Determine date params from downloadRange or active date filters
-      let exportStartDate: string | undefined
-      let exportEndDate: string | undefined
-
-      if (downloadRange === "custom") {
-        exportStartDate = startDate ? format(startDate, "yyyy-MM-dd") : undefined
-        exportEndDate = endDate ? format(endDate, "yyyy-MM-dd") : undefined
-      } else if (downloadRange === "weekly") {
-        const now = new Date()
-        const weekAgo = new Date(now)
-        weekAgo.setDate(now.getDate() - 7)
-        exportStartDate = format(weekAgo, "yyyy-MM-dd")
-        exportEndDate = format(now, "yyyy-MM-dd")
-      } else if (downloadRange === "monthly") {
-        const now = new Date()
-        const monthAgo = new Date(now)
-        monthAgo.setMonth(now.getMonth() - 1)
-        exportStartDate = format(monthAgo, "yyyy-MM-dd")
-        exportEndDate = format(now, "yyyy-MM-dd")
-      } else if (downloadRange === "yearly") {
-        const now = new Date()
-        const yearAgo = new Date(now)
-        yearAgo.setFullYear(now.getFullYear() - 1)
-        exportStartDate = format(yearAgo, "yyyy-MM-dd")
-        exportEndDate = format(now, "yyyy-MM-dd")
-      }
-
-      // Determine kelas/jurusan from download class selection
-      const exportKelas =
-        downloadClasses.includes("All") || downloadClasses.length === 0
-          ? undefined
-          : downloadClasses[0]
-
-      const result: any = await window.electronAPI.exportReport({
-        endpoint: config.endpoint,
-        startDate: exportStartDate,
-        endDate: exportEndDate,
-        kelas: exportKelas,
-        jurusan: undefined,
-      })
-
-      // Write base64 data to the chosen path
-      await window.electronAPI.writeFile({ filePath: savePath, data: result.data, encoding: 'base64' })
-
-      notify("Laporan berhasil diunduh ke " + savePath, "success")
-      setIsDownloadDialogOpen(false)
-    } catch (error) {
-      console.error("Gagal mengunduh laporan:", error)
-      notify("Gagal mengunduh laporan: " + error, "error")
-    } finally {
-      setIsDownloading(false)
-    }
+    setIsDownloadDialogOpen(false)
   }
+
+  // Build active filters for PrintHeader
+  const activeFilters = useMemo(() => {
+    const filters: Record<string, string> = {}
+    if (forcedClass) {
+      filters["Kelas"] = forcedClass
+    } else {
+      if (selectedKelasFilters.length > 0) filters["Kelas"] = selectedKelasFilters.join(", ")
+      if (selectedJurusanFilters.length > 0) filters["Jurusan"] = selectedJurusanFilters.join(", ")
+    }
+    if (selectedSholatFilters.length > 0) filters["Sholat"] = selectedSholatFilters.join(", ")
+    if (startDate) filters["Dari"] = format(startDate, "dd/MM/yyyy")
+    if (endDate) filters["Sampai"] = format(endDate, "dd/MM/yyyy")
+    return filters
+  }, [forcedClass, selectedKelasFilters, selectedJurusanFilters, selectedSholatFilters, startDate, endDate])
+
+  const isPrintDisabled = records.length === 0 || isLoading
 
   return (
     <div className="space-y-6">
@@ -469,6 +498,28 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
               Unduh Laporan
             </Button>
 
+            <TooltipProvider>
+              <UITooltip>
+                <TooltipTrigger render={<span tabIndex={isPrintDisabled ? 0 : undefined} />}>
+                  <Button
+                    variant="outline"
+                    onClick={print}
+                    disabled={isPrintDisabled}
+                  >
+                    <Printer className="mr-2 size-4" />
+                    Cetak
+                  </Button>
+                </TooltipTrigger>
+                {isPrintDisabled && (
+                  <TooltipContent>
+                    {isLoading
+                      ? "Data sedang dimuat, harap tunggu"
+                      : "Tidak ada data untuk dicetak"}
+                  </TooltipContent>
+                )}
+              </UITooltip>
+            </TooltipProvider>
+
             <div className="flex items-center gap-2 border rounded-md px-2 py-1 bg-muted/20">
               <div className="flex items-center gap-1">
                 <Label className="text-[10px] uppercase font-bold text-muted-foreground">From</Label>
@@ -598,6 +649,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
           </div>
         </CardHeader>
         <CardContent>
+          <PrintHeader title="Laporan Absensi" filters={activeFilters} />
           <div className="overflow-x-auto rounded-lg border">
             <table className="w-full min-w-[920px] text-sm">
               <thead className="bg-muted/40">
@@ -708,9 +760,78 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                 </div>
                 <div className="flex items-center space-x-2 rounded-lg border p-3 hover:bg-muted/50 cursor-pointer">
                   <RadioGroupItem value="custom" id="range-custom" />
-                  <Label htmlFor="range-custom" className="flex-1 cursor-pointer">Kustom (Filter Aktif)</Label>
+                  <Label htmlFor="range-custom" className="flex-1 cursor-pointer">Kustom</Label>
                 </div>
               </RadioGroup>
+
+              {/* Custom date range pickers */}
+              {downloadRange === "custom" && (
+                <div className="space-y-3 pt-1">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Tanggal Mulai</Label>
+                    <Popover>
+                      <PopoverTrigger
+                        render={
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !customStartDate && "text-muted-foreground",
+                              isCustomRangeInvalid && !customStartDate && "border-destructive"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {customStartDate ? format(customStartDate, "PP") : <span>Pilih tanggal mulai</span>}
+                          </Button>
+                        }
+                      />
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customStartDate ?? undefined}
+                          onSelect={(d) => setCustomStartDate(d ?? null)}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    {isCustomRangeInvalid && !customStartDate && (
+                      <p className="text-xs text-destructive">Tanggal mulai wajib diisi</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Tanggal Akhir</Label>
+                    <Popover>
+                      <PopoverTrigger
+                        render={
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !customEndDate && "text-muted-foreground",
+                              isCustomRangeInvalid && !customEndDate && "border-destructive"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {customEndDate ? format(customEndDate, "PP") : <span>Pilih tanggal akhir</span>}
+                          </Button>
+                        }
+                      />
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customEndDate ?? undefined}
+                          onSelect={(d) => setCustomEndDate(d ?? null)}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    {isCustomRangeInvalid && !customEndDate && (
+                      <p className="text-xs text-destructive">Tanggal akhir wajib diisi</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Class Selection */}
@@ -784,7 +905,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
             <Button variant="outline" onClick={() => setIsDownloadDialogOpen(false)} disabled={isDownloading}>
               Batal
             </Button>
-            <Button onClick={handleDownloadReport} disabled={isDownloading} className="bg-primary hover:bg-primary/90">
+            <Button onClick={handleDownloadReport} disabled={isDownloading || isCustomRangeInvalid} className="bg-primary hover:bg-primary/90">
               {isDownloading ? <Spinner size="sm" className="mr-2" /> : <Download className="mr-2 size-4" />}
               {isDownloading ? "Mengunduh..." : "Unduh Laporan"}
             </Button>

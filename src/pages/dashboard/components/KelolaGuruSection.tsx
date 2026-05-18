@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { Search, Plus, Pencil, Trash2, UserCheck, UserMinus } from "lucide-react"
+import { Search, Plus, Pencil, Trash2, UserCheck, UserMinus, Download, Loader2, Mail, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -7,9 +7,12 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
 import { extractData } from "@/lib/api-utils"
+import { useDownloadAction } from "@/hooks/use-download-action"
+import { arrayToCsv } from "@/lib/export-filename"
 
 interface GuruResponse {
   id_staff: number
@@ -47,7 +50,6 @@ const ITEMS_PER_PAGE = 15
 export function KelolaGuruSection() {
   const [activeTab, setActiveTab] = useState<"guru" | "wali">("guru")
 
-  // Guru list state
   const [guruList, setGuruList] = useState<GuruResponse[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -55,14 +57,11 @@ export function KelolaGuruSection() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
-  // Wali kelas list state
   const [waliList, setWaliList] = useState<WaliKelasListItem[]>([])
   const [isLoadingWali, setIsLoadingWali] = useState(false)
 
-  // Classes for assign dialog
   const [kelasList, setKelasList] = useState<KelasOption[]>([])
 
-  // Dialogs
   const [createOpen, setCreateOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [assignOpen, setAssignOpen] = useState(false)
@@ -71,13 +70,14 @@ export function KelolaGuruSection() {
 
   const [selectedGuru, setSelectedGuru] = useState<GuruResponse | null>(null)
 
-  // Form state
   const [formNama, setFormNama] = useState("")
   const [formEmail, setFormEmail] = useState("")
   const [formPassword, setFormPassword] = useState("")
   const [formNip, setFormNip] = useState("")
   const [formKelas, setFormKelas] = useState("")
   const [isSaving, setIsSaving] = useState(false)
+
+  const { isDownloading, download } = useDownloadAction()
 
   const isMounted = useRef(true)
 
@@ -140,10 +140,10 @@ export function KelolaGuruSection() {
     if (activeTab === "wali") fetchWali()
   }, [activeTab])
 
-  const handleSearch = () => {
-    setPage(1)
-    fetchGuru(1)
-  }
+  useEffect(() => {
+    const timer = setTimeout(() => { setPage(1); fetchGuru(1) }, 300)
+    return () => clearTimeout(timer)
+  }, [search])
 
   const handleFilterChange = (val: "" | "true" | "false") => {
     setHasWaliFilter(val)
@@ -156,7 +156,6 @@ export function KelolaGuruSection() {
     fetchGuru(p)
   }
 
-  // Create
   const openCreate = () => {
     setFormNama(""); setFormEmail(""); setFormPassword(""); setFormNip("")
     setCreateOpen(true)
@@ -174,7 +173,6 @@ export function KelolaGuruSection() {
     finally { setIsSaving(false) }
   }
 
-  // Edit
   const openEdit = (guru: GuruResponse) => {
     setSelectedGuru(guru)
     setFormNama(guru.nama)
@@ -196,7 +194,6 @@ export function KelolaGuruSection() {
     finally { setIsSaving(false) }
   }
 
-  // Delete
   const openDelete = (guru: GuruResponse) => { setSelectedGuru(guru); setDeleteOpen(true) }
 
   const handleDelete = async () => {
@@ -211,7 +208,6 @@ export function KelolaGuruSection() {
     finally { setIsSaving(false) }
   }
 
-  // Assign wali kelas
   const openAssign = (guru: GuruResponse) => {
     setSelectedGuru(guru)
     setFormKelas(guru.id_kelas_wali?.toString() || "")
@@ -230,7 +226,6 @@ export function KelolaGuruSection() {
     finally { setIsSaving(false) }
   }
 
-  // Remove wali kelas
   const openRemoveWali = (guru: GuruResponse) => { setSelectedGuru(guru); setRemoveWaliOpen(true) }
 
   const handleRemoveWali = async () => {
@@ -245,13 +240,37 @@ export function KelolaGuruSection() {
     finally { setIsSaving(false) }
   }
 
-  // Remove wali from wali tab
   const handleRemoveWaliFromList = async (item: WaliKelasListItem) => {
     try {
       await window.electronAPI.removeGuruWaliKelas({ id: item.id_staff })
       notify("Wali kelas berhasil dilepas", "success")
       fetchWali()
     } catch (err: any) { notify(err.message || "Gagal melepas wali kelas", "error") }
+  }
+
+  const handleDownload = () => {
+    if (guruList.length === 0) {
+      notify("Tidak ada data untuk diunduh", "info")
+      return
+    }
+    download({
+      filenameOptions: {
+        dataType: "daftar-guru",
+        format: "csv",
+      },
+      fetchData: async () => {
+        const headers = ["Nama", "Email", "NIP", "Wali Kelas"]
+        const rows = guruList.map((guru) => [
+          guru.nama,
+          guru.email,
+          guru.nip ?? "",
+          guru.label_kelas ?? "",
+        ])
+        const csv = arrayToCsv(headers, rows)
+        return { data: btoa(unescape(encodeURIComponent(csv))), encoding: "base64" as const }
+      },
+      dialogFilters: [{ name: "CSV Files", extensions: ["csv"] }],
+    })
   }
 
   return (
@@ -277,6 +296,33 @@ export function KelolaGuruSection() {
             >
               Wali Kelas Aktif
             </Button>
+            {activeTab === "guru" && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger render={<span />}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDownload}
+                      disabled={isDownloading || isLoading}
+                      aria-label="Unduh Daftar"
+                    >
+                      {isDownloading ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Download className="size-4" />
+                      )}
+                      <span className="ml-2">Unduh Daftar</span>
+                    </Button>
+                  </TooltipTrigger>
+                  {(isDownloading || isLoading) && (
+                    <TooltipContent>
+                      {isDownloading ? "Sedang mengunduh..." : "Memuat data..."}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            )}
           </div>
         </CardHeader>
       </Card>
@@ -288,14 +334,13 @@ export function KelolaGuruSection() {
               <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <Input
                 placeholder="Cari nama atau email..."
-                className="pl-9"
+                className="pl-9 bg-background"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
             </div>
             <Select value={hasWaliFilter} onValueChange={(v) => handleFilterChange(v as "" | "true" | "false")}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[180px] bg-background">
                 <SelectValue placeholder="Filter Wali Kelas" />
               </SelectTrigger>
               <SelectContent>
@@ -304,7 +349,6 @@ export function KelolaGuruSection() {
                 <SelectItem value="false">Belum Jadi Wali</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={handleSearch}>Cari</Button>
             <Button onClick={openCreate}>
               <Plus className="mr-2 size-4" /> Tambah Guru
             </Button>
@@ -314,64 +358,69 @@ export function KelolaGuruSection() {
             <div className="flex h-[300px] items-center justify-center">
               <Spinner size="lg" />
             </div>
+          ) : guruList.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <p>Tidak ada data guru.</p>
+            </div>
           ) : (
-            <div className="rounded-md border bg-background overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/50 border-b">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-medium">Nama</th>
-                      <th className="px-4 py-3 text-left font-medium">Email</th>
-                      <th className="px-4 py-3 text-left font-medium">NIP</th>
-                      <th className="px-4 py-3 text-left font-medium">Wali Kelas</th>
-                      <th className="px-4 py-3 text-left font-medium w-40">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {guruList.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                          Tidak ada data guru.
-                        </td>
-                      </tr>
-                    ) : (
-                      guruList.map((guru) => (
-                        <tr key={guru.id_staff} className="border-b last:border-0 hover:bg-muted/30">
-                          <td className="px-4 py-3 font-medium">{guru.nama}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{guru.email}</td>
-                          <td className="px-4 py-3">{guru.nip || "-"}</td>
-                          <td className="px-4 py-3">
-                            {guru.label_kelas ? (
-                              <Badge variant="secondary">{guru.label_kelas}</Badge>
-                            ) : (
-                              <span className="text-muted-foreground text-xs">-</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-1">
-                              <Button variant="ghost" size="icon" title="Edit" onClick={() => openEdit(guru)}>
-                                <Pencil className="size-4" />
-                              </Button>
-                              {guru.id_kelas_wali ? (
-                                <Button variant="ghost" size="icon" title="Lepas Wali Kelas" onClick={() => openRemoveWali(guru)}>
-                                  <UserMinus className="size-4 text-yellow-600" />
-                                </Button>
-                              ) : (
-                                <Button variant="ghost" size="icon" title="Tetapkan Wali Kelas" onClick={() => openAssign(guru)}>
-                                  <UserCheck className="size-4 text-green-600" />
-                                </Button>
-                              )}
-                              <Button variant="ghost" size="icon" title="Hapus" onClick={() => openDelete(guru)}>
-                                <Trash2 className="size-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {guruList.map((guru) => (
+                <Card key={guru.id_staff} className="overflow-hidden hover:border-primary/30 transition-colors">
+                  <div className="p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                          {guru.nama.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-sm truncate">{guru.nama}</h3>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Mail className="size-3 shrink-0" />
+                            <span className="truncate">{guru.email}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {guru.nip && (
+                        <Badge variant="outline" className="text-xs font-normal">
+                          <CreditCard className="mr-1 size-3" />
+                          {guru.nip}
+                        </Badge>
+                      )}
+                      {guru.label_kelas ? (
+                        <Badge variant="secondary" className="text-xs">
+                          Wali {guru.label_kelas}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs text-muted-foreground border-dashed">
+                          Belum jadi wali
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1 pt-1 border-t">
+                      <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => openEdit(guru)}>
+                        <Pencil className="mr-1 size-3" /> Edit
+                      </Button>
+                      {guru.id_kelas_wali ? (
+                        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-yellow-600" onClick={() => openRemoveWali(guru)}>
+                          <UserMinus className="mr-1 size-3" /> Lepas Wali
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-green-600" onClick={() => openAssign(guru)}>
+                          <UserCheck className="mr-1 size-3" /> Tetapkan Wali
+                        </Button>
+                      )}
+                      <div className="flex-1" />
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => openDelete(guru)}>
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
           )}
 
@@ -395,51 +444,38 @@ export function KelolaGuruSection() {
             <div className="flex h-[300px] items-center justify-center">
               <Spinner size="lg" />
             </div>
+          ) : waliList.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <p>Belum ada wali kelas aktif.</p>
+            </div>
           ) : (
-            <div className="rounded-md border bg-background overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/50 border-b">
-                    <tr>
-                      <th className="px-4 py-3 text-left font-medium">Kelas</th>
-                      <th className="px-4 py-3 text-left font-medium">Nama Guru</th>
-                      <th className="px-4 py-3 text-left font-medium">NIP</th>
-                      <th className="px-4 py-3 text-left font-medium">Berlaku Mulai</th>
-                      <th className="px-4 py-3 text-left font-medium w-24">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {waliList.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                          Belum ada wali kelas aktif.
-                        </td>
-                      </tr>
-                    ) : (
-                      waliList.map((item) => (
-                        <tr key={item.id_wali} className="border-b last:border-0 hover:bg-muted/30">
-                          <td className="px-4 py-3 font-medium">{item.kelas_label}</td>
-                          <td className="px-4 py-3">{item.nama_guru}</td>
-                          <td className="px-4 py-3">{item.nip || "-"}</td>
-                          <td className="px-4 py-3 text-muted-foreground">
-                            {item.berlaku_mulai ? new Date(item.berlaku_mulai).toLocaleDateString("id-ID") : "-"}
-                          </td>
-                          <td className="px-4 py-3">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-destructive hover:text-destructive"
-                              onClick={() => handleRemoveWaliFromList(item)}
-                            >
-                              Lepas
-                            </Button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {waliList.map((item) => (
+                <Card key={item.id_wali} className="overflow-hidden hover:border-primary/30 transition-colors">
+                  <div className="p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <Badge variant="secondary" className="text-xs font-semibold mb-2">{item.kelas_label}</Badge>
+                        <h3 className="font-semibold text-sm">{item.nama_guru}</h3>
+                        {item.nip && <p className="text-xs text-muted-foreground">NIP: {item.nip}</p>}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-1 border-t">
+                      <span className="text-xs text-muted-foreground">
+                        Sejak {item.berlaku_mulai ? new Date(item.berlaku_mulai).toLocaleDateString("id-ID") : "-"}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs text-destructive hover:text-destructive"
+                        onClick={() => handleRemoveWaliFromList(item)}
+                      >
+                        Lepas
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
           )}
         </div>
@@ -515,9 +551,11 @@ export function KelolaGuruSection() {
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label>Kelas <span className="text-destructive">*</span></Label>
-              <Select value={formKelas} onValueChange={setFormKelas}>
+              <Select value={formKelas} onValueChange={(v) => setFormKelas(v ?? "")}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih kelas..." />
+                  <SelectValue placeholder="Pilih kelas...">
+                    {formKelas ? kelasList.find(k => k.id_kelas.toString() === formKelas)?.label || "Pilih kelas..." : undefined}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {kelasList.map((k) => (

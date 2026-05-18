@@ -1,9 +1,9 @@
 import { useMemo, useState, useEffect, useRef } from "react"
-import { Eye, Filter, ExternalLink, Paperclip } from "lucide-react"
+import { Eye, Filter, Paperclip, Printer } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
@@ -14,6 +14,10 @@ import {
 import type { PresensiRecord } from "@/pages/dashboard/types"
 import { notify } from "@/lib/notify"
 import { extractData, normalizeAttendance } from "@/lib/api-utils"
+import { usePrintAction } from "@/hooks/use-print-action"
+import { PrintHeader } from "@/components/print-header"
+import { BuktiFotoPreview } from "@/components/bukti-foto-preview"
+import { useDownloadAction } from "@/hooks/use-download-action"
 
 interface IzinDetail {
   id_pengajuan: number
@@ -31,6 +35,8 @@ interface PresensiSectionProps {
 }
 
 export function PresensiSection({ forcedClass }: PresensiSectionProps) {
+  const { print } = usePrintAction()
+  const { isDownloading, download } = useDownloadAction()
   const [presensiRecords, setPresensiRecords] = useState<PresensiRecord[]>([])
   const [presensiSearchQuery, setPresensiSearchQuery] = useState("")
   const [selectedSholatFilters, setSelectedSholatFilters] = useState<PresensiRecord["jenisSholat"][]>([])
@@ -141,6 +147,58 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
     if (status === "Sakit") return "bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400"
     if (status === "Alpha") return "bg-red-100 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400"
     return "bg-gray-100 text-gray-700 hover:bg-gray-100 dark:bg-gray-900/30 dark:text-gray-400"
+  }
+
+  const handleDownloadBukti = async () => {
+    if (!izinDetail?.bukti_foto_url) return
+
+    const buktiUrl = izinDetail.bukti_foto_url
+
+    // Extract filename from URL if available, fallback to bukti-izin-{YYYY-MM-DD}.{ext}
+    const urlPath = buktiUrl.split("?")[0]
+    const urlFilename = urlPath.split("/").pop() ?? ""
+    const hasOriginalFilename = urlFilename.includes(".")
+
+    // Determine extension from URL
+    const extMatch = urlPath.match(/\.([a-zA-Z0-9]+)$/)
+    const ext = extMatch ? extMatch[1].toLowerCase() : "jpg"
+
+    // Determine format for filename generator (fallback filename)
+    const format = (ext === "pdf" ? "pdf" : "png") as "pdf" | "png"
+
+    // Use the date from izin period (tanggal_awal) for the fallback filename
+    const izinDate = izinDetail.tanggal_awal
+      ? new Date(izinDetail.tanggal_awal)
+      : new Date()
+
+    await download({
+      filenameOptions: {
+        dataType: "bukti-izin",
+        format,
+        date: izinDate,
+      },
+      // Use original filename from URL as default if available
+      ...(hasOriginalFilename ? { defaultPathOverride: urlFilename } : {}),
+      fetchData: async () => {
+        const response = await fetch(buktiUrl)
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        const arrayBuffer = await response.arrayBuffer()
+        const uint8Array = new Uint8Array(arrayBuffer)
+        let binary = ""
+        for (let i = 0; i < uint8Array.length; i++) {
+          binary += String.fromCharCode(uint8Array[i])
+        }
+        const base64 = btoa(binary)
+        return { data: base64, encoding: "base64" as const }
+      },
+      dialogFilters: [
+        { name: "Image Files", extensions: ["jpg", "jpeg", "png", "gif", "webp"] },
+        { name: "PDF Files", extensions: ["pdf"] },
+        { name: "All Files", extensions: ["*"] },
+      ],
+    })
   }
 
   return (
@@ -256,7 +314,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                       <td className="px-4 py-3">
                         <Badge className={getStatusBadgeClassName(record.status)}>{record.status}</Badge>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 print:hidden">
                         {record.status === "Izin" || record.status === "Sakit" ? (
                           <Button variant="outline" size="sm" onClick={() => handleOpenDetail(record)}>
                             <Eye className="mr-2 size-4" />
@@ -273,7 +331,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
             </table>
           </div>
 
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 flex items-center justify-between print:hidden">
             <p className="text-sm text-muted-foreground">
               Menampilkan {filteredRecords.length} dari {totalItems} data
             </p>
@@ -304,7 +362,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
 
       <Dialog open={Boolean(detailPresensi)} onOpenChange={(open) => { if (!open) { setDetailPresensi(null); setIzinDetail(null) } }}>
         <DialogContent className="max-h-[80vh] flex flex-col">
-          <DialogHeader>
+          <DialogHeader className="print:hidden">
             <DialogTitle>Detail Izin Presensi</DialogTitle>
             <DialogDescription>Informasi pengajuan izin siswa.</DialogDescription>
           </DialogHeader>
@@ -313,6 +371,11 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
             <div className="flex justify-center py-4"><Spinner /></div>
           ) : izinDetail ? (
             <div className="space-y-3 text-sm">
+              <PrintHeader
+                title="Detail Izin Presensi"
+                studentName={detailPresensi?.nama}
+                nis={detailPresensi?.nis}
+              />
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <p className="text-xs text-muted-foreground">Jenis</p>
@@ -338,22 +401,11 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
               {izinDetail.bukti_foto_url ? (
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">Bukti</p>
-                  {izinDetail.bukti_foto_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                    <img
-                      src={izinDetail.bukti_foto_url}
-                      alt="Bukti izin"
-                      className="max-h-64 w-full rounded-lg border object-contain"
-                    />
-                  ) : null}
-                  <a
-                    href={izinDetail.bukti_foto_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-primary hover:underline text-xs"
-                  >
-                    <ExternalLink className="size-3" />
-                    Buka file bukti
-                  </a>
+                  <BuktiFotoPreview
+                    url={izinDetail.bukti_foto_url}
+                    onDownload={handleDownloadBukti}
+                    isDownloading={isDownloading}
+                  />
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -366,6 +418,16 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
             <p className="text-sm text-muted-foreground">Data pengajuan izin tidak ditemukan.</p>
           )}
           </div>
+          <DialogFooter className="print:hidden">
+            <Button
+              variant="outline"
+              onClick={print}
+              disabled={!izinDetail}
+            >
+              <Printer className="mr-2 size-4" />
+              Cetak Detail
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

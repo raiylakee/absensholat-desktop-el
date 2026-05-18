@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react"
-import { Eye, Filter, Pencil, Plus, Users, CheckSquare, Settings, Layers, ChevronLeft, ChevronRight, Save, Upload } from "lucide-react"
+import { Eye, Filter, Pencil, Plus, Printer, Users, CheckSquare, Settings, Layers, ChevronLeft, ChevronRight, Save, Upload, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -10,15 +10,22 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { GENDER_OPTIONS } from "@/pages/dashboard/constants"
 import type { Student } from "@/pages/dashboard/types"
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
 import { extractData, extractPagination, normalizeStudent, genderToApi } from "@/lib/api-utils"
 import { Combobox } from "@/components/ui/combobox"
+import { usePrintAction } from "@/hooks/use-print-action"
+import { useDownloadAction } from "@/hooks/use-download-action"
+import { arrayToCsv } from "@/lib/export-filename"
+import { PrintHeader } from "@/components/print-header"
 
 
 export function ManageSiswaSection() {
+  const { print } = usePrintAction()
+  const { isDownloading, download } = useDownloadAction()
   const [students, setStudents] = useState<Student[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -149,21 +156,21 @@ export function ManageSiswaSection() {
     setImportProgressStep("Membuka file...")
     setImportProgressPct(10)
     try {
-      const content = await window.electronAPI.readTextFile({ filePath: selected as string })
+      const content = await window.electronAPI.readFile({ filePath: selected as string })
       setImportProgressStep("Membaca baris data...")
       setImportProgressPct(30)
-      const lines = content.split("\n").filter(l => l.trim())
+      const lines: string[] = (content as string).split("\n").filter((l: string) => l.trim())
       if (lines.length < 2) { notify("File kosong atau tidak valid", "error"); return }
-      const headers = lines[0].split(",").map(h => h.trim().toLowerCase())
+      const headers: string[] = lines[0].split(",").map((h: string) => h.trim().toLowerCase())
       const colIdx: Record<string, number> = {}
-      headers.forEach((h, i) => { colIdx[h] = i })
+      headers.forEach((h: string, i: number) => { colIdx[h] = i })
       const required = ["nis", "nama_siswa", "jk", "tingkatan", "jurusan", "part"]
       for (const r of required) {
         if (!(r in colIdx)) { notify(`Kolom '${r}' tidak ditemukan`, "error"); return }
       }
       setImportProgressStep("Memproses data siswa...")
       setImportProgressPct(60)
-      const rows = lines.slice(1).map((line, idx) => {
+      const rows = lines.slice(1).map((line: string, idx: number) => {
         const cols = line.split(",")
         return {
           _idx: idx,
@@ -176,11 +183,11 @@ export function ManageSiswaSection() {
           part: cols[colIdx["part"]]?.trim() || "",
           kelas: `${cols[colIdx["tingkatan"]]?.trim()} ${cols[colIdx["jurusan"]]?.trim()} ${cols[colIdx["part"]]?.trim()}`,
         }
-      }).filter(r => r.nis && r.nama_siswa)
+      }).filter((r: { nis: string; nama_siswa: string }) => r.nis && r.nama_siswa)
       setImportProgressStep(`Ditemukan ${rows.length} siswa, menyiapkan preview...`)
       setImportProgressPct(90)
       setImportPreview(rows)
-      setImportSelected(new Set(rows.map((_, i) => i)))
+      setImportSelected(new Set(rows.map((_: unknown, i: number) => i)))
       setImportFilterJurusan("")
       setImportFilterKelas("")
       setImportFilterIslamOnly(false)
@@ -273,6 +280,15 @@ export function ManageSiswaSection() {
     if (selectedKelasFilters.length === 0) return students
     return students.filter(s => selectedKelasFilters.includes(s.kelas))
   }, [selectedKelasFilters, students])
+
+  const activeFilters = useMemo(() => {
+    const filters: Record<string, string> = {}
+    if (selectedJurusanFilters.length > 0) filters["Jurusan"] = selectedJurusanFilters.join(", ")
+    if (selectedKelasFilters.length > 0) filters["Kelas"] = selectedKelasFilters.join(", ")
+    if (selectedGenderFilters.length > 0) filters["Jenis Kelamin"] = selectedGenderFilters.join(", ")
+    if (selectedAgamaFilter) filters["Agama"] = selectedAgamaFilter
+    return filters
+  }, [selectedJurusanFilters, selectedKelasFilters, selectedGenderFilters, selectedAgamaFilter])
 
   const openAddStudentDialog = () => {
     const activeYear = dynamicYearOptions.find(y => y.is_active) || dynamicYearOptions[0]
@@ -633,6 +649,73 @@ export function ManageSiswaSection() {
               {isReadingCsv ? <Spinner className="mr-2 size-4" /> : <Upload className="mr-2 size-4" />}
               {isReadingCsv ? "Membaca file..." : "Import"}
             </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger render={<span />}>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (filteredStudents.length === 0) {
+                        notify("Tidak ada data siswa untuk diunduh", "info")
+                        return
+                      }
+                      const activeJurusan = selectedJurusanFilters.length > 0 ? selectedJurusanFilters[0] : undefined
+                      download({
+                        filenameOptions: {
+                          dataType: 'data-siswa',
+                          format: 'csv',
+                          filter: activeJurusan,
+                        },
+                        dialogFilters: [{ name: 'CSV', extensions: ['csv'] }],
+                        fetchData: async () => {
+                          const headers = ['NIS', 'Nama', 'Jenis Kelamin', 'Agama', 'Jurusan', 'Kelas', 'Status Akademik']
+                          const rows = filteredStudents.map(s => [
+                            s.nis,
+                            s.nama,
+                            s.jenisKelamin,
+                            (s as any).agama || 'Islam',
+                            s.jurusan,
+                            s.kelas,
+                            (s as any).status_akademik || '',
+                          ])
+                          const csv = arrayToCsv(headers, rows)
+                          const data = btoa(unescape(encodeURIComponent(csv)))
+                          return { data, encoding: 'base64' }
+                        },
+                      })
+                    }}
+                    disabled={isDownloading || filteredStudents.length === 0}
+                  >
+                    {isDownloading ? <Spinner className="mr-2 size-4" /> : <Download className="mr-2 size-4" />}
+                    Unduh
+                  </Button>
+                </TooltipTrigger>
+                {filteredStudents.length === 0 && (
+                  <TooltipContent>
+                    <p>Tidak ada data siswa untuk diunduh</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger render={<span />}>
+                  <Button
+                    variant="outline"
+                    onClick={print}
+                    disabled={filteredStudents.length === 0}
+                  >
+                    <Printer className="mr-2 size-4" />
+                    Cetak
+                  </Button>
+                </TooltipTrigger>
+                {filteredStudents.length === 0 && (
+                  <TooltipContent>
+                    <p>Tidak ada data siswa untuk dicetak</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </CardHeader>
         <CardContent>
@@ -663,10 +746,11 @@ export function ManageSiswaSection() {
           )}
 
           <div className="rounded-lg border overflow-hidden">
+            <PrintHeader title="Daftar Siswa" filters={activeFilters} />
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40 hover:bg-muted/40">
-                  <TableHead className="w-12">
+                  <TableHead className="w-12 print:hidden">
                     <Checkbox
                       checked={filteredStudents.length > 0 && selectedNis.length === filteredStudents.length}
                       onCheckedChange={toggleSelectAll}
@@ -697,7 +781,7 @@ export function ManageSiswaSection() {
                 ) : (
                   filteredStudents.map((student, index) => (
                     <TableRow key={student.nis}>
-                      <TableCell>
+                      <TableCell className="print:hidden">
                         <Checkbox
                           checked={selectedNis.includes(student.nis)}
                           onCheckedChange={() => toggleSelectStudent(student.nis)}

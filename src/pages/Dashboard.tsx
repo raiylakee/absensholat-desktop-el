@@ -17,6 +17,7 @@ import { KelolaGuruSection } from "@/pages/dashboard/components/KelolaGuruSectio
 import { QRGeneratorSection } from "@/pages/dashboard/components/QRGeneratorSection"
 import { UnregisteredStudentsSection } from "@/pages/dashboard/components/UnregisteredStudentsSection"
 import { PengajuanIzinSection } from "@/pages/dashboard/components/PengajuanIzinSection"
+import { SiswaDevicesSection } from "@/pages/dashboard/components/SiswaDevicesSection"
 import { PlaceholderSection } from "@/pages/dashboard/components/PlaceholderSection"
 import { useCurrentProfile } from "@/hooks/use-current-profile"
 
@@ -37,6 +38,7 @@ export default function Dashboard() {
     if (activeItem === "QR Code") return <QRGeneratorSection />
     if (activeItem === "Siswa Belum Terdaftar") return <UnregisteredStudentsSection />
     if (activeItem === "Pengajuan Izin") return <PengajuanIzinSection />
+    if (activeItem === "Perangkat Siswa") return <SiswaDevicesSection />
     if (activeItem === "Profile") return <ProfileSection user={profile ?? undefined} />
     if (activeItem === "Settings") return <SettingsSection />
     return <PlaceholderSection title={activeItem} />
