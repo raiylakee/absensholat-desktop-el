@@ -135,6 +135,18 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
         }
       }
 
+      // For Dhuha, use rotation data for today's Jakarta day (max 2 majors)
+      const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
+      const jakartaNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }))
+      const todayDay = dayNames[jakartaNow.getDay()]
+      const dhuhaEntry = prayerTypeCardMap.get("Dhuha")
+      if (dhuhaEntry) {
+        const todayMajors = dhuhaSchedules.filter(j => j.hari_dhuha === todayDay)
+        if (todayMajors.length > 0) {
+          dhuhaEntry.jurusans = new Set(todayMajors.map(j => j.nama_jurusan))
+        }
+      }
+
       const cards: PrayerCard[] = Array.from(prayerTypeCardMap.entries()).map(([name, { waktuSholat, jurusans, idJadwal }]) => ({
         id: idJadwal,
         nama: name,
@@ -468,10 +480,12 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
                       <DropdownMenuCheckboxItem
                         key={major}
                         checked={prayerDraft.jurusan.includes(major)}
+                        disabled={prayerDraft.nama === "Dhuha" && !prayerDraft.jurusan.includes(major) && prayerDraft.jurusan.length >= 2}
                         onSelect={(event) => event.preventDefault()}
                         onCheckedChange={(checked) => {
                           setPrayerDraft((current: any) => {
                             if (!current) return current
+                            if (current.nama === "Dhuha" && checked && current.jurusan.length >= 2) return current
                             const nextMajors = checked
                               ? Array.from(new Set([...current.jurusan, major]))
                               : current.jurusan.filter((item: string) => item !== major)
@@ -484,6 +498,9 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
                     ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
+                {prayerDraft.nama === "Dhuha" && (
+                  <p className="text-xs text-muted-foreground">Maks. 2 jurusan per hari</p>
+                )}
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={closePrayerEdit} disabled={isSaving}>
