@@ -12,11 +12,22 @@ mac:
       arch:
         - universal
 win:
+  icon: build/icon.ico
   target:
     - target: nsis
       arch:
         - x64
+    - target: nsis
+      arch:
         - arm64
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  buildUniversalInstaller: false
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
 linux:
   target:
     - target: AppImage
