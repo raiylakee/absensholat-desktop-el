@@ -16,11 +16,8 @@ function createWindow() {
 
   if (process.env.NODE_ENV === "development") {
     win.loadURL("http://localhost:5173");
-    win.webContents.openDevTools();
   } else {
     win.loadFile(path.join(__dirname, "../dist/index.html"));
-    // TODO: Remove after debugging Windows login issue
-    win.webContents.openDevTools();
   }
 
   // Window control handlers
