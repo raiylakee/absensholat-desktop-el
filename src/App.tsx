@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
+import { HashRouter, Navigate, Route, Routes } from "react-router-dom"
 import Dashboard from "@/pages/Dashboard"
 import SiswaDashboard from "@/pages/SiswaDashboard"
 import GuruDashboard from "@/pages/GuruDashboard"
@@ -31,7 +31,7 @@ function App() {
       />
       
       <NotificationProvider>
-        <BrowserRouter>
+        <HashRouter>
           <div className="relative z-10 min-h-screen">
             <Routes>
               <Route path="/" element={<Navigate to="/login" replace />} />
@@ -49,7 +49,7 @@ function App() {
             </Routes>
             <Toaster />
           </div>
-        </BrowserRouter>
+        </HashRouter>
       </NotificationProvider>
     </div>
   )
