@@ -34,7 +34,7 @@ export default function GuruDashboard() {
     : undefined
 
   const renderSection = () => {
-    if (activeItem === "Beranda") return <DashboardOverviewSection onNavigate={setActiveItem} />
+    if (activeItem === "Beranda") return <DashboardOverviewSection onNavigate={setActiveItem} showQrButton={false} />
     if (activeItem === "Jadwal") return <JadwalSection readOnly />
     if (activeItem === "Presensi") return <PresensiSection forcedClass={profile?.className} />
     if (activeItem === "Pengajuan Izin") return <PengajuanIzinSection />

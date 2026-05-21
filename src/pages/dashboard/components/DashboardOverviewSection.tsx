@@ -51,7 +51,7 @@ interface ClosestPrayerData {
 
 const logoMap: Record<string, string> = {
   RPL: logoRpl, TKJ: logoTkj, DKV: logoDkv, TEI: logoTei,
-  AN: logoAn, BC: logoBc, MT: logoMt, TAV: logoTav,
+  ANM: logoAn, BC: logoBc, TMT: logoMt, TAV: logoTav,
 }
 
 const gradientMap: Record<string, string> = {
@@ -59,13 +59,13 @@ const gradientMap: Record<string, string> = {
   TKJ: "from-yellow-500 to-yellow-600 shadow-yellow-200/50",
   DKV: "from-sky-400 to-sky-600 shadow-sky-200/50",
   TEI: "from-emerald-400 to-emerald-600 shadow-emerald-200/50",
-  AN: "from-rose-400 to-rose-600 shadow-rose-200/50",
+  ANM: "from-rose-400 to-rose-600 shadow-rose-200/50",
   BC: "from-red-400 to-red-600 shadow-red-200/50",
-  MT: "from-green-400 to-green-600 shadow-green-200/50",
+  TMT: "from-green-400 to-green-600 shadow-green-200/50",
   TAV: "from-lime-500 to-lime-600 shadow-lime-200/50",
 }
 
-export function DashboardOverviewSection({ onNavigate }: { onNavigate?: (page: string) => void }) {
+export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { onNavigate?: (page: string) => void; showQrButton?: boolean }) {
   const [isLoading, setIsLoading] = useState(true)
   const [statsData, setStatsData] = useState<any>(null)
   const [closestData, setClosestData] = useState<ClosestPrayerData | null>(null)
@@ -176,7 +176,7 @@ export function DashboardOverviewSection({ onNavigate }: { onNavigate?: (page: s
                 </div>
                 <p className="text-sm text-muted-foreground">{prayerTime}</p>
               </div>
-              {activePrayer && onNavigate && (
+              {activePrayer && onNavigate && showQrButton && (
                 <Button variant="default" size="icon-sm" onClick={() => onNavigate("QR Code")} className="rounded-full shadow-lg shadow-primary/20">
                   <QrCode className="size-4" />
                   <span className="sr-only">Tampilkan QR Code</span>

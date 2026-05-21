@@ -17,7 +17,7 @@ function renderSidebar(props: { activeItem?: string; setActiveItem?: ReturnType<
     setActiveItem,
     ...render(
       <MemoryRouter>
-        <AppSidebar activeItem={props.activeItem ?? "Dashboard"} setActiveItem={setActiveItem} user={mockUser} />
+        <AppSidebar activeItem={props.activeItem ?? "Beranda"} setActiveItem={setActiveItem} user={mockUser} />
       </MemoryRouter>
     ),
   };
@@ -33,7 +33,7 @@ describe("AppSidebar", () => {
 
   it("all 10 expected menu items exist", () => {
     renderSidebar();
-    const items = ["Dashboard", "Jadwal", "Kelola Siswa", "Kelola Kelas", "Kelola Guru", "Presensi", "Pengajuan Izin", "Laporan", "QR Code", "Siswa Belum Terdaftar"];
+    const items = ["Beranda", "Jadwal", "Kelola Siswa", "Kelola Kelas", "Kelola Guru", "Presensi", "Pengajuan Izin", "Laporan", "QR Code", "Siswa Belum Terdaftar"];
     items.forEach((item) => {
       expect(screen.getByText(item)).toBeInTheDocument();
     });

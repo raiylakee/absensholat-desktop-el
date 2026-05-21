@@ -5,10 +5,9 @@ export const MAJOR_CLASS_MAP: Record<string, string[]> = {
   TEI: ["X TEI 1", "XI TEI 1", "XI TEI 2", "XII TEI 1"],
   DKV: ["X DKV 2", "XI DKV 1", "XI DKV 2", "XI DKV 3"],
   TKJ: ["X TKJ 1", "XI TKJ 1", "XI TKJ 2"],
-  AN: ["X AN 1", "XI AN 1"],
-  BCF: ["X BCF 1", "XI BCF 1"],
+  ANM: ["X ANM 1", "XI ANM 1"],
   BC: ["X BC 1", "XI BC 1"],
-  MT: ["X MT 1", "XI MT 1"],
+  TMT: ["X TMT 1", "XI TMT 1"],
   TAV: ["X TAV 1", "XI TAV 1"],
 }
 
@@ -25,8 +24,8 @@ export const IZIN_IMAGE_TYPE_OPTIONS: NonNullable<PresensiRecord["izinDetail"]>[
 export const initialJadwalRows: JadwalRow[] = [
   { hari: "Senin", jurusan1: "RPL", jurusan2: "TEI" },
   { hari: "Selasa", jurusan1: "TKJ", jurusan2: "TAV" },
-  { hari: "Rabu", jurusan1: "DKV", jurusan2: "AN" },
-  { hari: "Kamis", jurusan1: "BCF", jurusan2: "BC" },
+  { hari: "Rabu", jurusan1: "DKV", jurusan2: "ANM" },
+  { hari: "Kamis", jurusan1: "BC", jurusan2: "TMT" },
 ]
 
 export const initialPrayerCards: PrayerCard[] = [

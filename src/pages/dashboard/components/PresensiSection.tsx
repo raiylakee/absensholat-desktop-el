@@ -7,9 +7,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
-import {
-  MAJOR_OPTIONS,
-} from "@/pages/dashboard/constants"
 import type { PresensiRecord } from "@/pages/dashboard/types"
 import { notify } from "@/lib/notify"
 import { extractData, normalizeAttendance } from "@/lib/api-utils"
@@ -38,6 +35,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
   const { isDownloading, download } = useDownloadAction()
   const [presensiRecords, setPresensiRecords] = useState<PresensiRecord[]>([])
   const [prayerTypes, setPrayerTypes] = useState<string[]>([])
+  const [majorOptions, setMajorOptions] = useState<string[]>([])
   const [presensiSearchQuery, setPresensiSearchQuery] = useState("")
   const [selectedSholatFilters, setSelectedSholatFilters] = useState<PresensiRecord["jenisSholat"][]>([])
   const [selectedPresensiJurusanFilters, setSelectedPresensiJurusanFilters] = useState<string[]>([])
@@ -97,6 +95,10 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
     window.electronAPI.getPrayerTypes().then((res: any) => {
       const types: any[] = extractData(res) ?? []
       if (isMounted.current) setPrayerTypes(types.map(t => t.nama_jenis))
+    })
+    window.electronAPI.getMajors().then((res: any) => {
+      const majors: any[] = extractData(res) ?? []
+      if (isMounted.current && majors.length > 0) setMajorOptions(majors.map(m => m.nama_jurusan))
     })
     return () => { isMounted.current = false }
   }, [currentPage])
@@ -244,7 +246,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                     </DropdownMenuCheckboxItem>
                   ))}
                   <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Jurusan</p>
-                  {MAJOR_OPTIONS.map((major) => (
+                  {majorOptions.map((major) => (
                     <DropdownMenuCheckboxItem
                       key={`presensi-jurusan-${major}`}
                       checked={selectedPresensiJurusanFilters.includes(major)}

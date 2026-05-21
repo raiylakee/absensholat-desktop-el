@@ -127,20 +127,28 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
   const [chartData, setChartData] = useState<ChartDataState | null>(null)
   const [studentStatusData, setStudentStatusData] = useState<StudentStatusCount[]>([])
   const [statsData, setStatsData] = useState<any>(null)
+  const [dynamicMajorOptions, setDynamicMajorOptions] = useState<string[]>(MAJOR_OPTIONS)
+  const [dynamicPrayerTypes, setDynamicPrayerTypes] = useState<string[]>(PRAYER_TYPE_OPTIONS)
 
   useEffect(() => {
     const fetchChartData = async () => {
       try {
-        const [chartRes, filtersRes, statsRes]: [any, any, any] = await Promise.all([
+        const [chartRes, filtersRes, statsRes, majorsRes, typesRes]: [any, any, any, any, any] = await Promise.all([
           window.electronAPI.getChartData(),
           window.electronAPI.getStudentFilters(),
           window.electronAPI.getAttendanceStatistics(),
+          window.electronAPI.getMajors(),
+          window.electronAPI.getPrayerTypes(),
         ])
         const cd = extractData<ChartDataState>(chartRes)
         if (cd) setChartData(cd)
         const filters = extractData<any>(filtersRes)
         if (filters?.by_status) setStudentStatusData(filters.by_status)
         setStatsData(extractData(statsRes))
+        const majors: any[] = extractData(majorsRes) ?? []
+        if (majors.length > 0) setDynamicMajorOptions(majors.map((m: any) => m.nama_jurusan))
+        const types: any[] = extractData(typesRes) ?? []
+        if (types.length > 0) setDynamicPrayerTypes(types.map((t: any) => t.nama_jenis))
       } catch (error) {
         console.error("Failed to fetch chart data:", error)
       }
@@ -597,7 +605,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                 />
                 <DropdownMenuContent className="w-56" align="end">
                   <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Jurusan</p>
-                  {MAJOR_OPTIONS.map((major) => (
+                  {dynamicMajorOptions.map((major) => (
                     <DropdownMenuCheckboxItem
                       key={`laporan-jurusan-${major}`}
                       checked={selectedJurusanFilters.includes(major)}
@@ -612,7 +620,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                     </DropdownMenuCheckboxItem>
                   ))}
                   <p className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Jenis Sholat</p>
-                  {PRAYER_TYPE_OPTIONS.map((type) => (
+                  {dynamicPrayerTypes.map((type) => (
                     <DropdownMenuCheckboxItem
                       key={`laporan-sholat-${type}`}
                       checked={selectedSholatFilters.includes(type)}
@@ -835,6 +843,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
             </div>
 
             {/* Class Selection */}
+            {!forcedClass && (
             <div className="space-y-3">
               <Label className="text-sm font-semibold">Pilih Kelas</Label>
               <div className="rounded-lg border p-3 space-y-3 max-h-[150px] overflow-y-auto">
@@ -869,6 +878,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                 </div>
               </div>
             </div>
+            )}
 
             {/* Format Selection */}
             <div className="space-y-3">

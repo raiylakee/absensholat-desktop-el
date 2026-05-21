@@ -35,6 +35,11 @@ interface PengajuanIzinItem {
   bukti_foto_url?: string | null
   created_at?: string
   reviewed_at?: string | null
+  approver_role?: string | null
+  staff_approver?: {
+    id_staff: number
+    nama: string
+  } | null
   siswa?: {
     nis?: string
     nama_siswa?: string
@@ -288,6 +293,19 @@ export function PengajuanIzinSection() {
                   <p className="whitespace-pre-wrap">{detail.catatan_verifikasi}</p>
                 </div>
               ) : null}
+              {detail.staff_approver && (
+                <div>
+                  <p className="text-xs text-muted-foreground">Diverifikasi oleh</p>
+                  <p className="font-medium">
+                    {detail.staff_approver.nama}
+                    {detail.approver_role && (
+                      <span className="ml-1 text-xs text-muted-foreground">
+                        ({detail.approver_role === "wali_kelas" ? "Wali Kelas" : detail.approver_role === "admin" ? "Admin" : detail.approver_role})
+                      </span>
+                    )}
+                  </p>
+                </div>
+              )}
               {detail.bukti_foto_url ? (
                 <div className="space-y-2">
                   <p className="text-xs text-muted-foreground">Bukti</p>

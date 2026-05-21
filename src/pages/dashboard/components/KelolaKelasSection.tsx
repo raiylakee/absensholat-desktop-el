@@ -22,7 +22,7 @@ import logoTav from "@/assets/logo-tav 2.png"
 
 const logoMap: Record<string, string> = {
   RPL: logoRpl, TKJ: logoTkj, DKV: logoDkv, TEI: logoTei,
-  AN: logoAn, AM: logoAn, BC: logoBc, MT: logoMt, TMT: logoMt, TAV: logoTav,
+  ANM: logoAn, BC: logoBc, TMT: logoMt, TAV: logoTav,
 }
 
 const colorMap: Record<string, string> = {
