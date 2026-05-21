@@ -159,8 +159,8 @@ jobs:
             **Downloads**
             | Platform | Architecture | Installer |
             |----------|-------------|-----------|
-            | Windows  | x64         | `.exe` (NSIS) |
-            | Windows  | arm64       | `.exe` (NSIS) |
+            | Windows  | x64         | `.msi` |
+            | Windows  | arm64       | `.msi` |
             | macOS    | Universal   | `.dmg` (arm64 + x64) |
             | Linux    | x64         | `.deb`, `.rpm`, `.AppImage` |
             | Linux    | arm64       | `.deb`, `.rpm`, `.AppImage` |

@@ -38,16 +38,7 @@
       "icon": "build/icon.ico",
       "target": [
         {
-          "target": "msi",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "msi",
-          "arch": [
-            "arm64"
-          ]
+          "target": "msi"
         }
       ]
     },
@@ -58,25 +49,13 @@
     "linux": {
       "target": [
         {
-          "target": "AppImage",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
+          "target": "AppImage"
         },
         {
-          "target": "deb",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
+          "target": "deb"
         },
         {
-          "target": "rpm",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
+          "target": "rpm"
         }
       ]
     }
