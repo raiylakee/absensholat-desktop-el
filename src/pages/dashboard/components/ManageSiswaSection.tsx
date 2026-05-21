@@ -66,7 +66,7 @@ export function ManageSiswaSection() {
   // Bulk action state
   const [bulkActionOpen, setBulkActionOpen] = useState(false)
   const [bulkActionType, setBulkActionType] = useState<"mutasi" | "upgrade" | "downgrade" | "lulus" | "hapus" | "ubah_status" | "ubah_tahun_masuk">("mutasi")
-  const [bulkMutasiDraft, setBulkMutasiDraft] = useState({ jurusan: "RPL", kelas: "X RPL 1" })
+  const [bulkMutasiDraft, setBulkMutasiDraft] = useState({ jurusan: "", kelas: "" })
   const [bulkStatusDraft, setBulkStatusDraft] = useState("PKL")
   const [bulkTahunMasukDraft, setBulkTahunMasukDraft] = useState<number | undefined>(undefined)
   const isMounted = useRef(true)
@@ -563,7 +563,7 @@ export function ManageSiswaSection() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Input
-              placeholder="Search siswa..."
+              placeholder="Cari siswa..."
               className="w-[220px]"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
@@ -573,7 +573,7 @@ export function ManageSiswaSection() {
                 render={
                   <Button variant="outline">
                     <Filter className="mr-2 size-4" />
-                    Filtering
+                    Filter
                   </Button>
                 }
               />
@@ -643,11 +643,11 @@ export function ManageSiswaSection() {
             </DropdownMenu>
             <Button onClick={openAddStudentDialog}>
               <Plus className="mr-2 size-4" />
-              Add Siswa
+              Tambah Siswa
             </Button>
             <Button variant="outline" onClick={handleImport} disabled={isImporting || isReadingCsv}>
               {isReadingCsv ? <Spinner className="mr-2 size-4" /> : <Upload className="mr-2 size-4" />}
-              {isReadingCsv ? "Membaca file..." : "Import"}
+              {isReadingCsv ? "Membaca file..." : "Impor"}
             </Button>
             <TooltipProvider>
               <Tooltip>
@@ -850,7 +850,9 @@ export function ManageSiswaSection() {
               <Label>Jenis Aksi Massal</Label>
               <Select value={bulkActionType} onValueChange={(v) => setBulkActionType(v as typeof bulkActionType)}>
                 <SelectTrigger className="w-full">
-                  <SelectValue />
+                  <SelectValue>
+                    {{ mutasi: "Mutasi / Pindah Kelas Spesifik", upgrade: "Naik Kelas Otomatis (1 Tingkat)", downgrade: "Tinggal Kelas Otomatis (1 Tingkat)", lulus: "Luluskan Semua Siswa", ubah_status: "Ubah Status Akademik", ubah_tahun_masuk: "Ubah Tahun Masuk", hapus: "Hapus Data Siswa" }[bulkActionType]}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="mutasi">Mutasi / Pindah Kelas Spesifik</SelectItem>
@@ -1083,12 +1085,13 @@ export function ManageSiswaSection() {
                   onValueChange={(v) => setStudentDraft((current: any) => ({ ...current, jk: v, jenisKelamin: v }))}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Pilih" />
+                    <SelectValue placeholder="Pilih">
+                      {(studentDraft.jk || studentDraft.jenisKelamin) === "L" ? "Laki-laki" : (studentDraft.jk || studentDraft.jenisKelamin) === "P" ? "Perempuan" : (studentDraft.jk || studentDraft.jenisKelamin || "Pilih")}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    {GENDER_OPTIONS.map((gender) => (
-                      <SelectItem key={`student-gender-${gender}`} value={gender}>{gender}</SelectItem>
-                    ))}
+                    <SelectItem key="student-gender-L" value="L">Laki-laki</SelectItem>
+                    <SelectItem key="student-gender-P" value="P">Perempuan</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1294,7 +1297,7 @@ export function ManageSiswaSection() {
                   size="sm"
                   onClick={() => setImportFilterIslamOnly(v => !v)}
                 >
-                  Islam Only
+                  Hanya Islam
                 </Button>
                 <Button
                   variant="outline"
@@ -1308,7 +1311,7 @@ export function ManageSiswaSection() {
                   }}
                 >
                   <CheckSquare className="mr-1 size-3" />
-                  {filteredImportPreview.every(r => importSelected.has(r._idx)) ? "Uncheck Semua" : "Check Semua"}
+                  {filteredImportPreview.every(r => importSelected.has(r._idx)) ? "Hapus Centang Semua" : "Centang Semua"}
                 </Button>
                 <span className="text-xs text-muted-foreground ml-auto">
                   {filteredSelectedCount}/{filteredImportPreview.length} tampil dipilih

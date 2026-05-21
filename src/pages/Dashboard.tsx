@@ -24,11 +24,11 @@ import { useCurrentProfile } from "@/hooks/use-current-profile"
 import { FloatingFAQ } from "@/components/FloatingFAQ"
 
 export default function Dashboard() {
-  const [activeItem, setActiveItem] = useState("Dashboard")
+  const [activeItem, setActiveItem] = useState("Beranda")
   const { profile } = useCurrentProfile()
 
   const renderSection = () => {
-    if (activeItem === "Dashboard") return <DashboardOverviewSection onNavigate={setActiveItem} />
+    if (activeItem === "Beranda") return <DashboardOverviewSection onNavigate={setActiveItem} />
     if (activeItem === "Jadwal") return <JadwalSection />
     if (activeItem === "Kelola Siswa") return <ManageSiswaSection />
     if (activeItem === "Kelola Kelas") return <KelolaKelasSection />
@@ -48,7 +48,7 @@ export default function Dashboard() {
     <TooltipProvider>
       <SidebarProvider className="h-screen overflow-hidden">
         <AppSidebar activeItem={activeItem} setActiveItem={setActiveItem} user={profile ?? undefined} />
-        <SidebarInset className="overflow-y-auto bg-muted/20 scroll-smooth">
+        <SidebarInset className="overflow-y-auto bg-background/85 scroll-smooth">
           <header 
             style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
             className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 pl-4 backdrop-blur supports-[backdrop-filter]:bg-background/60"

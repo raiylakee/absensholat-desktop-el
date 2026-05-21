@@ -68,6 +68,7 @@ async function fetchWithRetry(url, opts) {
 // --- Cache invalidation patterns ---
 const INVALIDATION_MAP = {
   "/students": ["/students", "/analytics/"],
+  "/attendance": ["/analytics/", "/attendance/"],
   "/prayer-schedules": ["/prayer-schedules", "/prayer-times"],
   "/prayer-times": ["/prayer-times", "/prayer-schedules"],
   "/jurusan": ["/jurusan", "/dhuha-schedules"],
@@ -127,7 +128,8 @@ async function apiRequest(method, endpoint, { body, query, raw } = {}) {
   try { data = JSON.parse(text); } catch { data = text; }
 
   if (!res.ok) {
-    const msg = data?.message || data?.error || data?.details || `Operasi gagal (status ${res.status})`;
+    const errObj = data?.error;
+    const msg = data?.message || (typeof errObj === "string" ? errObj : errObj?.message) || data?.details || `Operasi gagal (status ${res.status})`;
     throw new Error(msg);
   }
 
@@ -264,6 +266,10 @@ function register(ipcMain) {
     apiRequest("DELETE", `/api/v2/prayer-types/${id}`)
   ));
 
+  ipcMain.handle("update-prayer-type", handler(async ({ id, body }) =>
+    apiRequest("PUT", `/api/v2/prayer-types/${id}`, { body })
+  ));
+
   ipcMain.handle("update-prayer-time", handler(async ({ id, body }) =>
     apiRequest("PUT", `/api/v2/prayer-times/${id}`, { body })
   ));
@@ -304,11 +310,11 @@ function register(ipcMain) {
   ));
 
   ipcMain.handle("update-student", handler(async ({ nis, body }) =>
-    apiRequest("PUT", `/api/v2/students/${nis}`, { body })
+    apiRequest("PUT", `/api/v2/students/${encodeURIComponent(nis)}`, { body })
   ));
 
   ipcMain.handle("delete-student", handler(async ({ nis }) =>
-    apiRequest("DELETE", `/api/v2/students/${nis}`)
+    apiRequest("DELETE", `/api/v2/students/${encodeURIComponent(nis)}`)
   ));
 
   ipcMain.handle("get-student-filters", handler(async () => {
@@ -324,7 +330,7 @@ function register(ipcMain) {
   ));
 
   ipcMain.handle("update-student-status", handler(async ({ nis, body }) =>
-    apiRequest("PATCH", `/api/v2/students/${nis}/status`, { body })
+    apiRequest("PATCH", `/api/v2/students/${encodeURIComponent(nis)}/status`, { body })
   ));
 
   ipcMain.handle("import-students", handler(async ({ file_path }) => {

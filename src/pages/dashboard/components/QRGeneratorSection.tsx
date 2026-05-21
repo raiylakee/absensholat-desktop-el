@@ -130,7 +130,7 @@ export function QRGeneratorSection() {
                       onClick={() =>
                         download({
                           filenameOptions: { dataType: "qr-presensi", format: "png" },
-                          dialogFilters: [{ name: "PNG Image", extensions: ["png"] }],
+                          dialogFilters: [{ name: "Gambar PNG", extensions: ["png"] }],
                           fetchData: async () => {
                             const svgElement = qrRef.current
                             if (!svgElement) throw new Error("Elemen SVG tidak ditemukan")

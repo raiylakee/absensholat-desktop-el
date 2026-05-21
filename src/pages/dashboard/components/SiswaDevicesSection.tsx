@@ -78,10 +78,10 @@ export function SiswaDevicesSection() {
   const handleUnbind = async (id: number) => {
     try {
       await window.electronAPI.deleteAdminDevice({ id })
-      notify("Perangkat siswa berhasil di-unbind", "success")
+      notify("Perangkat siswa berhasil dilepas", "success")
       setDevices(prev => prev.filter(d => d.id !== id))
     } catch (err: any) {
-      notify("Gagal unbind: " + (err.message || err), "error")
+      notify("Gagal melepas: " + (err.message || err), "error")
     }
   }
 
@@ -113,7 +113,7 @@ export function SiswaDevicesSection() {
             <MonitorSmartphone className="size-5" />
             Perangkat Siswa
           </CardTitle>
-          <CardDescription>Kelola perangkat yang terdaftar untuk siswa. Unbind perangkat jika siswa perlu ganti HP.</CardDescription>
+          <CardDescription>Kelola perangkat yang terdaftar untuk siswa. Lepas perangkat jika siswa perlu ganti HP.</CardDescription>
         </CardHeader>
       </Card>
 
@@ -171,12 +171,12 @@ export function SiswaDevicesSection() {
                         </td>
                         <td className="px-4 py-3">
                           <Badge variant={d.is_verified ? "default" : "secondary"} className="text-[10px]">
-                            {d.is_verified ? "Verified" : "Unverified"}
+                            {d.is_verified ? "Terverifikasi" : "Belum Terverifikasi"}
                           </Badge>
                         </td>
                         <td className="px-4 py-3">
                           <Button variant="destructive" size="sm" onClick={() => handleUnbind(d.id)}>
-                            <Trash2 className="size-3.5 mr-1" /> Unbind
+                            <Trash2 className="size-3.5 mr-1" /> Lepas
                           </Button>
                         </td>
                       </tr>

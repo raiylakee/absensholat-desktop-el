@@ -58,6 +58,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
   const [isCreating, setIsCreating] = useState(false)
 
   const [dynamicMajorOptions, setDynamicMajorOptions] = useState<string[]>(MAJOR_OPTIONS)
+  const [prayerTypesList, setPrayerTypesList] = useState<{ id_jenis: number; nama_jenis: string }[]>([])
   const isMounted = useRef(true)
 
   const fetchSchedules = async () => {
@@ -81,6 +82,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
       setRawSchedules(schedules)
       setAllJurusan(majors)
       setDynamicMajorOptions(majors.map(m => m.nama_jurusan))
+      setPrayerTypesList(prayerTypes)
 
       // Build lookup maps for prayer times and types
       const typeMap = new Map(prayerTypes.map(t => [t.id_jenis, t]))
@@ -155,6 +157,14 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
         jurusan: Array.from(jurusans),
         kelas: [],
       }))
+
+      // Add cards for prayer times that have no schedules yet
+      for (const t of prayerTimes) {
+        const name = t.jenis_sholat?.nama_jenis ?? typeMap.get(t.id_jenis)?.nama_jenis
+        if (name && !prayerTypeCardMap.has(name)) {
+          cards.push({ nama: name, waktuMulai: formatHHMM(t.waktu_mulai), waktuSelesai: formatHHMM(t.waktu_selesai), jurusan: [], kelas: [] })
+        }
+      }
 
       setPrayerCards(cards.length > 0 ? cards : initialPrayerCards)
     } catch (error) {
@@ -250,15 +260,22 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
     if (editingPrayerIndex === null || !prayerDraft) return
     setIsSaving(true)
 
+    const originalName = prayerCards[editingPrayerIndex].nama
     // Optimistic: update card immediately
     const prevCards = [...prayerCards]
-    setPrayerCards(cards => cards.map((c, i) => i === editingPrayerIndex ? { ...c, waktuMulai: prayerDraft.waktuMulai, waktuSelesai: prayerDraft.waktuSelesai, jurusan: prayerDraft.jurusan } : c))
+    setPrayerCards(cards => cards.map((c, i) => i === editingPrayerIndex ? { ...c, nama: prayerDraft.nama, waktuMulai: prayerDraft.waktuMulai, waktuSelesai: prayerDraft.waktuSelesai, jurusan: prayerDraft.jurusan } : c))
     closePrayerEdit()
 
     try {
-      const prayerName = prayerDraft.nama
-      const relatedSchedules = rawSchedules.filter(s => s.waktu_sholat?.jenis_sholat?.nama_jenis === prayerName)
+      const relatedSchedules = rawSchedules.filter(s => s.waktu_sholat?.jenis_sholat?.nama_jenis === originalName)
       const waktuId = relatedSchedules[0]?.waktu_sholat?.id_waktu
+      const jenisId = relatedSchedules[0]?.waktu_sholat?.jenis_sholat?.id_jenis
+        ?? prayerTypesList.find(t => t.nama_jenis === originalName)?.id_jenis
+
+      // Update prayer type name if changed
+      if (jenisId && prayerDraft.nama !== originalName) {
+        await window.electronAPI.updatePrayerType({ id: jenisId, body: { nama_jenis: prayerDraft.nama } })
+      }
 
       if (waktuId) {
         await window.electronAPI.updatePrayerTime({
@@ -277,7 +294,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
         ))
       }
 
-      notify(`Jadwal ${prayerName} berhasil diperbarui`, "success")
+      notify(`Jadwal ${prayerDraft.nama} berhasil diperbarui`, "success")
     } catch (error) {
       // Rollback
       setPrayerCards(prevCards)
@@ -291,14 +308,29 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
     if (!newPrayerName.trim()) { notify("Nama jenis sholat wajib diisi", "error"); return }
     setIsCreating(true)
     try {
-      // Create prayer type
-      const typeRes: any = await window.electronAPI.createPrayerType({ body: { nama_jenis: newPrayerName.trim(), butuh_giliran: false } })
-      const typeData = typeRes?.data ?? typeRes
-      const idJenis = typeData?.id_jenis
-      if (!idJenis) throw new Error("Gagal membuat jenis sholat")
+      // Check if prayer type already exists
+      let idJenis = prayerTypesList.find(t => t.nama_jenis === newPrayerName.trim())?.id_jenis
+
+      if (!idJenis) {
+        // Create prayer type
+        const typeRes: any = await window.electronAPI.createPrayerType({ body: { nama_jenis: newPrayerName.trim(), butuh_giliran: false } })
+        const typeData = typeRes?.data ?? typeRes
+        idJenis = typeData?.id_jenis
+        if (!idJenis) throw new Error("Gagal membuat jenis sholat")
+      }
 
       // Create prayer time for this type
-      await window.electronAPI.createPrayerTime({ body: { id_jenis: idJenis, waktu_mulai: newPrayerStart, waktu_selesai: newPrayerEnd } })
+      const timeRes: any = await window.electronAPI.createPrayerTime({ body: { id_jenis: idJenis, waktu_mulai: newPrayerStart, waktu_selesai: newPrayerEnd, berlaku_mulai: new Date().toISOString().slice(0, 10) } })
+      const timeData = timeRes?.data ?? timeRes
+      const idWaktu = timeData?.id_waktu
+
+      // Create schedule entries for each weekday so it appears in closest/today
+      if (idWaktu) {
+        const days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"]
+        await Promise.all(days.map(hari =>
+          window.electronAPI.createPrayerSchedule({ body: { hari, id_waktu: idWaktu, jurusan_ids: allJurusan.map(j => j.id_jurusan) } })
+        ))
+      }
 
       notify(`Jadwal ${newPrayerName} berhasil ditambahkan`, "success")
       setCreatePrayerOpen(false)
@@ -353,10 +385,10 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
                   setSelectedJadwalCell(null)
                 }}
               >
-                Cancel
+                Batal
               </Button>
               <Button size="sm" onClick={handleSaveWeeklyJadwal} disabled={isSaving}>
-                {isSaving ? <Spinner size="sm" /> : "Save"}
+                {isSaving ? <Spinner size="sm" /> : "Simpan"}
               </Button>
             </div>
           )}
@@ -451,6 +483,10 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
           </DialogHeader>
           {prayerDraft && (
             <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Nama Jenis Sholat</Label>
+                <Input value={prayerDraft.nama} onChange={(e) => setPrayerDraft((curr: any) => curr ? { ...curr, nama: e.target.value } : null)} />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Waktu Mulai</Label>
@@ -504,10 +540,10 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={closePrayerEdit} disabled={isSaving}>
-                  Cancel
+                  Batal
                 </Button>
                 <Button onClick={savePrayerEdit} disabled={isSaving}>
-                  {isSaving ? <Spinner size="sm" /> : "Save"}
+                  {isSaving ? <Spinner size="sm" /> : "Simpan"}
                 </Button>
               </div>
             </div>

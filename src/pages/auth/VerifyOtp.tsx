@@ -31,16 +31,16 @@ export default function VerifyOtp() {
     event.preventDefault()
 
     const nextErrors: { nis?: string; otp?: string } = {}
-    if (!nis.trim()) nextErrors.nis = "NIS is required."
-    if (!otp.trim()) nextErrors.otp = "OTP is required."
-    if (otp.trim() && otp.length !== 6) nextErrors.otp = "OTP must be 6 digits."
+    if (!nis.trim()) nextErrors.nis = "NIS wajib diisi."
+    if (!otp.trim()) nextErrors.otp = "OTP wajib diisi."
+    if (otp.trim() && otp.length !== 6) nextErrors.otp = "OTP harus 6 digit."
 
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) {
       setDialog({
         open: true,
-        title: "Validation error",
-        description: "Please enter a valid NIS and 6-digit OTP code.",
+        title: "Kesalahan validasi",
+        description: "Silakan masukkan NIS dan kode OTP 6 digit yang valid.",
         variant: "destructive",
       })
       return
@@ -58,7 +58,7 @@ export default function VerifyOtp() {
 
       setDialog({
         open: true,
-        title: "OTP Valid",
+        title: "OTP Berhasil",
         description: response.message || "OTP valid. Silakan lanjutkan untuk mengatur ulang kata sandi.",
         variant: "default",
       })
@@ -92,7 +92,7 @@ export default function VerifyOtp() {
               <Input
                 id="nis"
                 name="nis"
-                placeholder="Masukkan NIS Anda"
+                placeholder="Contoh: 7771/1116.063"
                 value={nis}
                 onChange={(event) => setNis(event.target.value)}
                 aria-invalid={Boolean(errors.nis)}

@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   createPrayerType: (args) => ipcRenderer.invoke("create-prayer-type", args),
   createPrayerTime: (args) => ipcRenderer.invoke("create-prayer-time", args),
   deletePrayerType: (args) => ipcRenderer.invoke("delete-prayer-type", args),
+  updatePrayerType: (args) => ipcRenderer.invoke("update-prayer-type", args),
   updatePrayerTime: (args) => ipcRenderer.invoke("update-prayer-time", args),
 
   // Dhuha Groups

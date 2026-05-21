@@ -106,14 +106,17 @@ export const fetchCurrentProfile = async (): Promise<UserProfileData> => {
   const response = (await window.electronAPI.getCurrentProfile()) as RawApiResponse
   const data = asRecord(response.data) ?? {}
 
+  // Some APIs nest student data inside a "siswa" key
+  const siswa = asRecord(data.siswa) ?? {}
+
   const role = firstString(data.role, localStorage.getItem(AUTH_ROLE_KEY), "siswa") ?? "siswa"
   const name =
-    firstString(data.nama, data.nama_siswa, data.name, data.username, data.email, "Pengguna") ?? "Pengguna"
-  const email = firstString(data.email, "") ?? ""
-  const kelas = asRecord(data.kelas)
-  const major = firstString(data.jurusan, data.major)
+    firstString(data.nama, data.nama_siswa, siswa.nama_siswa, siswa.nama, data.name, data.username, data.email, "Pengguna") ?? "Pengguna"
+  const email = firstString(data.email, siswa.email, "") ?? ""
+  const kelas = asRecord(data.kelas) ?? asRecord(siswa.kelas)
+  const major = firstString(data.jurusan, data.major, siswa.jurusan, siswa.nama_jurusan)
   const normalizedClassName = normalizeClassName(
-    firstString(data.class_name, data.kelas, kelas?.nama_kelas),
+    firstString(data.class_name, data.kelas, siswa.kelas, kelas?.nama_kelas),
     major
   )
 
@@ -137,9 +140,9 @@ export const fetchCurrentProfile = async (): Promise<UserProfileData> => {
     role,
     email,
     nip: firstString(data.nip),
-    gender: firstString(data.jk, data.jenis_kelamin, data.gender),
+    gender: firstString(data.jk, data.jenis_kelamin, data.gender, siswa.jk, siswa.jenis_kelamin),
     className: resolvedClassName,
-    nis: firstString(data.nis),
+    nis: firstString(data.nis, siswa.nis),
     major,
     username: firstString(data.username),
     avatarFallback: initialsFromName(name),

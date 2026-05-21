@@ -28,6 +28,7 @@ interface ElectronAPI {
   createPrayerType: (args: any) => Promise<any>;
   createPrayerTime: (args: any) => Promise<any>;
   deletePrayerType: (args: any) => Promise<any>;
+  updatePrayerType: (args: any) => Promise<any>;
   updatePrayerTime: (args: any) => Promise<any>;
 
   // Dhuha

@@ -31,7 +31,7 @@ import { logoutSession, type UserProfileData } from "@/lib/auth-session";
 
 const studentMenuItems = [
   {
-    title: "Dashboard",
+    title: "Beranda",
     icon: LayoutDashboard,
   },
   {

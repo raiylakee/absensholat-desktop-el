@@ -15,9 +15,8 @@ export function AuthShell({ children }: AuthShellProps) {
       className="flex h-screen flex-col overflow-hidden bg-background relative"
       style={{
         backgroundImage: `url(${inorasi})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: "fixed",
+        backgroundSize: "contain",
+        backgroundPosition: "center center",
         backgroundRepeat: "no-repeat",
       }}
     >
@@ -29,20 +28,20 @@ export function AuthShell({ children }: AuthShellProps) {
       <div className="flex flex-1 items-center justify-center px-4 py-8 relative z-10">
         <div className="w-full max-w-md relative">
           {/* Decorative INO_2 - left side of card, on top, no fade */}
-          <div className="absolute -left-20 top-1/2 -translate-y-1/2 pointer-events-none z-20">
+          <div className="absolute -left-64 inset-y-0 flex items-center pointer-events-none z-20">
             <img 
               src={ino2}
               alt="Decorative INO"
-              className="w-40 h-40 object-contain"
+              className="h-3/4 object-contain"
             />
           </div>
 
           {/* Decorative RASI_2 - right side of card, on top, no fade */}
-          <div className="absolute -right-20 top-1/2 -translate-y-1/2 pointer-events-none z-20">
+          <div className="absolute -right-64 inset-y-0 flex items-center pointer-events-none z-20">
             <img 
               src={rasi2}
               alt="Decorative RASI"
-              className="w-40 h-40 object-contain"
+              className="h-3/4 object-contain"
             />
           </div>
 

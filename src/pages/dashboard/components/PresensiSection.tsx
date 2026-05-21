@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import {
   MAJOR_OPTIONS,
-  PRAYER_TYPE_OPTIONS,
 } from "@/pages/dashboard/constants"
 import type { PresensiRecord } from "@/pages/dashboard/types"
 import { notify } from "@/lib/notify"
@@ -38,6 +37,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
   const { print } = usePrintAction()
   const { isDownloading, download } = useDownloadAction()
   const [presensiRecords, setPresensiRecords] = useState<PresensiRecord[]>([])
+  const [prayerTypes, setPrayerTypes] = useState<string[]>([])
   const [presensiSearchQuery, setPresensiSearchQuery] = useState("")
   const [selectedSholatFilters, setSelectedSholatFilters] = useState<PresensiRecord["jenisSholat"][]>([])
   const [selectedPresensiJurusanFilters, setSelectedPresensiJurusanFilters] = useState<string[]>([])
@@ -94,6 +94,10 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
   useEffect(() => {
     isMounted.current = true
     fetchHistory()
+    window.electronAPI.getPrayerTypes().then((res: any) => {
+      const types: any[] = extractData(res) ?? []
+      if (isMounted.current) setPrayerTypes(types.map(t => t.nama_jenis))
+    })
     return () => { isMounted.current = false }
   }, [currentPage])
 
@@ -194,9 +198,9 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
         return { data: base64, encoding: "base64" as const }
       },
       dialogFilters: [
-        { name: "Image Files", extensions: ["jpg", "jpeg", "png", "gif", "webp"] },
-        { name: "PDF Files", extensions: ["pdf"] },
-        { name: "All Files", extensions: ["*"] },
+        { name: "File Gambar", extensions: ["jpg", "jpeg", "png", "gif", "webp"] },
+        { name: "File PDF", extensions: ["pdf"] },
+        { name: "Semua File", extensions: ["*"] },
       ],
     })
   }
@@ -225,14 +229,14 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                 />
                 <DropdownMenuContent className="w-64">
                   <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Jenis Sholat</p>
-                  {PRAYER_TYPE_OPTIONS.map((type) => (
+                  {prayerTypes.map((type) => (
                     <DropdownMenuCheckboxItem
                       key={`presensi-sholat-${type}`}
-                      checked={selectedSholatFilters.includes(type)}
+                      checked={selectedSholatFilters.includes(type as any)}
                       onSelect={(event) => event.preventDefault()}
                       onCheckedChange={(checked) =>
                         setSelectedSholatFilters((prev) =>
-                          checked ? [...prev, type] : prev.filter((item) => item !== type)
+                          checked ? [...prev, type as any] : prev.filter((item) => item !== type)
                         )
                       }
                     >
@@ -254,7 +258,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                       {major}
                     </DropdownMenuCheckboxItem>
                   ))}
-                  <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Class</p>
+                  <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Kelas</p>
                   {presensiClassOptions.map((kelas) => (
                     <DropdownMenuCheckboxItem
                       key={`presensi-kelas-${kelas}`}
@@ -286,7 +290,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                   <th className="px-4 py-3 text-left font-medium">Sholat</th>
                   <th className="px-4 py-3 text-left font-medium">Tanggal</th>
                   <th className="px-4 py-3 text-left font-medium">Status</th>
-                  <th className="px-4 py-3 text-left font-medium">Action</th>
+                  <th className="px-4 py-3 text-left font-medium">Aksi</th>
                 </tr>
               </thead>
               <tbody>

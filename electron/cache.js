@@ -6,9 +6,9 @@ const HOT_TTL = 60_000;       // 60s - profile, closest prayer, notifications
 const WARM_TTL = 300_000;     // 5min - jurusan, kelas, lookup, academic-years
 const COLD_TTL = 1_800_000;   // 30min - students list, analytics
 
-const HOT_PATTERNS = ["/auth/profile", "/prayer-schedules/closest", "/prayer-times", "/notifications", "/prayer-types"];
+const HOT_PATTERNS = ["/auth/profile", "/prayer-schedules/closest", "/prayer-times", "/notifications", "/prayer-types", "/analytics/"];
 const WARM_PATTERNS = ["/jurusan", "/kelas", "/lookup/", "/academic-years"];
-const COLD_PATTERNS = ["/students", "/analytics/"];
+const COLD_PATTERNS = ["/students"];
 
 function getTier(url) {
   if (HOT_PATTERNS.some(p => url.includes(p))) return { ttl: HOT_TTL, disk: false };

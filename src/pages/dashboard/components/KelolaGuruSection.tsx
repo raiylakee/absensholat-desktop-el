@@ -216,9 +216,11 @@ export function KelolaGuruSection() {
 
   const handleAssign = async () => {
     if (!selectedGuru || !formKelas) { notify("Pilih kelas terlebih dahulu", "error"); return }
+    const kelasId = parseInt(formKelas)
+    if (isNaN(kelasId)) { notify("ID kelas tidak valid", "error"); return }
     setIsSaving(true)
     try {
-      await window.electronAPI.assignGuruWaliKelas({ id: selectedGuru.id_staff, body: { id_kelas: parseInt(formKelas) } })
+      await window.electronAPI.assignGuruWaliKelas({ id: selectedGuru.id_staff, body: { id_kelas: kelasId } })
       notify("Wali kelas berhasil ditetapkan", "success")
       setAssignOpen(false)
       fetchGuru(page)
@@ -341,7 +343,9 @@ export function KelolaGuruSection() {
             </div>
             <Select value={hasWaliFilter} onValueChange={(v) => handleFilterChange(v as "" | "true" | "false")}>
               <SelectTrigger className="w-[180px] bg-background">
-                <SelectValue placeholder="Filter Wali Kelas" />
+                <SelectValue placeholder="Filter Wali Kelas">
+                  {hasWaliFilter === "true" ? "Sudah Jadi Wali" : hasWaliFilter === "false" ? "Belum Jadi Wali" : "Semua"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="">Semua</SelectItem>

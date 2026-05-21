@@ -522,7 +522,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
 
             <div className="flex items-center gap-2 border rounded-md px-2 py-1 bg-muted/20">
               <div className="flex items-center gap-1">
-                <Label className="text-[10px] uppercase font-bold text-muted-foreground">From</Label>
+                <Label className="text-[10px] uppercase font-bold text-muted-foreground">Dari</Label>
                 <Popover>
                   <PopoverTrigger
                     render={
@@ -550,7 +550,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
               </div>
               <div className="w-[1px] h-4 bg-border" />
               <div className="flex items-center gap-1">
-                <Label className="text-[10px] uppercase font-bold text-muted-foreground">To</Label>
+                <Label className="text-[10px] uppercase font-bold text-muted-foreground">Sampai</Label>
                 <Popover>
                   <PopoverTrigger
                     render={
@@ -875,7 +875,9 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
               <Label className="text-sm font-semibold">Format Dokumen</Label>
               <Select value={downloadFormat} onValueChange={(val) => val !== null && setDownloadFormat(val)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Pilih format" />
+                  <SelectValue placeholder="Pilih format">
+                    {downloadFormat === "excel" ? "Microsoft Excel (.xlsx)" : downloadFormat === "pdf" ? "PDF Document (.pdf)" : "Pilih format"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="excel">

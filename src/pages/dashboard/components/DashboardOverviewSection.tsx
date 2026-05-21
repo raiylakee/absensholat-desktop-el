@@ -179,7 +179,7 @@ export function DashboardOverviewSection({ onNavigate }: { onNavigate?: (page: s
               {activePrayer && onNavigate && (
                 <Button variant="default" size="icon-sm" onClick={() => onNavigate("QR Code")} className="rounded-full shadow-lg shadow-primary/20">
                   <QrCode className="size-4" />
-                  <span className="sr-only">Show QR Code</span>
+                  <span className="sr-only">Tampilkan QR Code</span>
                 </Button>
               )}
             </div>

@@ -99,7 +99,7 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
       }
       if (name.trim()) params.search = name.trim()
       if (jurusan) params.jurusan = jurusan
-      if (waliKelas) params.wali_kelas_id = waliKelas
+      if (waliKelas) params.wali_kelas = waliKelas
 
       const response: any = await window.electronAPI.getUnregisteredStudents(params)
       const data = extractData(response);
@@ -220,13 +220,13 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
                   <SelectValue placeholder="Semua Jurusan">
                     {!jurusanFilter || jurusanFilter === "__all__"
                       ? "Semua Jurusan"
-                      : jurusanFilter}
+                      : majorOptions.find(m => m.id_jurusan.toString() === jurusanFilter)?.nama_jurusan || jurusanFilter}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="__all__">Semua Jurusan</SelectItem>
                   {majorOptions.map((major) => (
-                    <SelectItem key={major.id_jurusan} value={major.nama_jurusan}>
+                    <SelectItem key={major.id_jurusan} value={major.id_jurusan.toString()}>
                       {major.nama_jurusan}
                     </SelectItem>
                   ))}
@@ -297,7 +297,7 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
                         <th className="px-4 py-3 text-left font-medium w-32">Kelas</th>
                         <th className="px-4 py-3 text-left font-medium w-40">Jurusan</th>
                         <th className="px-4 py-3 text-left font-medium w-44">Wali Kelas</th>
-                        <th className="px-4 py-3 text-left font-medium w-28">Actions</th>
+                        <th className="px-4 py-3 text-left font-medium w-28">Aksi</th>
                       </tr>
                     </thead>
                     <tbody>

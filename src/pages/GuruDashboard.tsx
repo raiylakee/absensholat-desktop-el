@@ -18,7 +18,7 @@ import { useCurrentProfile } from "@/hooks/use-current-profile"
 import { FloatingFAQ } from "@/components/FloatingFAQ"
 
 export default function GuruDashboard() {
-  const [activeItem, setActiveItem] = useState("Dashboard")
+  const [activeItem, setActiveItem] = useState("Beranda")
   const { profile } = useCurrentProfile()
 
   const teacherProfile = profile
@@ -34,7 +34,7 @@ export default function GuruDashboard() {
     : undefined
 
   const renderSection = () => {
-    if (activeItem === "Dashboard") return <DashboardOverviewSection onNavigate={setActiveItem} />
+    if (activeItem === "Beranda") return <DashboardOverviewSection onNavigate={setActiveItem} />
     if (activeItem === "Jadwal") return <JadwalSection readOnly />
     if (activeItem === "Presensi") return <PresensiSection forcedClass={profile?.className} />
     if (activeItem === "Pengajuan Izin") return <PengajuanIzinSection />
@@ -49,7 +49,7 @@ export default function GuruDashboard() {
     <TooltipProvider>
       <SidebarProvider className="h-screen overflow-hidden">
         <GuruSidebar activeItem={activeItem} setActiveItem={setActiveItem} user={teacherProfile} />
-        <SidebarInset className="overflow-y-auto bg-muted/20 scroll-smooth">
+        <SidebarInset className="overflow-y-auto bg-background/85 scroll-smooth">
           <header 
             style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
             className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 pl-4 backdrop-blur supports-[backdrop-filter]:bg-background/60"

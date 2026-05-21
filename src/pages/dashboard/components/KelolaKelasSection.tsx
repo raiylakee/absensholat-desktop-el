@@ -283,7 +283,7 @@ export function KelolaKelasSection() {
                           </Badge>
                           {isPending && (
                             <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 animate-pulse">
-                              Unsaved Changes
+                              Perubahan Belum Disimpan
                             </Badge>
                           )}
                         </div>
@@ -319,7 +319,9 @@ export function KelolaKelasSection() {
                                   onValueChange={(val) => val !== null && handleSetWaliKelas(kelas.id_kelas, parseInt(val))}
                                 >
                                   <SelectTrigger className={isPending ? "border-yellow-500 ring-yellow-500/20" : ""}>
-                                    <SelectValue placeholder="Pilih Guru..." />
+                                    <SelectValue placeholder="Pilih Guru...">
+                                      {currentStaffId ? (teachers.find(t => t.id_staff === currentStaffId)?.nama || "Pilih Guru...") : "Pilih Guru..."}
+                                    </SelectValue>
                                   </SelectTrigger>
                                   <SelectContent>
                                     {teachers.map(t => (
@@ -338,10 +340,10 @@ export function KelolaKelasSection() {
                                     disabled={isSaving[kelas.id_kelas]}
                                   >
                                     {isSaving[kelas.id_kelas] ? <Spinner className="size-3 mr-1" /> : null}
-                                    Save
+                                    Simpan
                                   </Button>
                                   <Button size="sm" variant="ghost" onClick={() => handleCancelWaliKelas(kelas.id_kelas)}>
-                                    Cancel
+                                    Batal
                                   </Button>
                                 </div>
                               )}

@@ -108,7 +108,7 @@ export default function RequestReset() {
               <Input
                 id="nis"
                 name="nis"
-                placeholder="Masukkan NIS Anda"
+                placeholder="Contoh: 7771/1116.063"
                 value={nis}
                 onChange={(event) => setNis(event.target.value)}
                 aria-invalid={Boolean(errors.nis)}

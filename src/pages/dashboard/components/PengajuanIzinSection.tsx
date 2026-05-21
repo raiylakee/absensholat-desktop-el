@@ -45,7 +45,7 @@ interface PengajuanIzinItem {
 }
 
 const STATUS_FILTERS = [
-  { value: "pending", label: "Pending" },
+  { value: "pending", label: "Menunggu" },
   { value: "disetujui", label: "Disetujui" },
   { value: "ditolak", label: "Ditolak" },
   { value: "all", label: "Semua" },
@@ -162,7 +162,9 @@ export function PengajuanIzinSection() {
           <div className="min-w-[180px]">
             <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue>
+                  {STATUS_FILTERS.find((f) => f.value === statusFilter)?.label}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {STATUS_FILTERS.map((opt) => (

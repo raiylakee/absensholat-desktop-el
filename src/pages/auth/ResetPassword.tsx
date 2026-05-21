@@ -32,18 +32,18 @@ export default function ResetPassword() {
     event.preventDefault()
 
     const nextErrors: { new_password?: string; nis?: string; otp?: string } = {}
-    if (!newPassword.trim()) nextErrors.new_password = "New password is required."
-    if (!nis.trim()) nextErrors.nis = "NIS is required."
-    if (!otp.trim()) nextErrors.otp = "OTP is required."
-    if (otp.trim() && otp.length !== 6) nextErrors.otp = "OTP must be 6 digits."
-    if (newPassword.trim() && newPassword.length < 6) nextErrors.new_password = "Password must be at least 6 characters."
+    if (!newPassword.trim()) nextErrors.new_password = "Kata sandi baru wajib diisi."
+    if (!nis.trim()) nextErrors.nis = "NIS wajib diisi."
+    if (!otp.trim()) nextErrors.otp = "OTP wajib diisi."
+    if (otp.trim() && otp.length !== 6) nextErrors.otp = "OTP harus 6 digit."
+    if (newPassword.trim() && newPassword.length < 6) nextErrors.new_password = "Kata sandi minimal 6 karakter."
 
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) {
       setDialog({
         open: true,
-        title: "Validation error",
-        description: "Please complete all fields with valid values.",
+        title: "Kesalahan validasi",
+        description: "Silakan lengkapi semua kolom dengan nilai yang valid.",
         variant: "destructive",
       })
       return
@@ -57,7 +57,7 @@ export default function ResetPassword() {
       
       setDialog({
         open: true,
-        title: "Password Direset",
+        title: "Kata Sandi Direset",
         description: response.message || "Kata sandi Anda telah berhasil diperbarui.",
         variant: "default",
       })
@@ -110,7 +110,7 @@ export default function ResetPassword() {
               <Input
                 id="nis"
                 name="nis"
-                placeholder="Masukkan NIS Anda"
+                placeholder="Contoh: 7771/1116.063"
                 value={nis}
                 onChange={(event) => setNis(event.target.value)}
                 aria-invalid={Boolean(errors.nis)}

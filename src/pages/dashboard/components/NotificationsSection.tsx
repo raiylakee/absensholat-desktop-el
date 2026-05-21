@@ -58,7 +58,7 @@ export function NotificationsSection() {
     <div className="space-y-4">
       <Card className="border">
         <CardHeader>
-          <CardTitle>Notifications</CardTitle>
+          <CardTitle>Notifikasi</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {isLoading ? (

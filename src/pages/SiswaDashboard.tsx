@@ -14,12 +14,12 @@ import { useCurrentProfile } from "@/hooks/use-current-profile"
 import { FloatingFAQ } from "@/components/FloatingFAQ"
 
 export default function SiswaDashboard() {
-  const [activeItem, setActiveItem] = useState("Dashboard")
+  const [activeItem, setActiveItem] = useState("Pindai QR")
   const { profile } = useCurrentProfile()
 
   const renderContent = () => {
     switch (activeItem) {
-      case "Dashboard":
+      case "Beranda":
         return <SiswaOverview setActiveItem={setActiveItem} user={profile ?? undefined} />
       case "Pindai QR":
         return <SiswaScanQR />
@@ -38,7 +38,7 @@ export default function SiswaDashboard() {
     <TooltipProvider>
       <SidebarProvider className="h-screen overflow-hidden">
         <SiswaSidebar activeItem={activeItem} setActiveItem={setActiveItem} user={profile ?? undefined} />
-        <SidebarInset className="overflow-y-auto bg-muted/20 scroll-smooth">
+        <SidebarInset className="overflow-y-auto bg-background/85 scroll-smooth">
           <header 
             style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
             className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 pl-4 backdrop-blur supports-[backdrop-filter]:bg-background/60"

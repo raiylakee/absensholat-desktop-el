@@ -66,10 +66,10 @@ export function DeviceManagementSection() {
   const handleUnbind = async (id: number) => {
     try {
       await window.electronAPI.deleteAdminDevice({ id })
-      notify("Perangkat berhasil di-unbind", "success")
+      notify("Perangkat berhasil dilepas", "success")
       setDevices(prev => prev.filter(d => d.id !== id))
     } catch (err) {
-      notify("Gagal unbind: " + err, "error")
+      notify("Gagal melepas: " + err, "error")
     }
   }
 
@@ -126,10 +126,10 @@ export function DeviceManagementSection() {
                         <Badge variant="outline" className="text-[10px]">{d.role}</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">{d.device_name || d.device_model || d.hardware_id}</p>
-                      <p className="text-xs text-muted-foreground">Last: {d.last_auth_at ? new Date(d.last_auth_at).toLocaleString("id-ID") : "-"}</p>
+                      <p className="text-xs text-muted-foreground">Terakhir: {d.last_auth_at ? new Date(d.last_auth_at).toLocaleString("id-ID") : "-"}</p>
                     </div>
                     <Button variant="destructive" size="sm" onClick={() => handleUnbind(d.id)}>
-                      <Trash2 className="size-4 mr-1" /> Unbind
+                      <Trash2 className="size-4 mr-1" /> Lepas
                     </Button>
                   </div>
                 ))}
