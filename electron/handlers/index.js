@@ -25,7 +25,8 @@ function getHardwareId() {
 const hardwareId = getHardwareId();
 
 // --- Task 1: Timeout + Retry with exponential backoff ---
-const TIMEOUT_MS = 5000;
+// Vercel serverless cold starts can take 5-15s, so production needs a longer timeout
+const TIMEOUT_MS = require("electron").app.isPackaged ? 15000 : 5000;
 const MAX_RETRIES = 3;
 const BASE_DELAY = 500;
 

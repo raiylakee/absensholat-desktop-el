@@ -38,25 +38,20 @@
       "icon": "build/icon.ico",
       "target": [
         {
-          "target": "nsis",
+          "target": "msi",
           "arch": [
             "x64"
           ]
         },
         {
-          "target": "nsis",
+          "target": "msi",
           "arch": [
             "arm64"
           ]
         }
       ]
     },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "buildUniversalInstaller": false,
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
+    "msi": {
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true
     },

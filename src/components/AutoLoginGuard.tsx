@@ -42,7 +42,7 @@ export function AutoLoginGuard({ children }: AutoLoginGuardProps) {
             return await fetchCurrentProfile()
           })(),
           new Promise<never>((_, reject) => {
-            timeoutId = setTimeout(() => reject(new Error("timeout")), 10_000)
+            timeoutId = setTimeout(() => reject(new Error("timeout")), 15_000)
           }),
         ])
 
@@ -57,13 +57,22 @@ export function AutoLoginGuard({ children }: AutoLoginGuardProps) {
         } else {
           navigate("/siswa-dashboard", { replace: true })
         }
-      } catch {
+      } catch (err) {
+        console.error("[AutoLogin] Failed:", err)
         if (cancelled) return
 
-        // Clear tokens on failure/timeout
-        localStorage.removeItem("auth_token")
-        localStorage.removeItem("auth_role")
-        localStorage.removeItem("auth_refresh_token")
+        // Only clear tokens on auth errors, not on timeouts/network errors
+        const isAuthError = err instanceof Error && (
+          err.message.includes("401") ||
+          err.message.includes("403") ||
+          err.message.includes("unauthorized") ||
+          err.message.includes("forbidden")
+        )
+        if (isAuthError) {
+          localStorage.removeItem("auth_token")
+          localStorage.removeItem("auth_role")
+          localStorage.removeItem("auth_refresh_token")
+        }
         setIsChecking(false)
       } finally {
         if (timeoutId !== undefined) {
