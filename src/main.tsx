@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { LogoAnimationProvider } from "./lib/logo-animation-context";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import "./index.css";
 
 // Apply theme before React renders to prevent flash of wrong theme
@@ -28,8 +29,10 @@ import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <LogoAnimationProvider>
-      <App />
-    </LogoAnimationProvider>
+    <ErrorBoundary>
+      <LogoAnimationProvider>
+        <App />
+      </LogoAnimationProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
 );

@@ -19,6 +19,8 @@ function createWindow() {
     win.webContents.openDevTools();
   } else {
     win.loadFile(path.join(__dirname, "../dist/index.html"));
+    // TODO: Remove after debugging Windows login issue
+    win.webContents.openDevTools();
   }
 
   // Window control handlers

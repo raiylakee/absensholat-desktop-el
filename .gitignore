@@ -90,3 +90,7 @@ typings/
 
 # Electron-Forge
 out/
+
+# Build output
+dist/
+dist-electron/
