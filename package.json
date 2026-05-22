@@ -6,13 +6,14 @@
   "main": "electron/main.js",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron . --no-sandbox\"",
     "build": "vite build && electron-builder",
-    "start": "vite build && electron .",
+    "start": "vite build && electron . --no-sandbox",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "postinstall": "node -e \"const fs=require('fs'),p=require('path').join(__dirname,'node_modules/electron/path.txt');if(fs.existsSync(p))fs.writeFileSync(p,fs.readFileSync(p,'utf8').trim())\""
   },
   "build": {
     "appId": "com.absensholat.desktop",

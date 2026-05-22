@@ -3,6 +3,7 @@ import { Search, Plus, Pencil, Trash2, UserCheck, UserMinus, Download, Loader2, 
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -503,7 +504,7 @@ export function KelolaGuruSection() {
             </div>
             <div className="grid gap-2">
               <Label>Password <span className="text-destructive">*</span></Label>
-              <Input type="password" value={formPassword} onChange={(e) => setFormPassword(e.target.value)} />
+              <PasswordInput value={formPassword} onChange={(e) => setFormPassword(e.target.value)} />
             </div>
             <div className="grid gap-2">
               <Label>NIP</Label>

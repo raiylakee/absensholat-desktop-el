@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { AuthShell } from "@/pages/auth/AuthShell"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { ShieldCheck } from "lucide-react"
@@ -66,9 +66,8 @@ export default function VerifyAccount() {
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label htmlFor="new-password">Password Baru (Opsional)</Label>
-              <Input
+              <PasswordInput
                 id="new-password"
-                type="password"
                 placeholder="Kosongkan jika tidak ingin mengubah"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -77,9 +76,8 @@ export default function VerifyAccount() {
             {newPassword && (
               <div className="space-y-2">
                 <Label htmlFor="confirm-password">Konfirmasi Password</Label>
-                <Input
+                <PasswordInput
                   id="confirm-password"
-                  type="password"
                   placeholder="Ulangi password baru"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}

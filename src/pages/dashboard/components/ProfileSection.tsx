@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { KeyRound, Mail } from "lucide-react"
 import { notify } from "@/lib/notify"
@@ -158,15 +159,15 @@ export function ProfileSection({ user }: { user?: UserProfile }) {
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label>Kata Sandi Saat Ini</Label>
-              <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+              <PasswordInput value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
             </div>
             <div className="grid gap-2">
               <Label>Kata Sandi Baru</Label>
-              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              <PasswordInput value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
             </div>
             <div className="grid gap-2">
               <Label>Konfirmasi Kata Sandi Baru</Label>
-              <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              <PasswordInput value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
