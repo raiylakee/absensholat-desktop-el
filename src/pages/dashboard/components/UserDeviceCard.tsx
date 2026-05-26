@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
+import { handleApiError } from "@/lib/api-utils"
 
 type DeviceState = "loading" | "not-registered" | "registered" | "mismatch"
 
@@ -82,7 +83,7 @@ export function UserDeviceCard() {
       notify("Perangkat berhasil didaftarkan", "success")
       loadData()
     } catch (err: any) {
-      notify(err.message || "Gagal mendaftarkan perangkat", "error")
+      notify(handleApiError(err) || "Gagal mendaftarkan perangkat", "error")
     } finally {
       setRegisterLoading(false)
     }
@@ -103,7 +104,7 @@ export function UserDeviceCard() {
       setChangeDialogOpen(false)
       setAlasan("")
     } catch (err: any) {
-      notify(err.message || "Gagal mengajukan permintaan", "error")
+      notify(handleApiError(err) || "Gagal mengajukan permintaan", "error")
     } finally {
       setChangeLoading(false)
     }
@@ -117,7 +118,7 @@ export function UserDeviceCard() {
       setUnbindDialogOpen(false)
       loadData()
     } catch (err: any) {
-      notify(err.message || "Gagal melepas perangkat", "error")
+      notify(handleApiError(err) || "Gagal melepas perangkat", "error")
     } finally {
       setUnbindLoading(false)
     }

@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Separator } from "@/components/ui/separator"
@@ -49,7 +50,7 @@ export default function Dashboard() {
       <SidebarProvider className="h-screen overflow-hidden">
         <AppSidebar activeItem={activeItem} setActiveItem={setActiveItem} user={profile ?? undefined} />
         <SidebarInset className="overflow-y-auto bg-background/85 scroll-smooth">
-          <header 
+          <header
             style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
             className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 pl-4 backdrop-blur supports-[backdrop-filter]:bg-background/60"
           >
@@ -66,9 +67,18 @@ export default function Dashboard() {
           </header>
 
           <div className="mx-auto w-full max-w-5xl p-6">
-            <div className="space-y-6">
-              {renderSection()}
-            </div>
+            <AnimatePresence initial={false}>
+              <motion.div
+                key={activeItem}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+                className="space-y-6"
+              >
+                {renderSection()}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </SidebarInset>
       </SidebarProvider>

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { AuthShell } from "@/pages/auth/AuthShell"
 import { AuthStatusDialog } from "@/pages/auth/AuthStatusDialog"
 import { useNavigate } from "react-router-dom"
+import { handleApiError } from "@/lib/api-utils"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -75,7 +76,7 @@ export default function ResetPassword() {
       setDialog({
         open: true,
         title: "Gagal reset password",
-        description: err.toString(),
+        description: handleApiError(err),
         variant: "destructive",
       })
     } finally {

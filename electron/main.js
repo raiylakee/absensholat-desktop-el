@@ -11,6 +11,7 @@ function createWindow() {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
       nodeIntegration: false,
+      zoomFactor: 1,
     },
   });
 
@@ -19,6 +20,12 @@ function createWindow() {
   } else {
     win.loadFile(path.join(__dirname, "../dist/index.html"));
   }
+
+  // Reset zoom to 100% on startup and prevent zoom persistence
+  win.webContents.setZoomFactor(1);
+  win.webContents.on("did-finish-load", () => {
+    win.webContents.setZoomFactor(1);
+  });
 
   // Window control handlers
   ipcMain.handle("window-minimize", () => win.minimize());

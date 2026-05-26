@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { AuthShell } from "@/pages/auth/AuthShell"
+import { handleApiError } from "@/lib/api-utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PasswordInput } from "@/components/ui/password-input"
@@ -39,7 +40,7 @@ export default function VerifyAccount() {
       else if (role === "guru" || role === "wali_kelas") navigate("/guru-dashboard")
       else navigate("/siswa-dashboard")
     } catch (err: any) {
-      setError(err.toString())
+      setError(handleApiError(err))
     } finally {
       setIsProcessing(false)
     }

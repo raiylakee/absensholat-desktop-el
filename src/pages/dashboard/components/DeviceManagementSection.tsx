@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Spinner } from "@/components/ui/spinner"
 import { MonitorSmartphone, Trash2, Check, X } from "lucide-react"
 import { notify } from "@/lib/notify"
-import { extractData } from "@/lib/api-utils"
+import { extractData, handleApiError } from "@/lib/api-utils"
 
 interface Device {
   id: number
@@ -69,7 +69,7 @@ export function DeviceManagementSection() {
       notify("Perangkat berhasil dilepas", "success")
       setDevices(prev => prev.filter(d => d.id !== id))
     } catch (err) {
-      notify("Gagal melepas: " + err, "error")
+      notify("Gagal melepas: " + handleApiError(err), "error")
     }
   }
 
@@ -79,7 +79,7 @@ export function DeviceManagementSection() {
       notify("Pengajuan disetujui", "success")
       setRequests(prev => prev.filter(r => r.id !== id))
     } catch (err) {
-      notify("Gagal: " + err, "error")
+      notify("Gagal: " + handleApiError(err), "error")
     }
   }
 
@@ -89,7 +89,7 @@ export function DeviceManagementSection() {
       notify("Pengajuan ditolak", "success")
       setRequests(prev => prev.filter(r => r.id !== id))
     } catch (err) {
-      notify("Gagal: " + err, "error")
+      notify("Gagal: " + handleApiError(err), "error")
     }
   }
 

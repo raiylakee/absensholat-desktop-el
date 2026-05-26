@@ -12,7 +12,7 @@ import { format } from "date-fns"
 import { Calendar as CalendarIcon, Stethoscope, Briefcase, Paperclip, X, Upload } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { notify } from "@/lib/notify"
-import { extractData } from "@/lib/api-utils"
+import { extractData, handleApiError } from "@/lib/api-utils"
 
 interface PengajuanIzin {
   id_pengajuan: number
@@ -129,7 +129,7 @@ export function SiswaPermitSection() {
       setFileName(null)
       await fetchRequests()
     } catch (err) {
-      const msg = typeof err === "string" ? err : err instanceof Error ? err.message : String(err)
+      const msg = handleApiError(err)
       notify("Gagal mengirim pengajuan: " + msg, "error")
     } finally {
       setIsSubmitting(false)

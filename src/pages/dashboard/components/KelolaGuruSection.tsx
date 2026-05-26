@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
-import { extractData } from "@/lib/api-utils"
+import { extractData, handleApiError } from "@/lib/api-utils"
 import { useDownloadAction } from "@/hooks/use-download-action"
 import { arrayToCsv } from "@/lib/export-filename"
 
@@ -99,7 +99,7 @@ export function KelolaGuruSection() {
       else if (meta?.total && meta?.limit) setTotalPages(Math.ceil(meta.total / meta.limit))
     } catch (err: any) {
       if (!isMounted.current) return
-      notify(err.message || "Gagal mengambil data guru", "error")
+      notify(handleApiError(err) || "Gagal mengambil data guru", "error")
     } finally {
       if (isMounted.current) setIsLoading(false)
     }
@@ -114,7 +114,7 @@ export function KelolaGuruSection() {
       setWaliList(Array.isArray(data) ? data : [])
     } catch (err: any) {
       if (!isMounted.current) return
-      notify(err.message || "Gagal mengambil data wali kelas", "error")
+      notify(handleApiError(err) || "Gagal mengambil data wali kelas", "error")
     } finally {
       if (isMounted.current) setIsLoadingWali(false)
     }
@@ -170,7 +170,7 @@ export function KelolaGuruSection() {
       notify("Guru berhasil ditambahkan", "success")
       setCreateOpen(false)
       fetchGuru(1)
-    } catch (err: any) { notify(err.message || "Gagal menambahkan guru", "error") }
+    } catch (err: any) { notify(handleApiError(err) || "Gagal menambahkan guru", "error") }
     finally { setIsSaving(false) }
   }
 
@@ -191,7 +191,7 @@ export function KelolaGuruSection() {
       notify("Data guru berhasil diperbarui", "success")
       setEditOpen(false)
       fetchGuru(page)
-    } catch (err: any) { notify(err.message || "Gagal memperbarui guru", "error") }
+    } catch (err: any) { notify(handleApiError(err) || "Gagal memperbarui guru", "error") }
     finally { setIsSaving(false) }
   }
 
@@ -205,7 +205,7 @@ export function KelolaGuruSection() {
       notify("Guru berhasil dihapus", "success")
       setDeleteOpen(false)
       fetchGuru(1)
-    } catch (err: any) { notify(err.message || "Gagal menghapus guru", "error") }
+    } catch (err: any) { notify(handleApiError(err) || "Gagal menghapus guru", "error") }
     finally { setIsSaving(false) }
   }
 
@@ -225,7 +225,7 @@ export function KelolaGuruSection() {
       notify("Wali kelas berhasil ditetapkan", "success")
       setAssignOpen(false)
       fetchGuru(page)
-    } catch (err: any) { notify(err.message || "Gagal menetapkan wali kelas", "error") }
+    } catch (err: any) { notify(handleApiError(err) || "Gagal menetapkan wali kelas", "error") }
     finally { setIsSaving(false) }
   }
 
@@ -239,7 +239,7 @@ export function KelolaGuruSection() {
       notify("Wali kelas berhasil dilepas", "success")
       setRemoveWaliOpen(false)
       fetchGuru(page)
-    } catch (err: any) { notify(err.message || "Gagal melepas wali kelas", "error") }
+    } catch (err: any) { notify(handleApiError(err) || "Gagal melepas wali kelas", "error") }
     finally { setIsSaving(false) }
   }
 
@@ -248,7 +248,7 @@ export function KelolaGuruSection() {
       await window.electronAPI.removeGuruWaliKelas({ id: item.id_staff })
       notify("Wali kelas berhasil dilepas", "success")
       fetchWali()
-    } catch (err: any) { notify(err.message || "Gagal melepas wali kelas", "error") }
+    } catch (err: any) { notify(handleApiError(err) || "Gagal melepas wali kelas", "error") }
   }
 
   const handleDownload = () => {

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { AlertCircle, CheckCircle2, RefreshCw, Camera, CameraOff, Keyboard } from "lucide-react"
 import { Html5Qrcode } from "html5-qrcode"
+import { handleApiError } from "@/lib/api-utils"
 
 type ScanMode = "camera" | "manual"
 type VerifyState = "idle" | "scanning" | "verifying" | "success" | "error"
@@ -37,7 +38,7 @@ export function SiswaScanQR() {
     } catch (err: any) {
       // Rollback to error state
       setState("error")
-      const msg = typeof err === "string" ? err : err?.message ?? "Verifikasi gagal."
+      const msg = handleApiError(err)
       if (msg.includes("Perangkat tidak sesuai") || msg.includes("DEVICE_MISMATCH")) {
         setErrorMessage("Perangkat ini tidak terdaftar. Hubungi admin untuk mendaftarkan perangkat Anda.")
       } else {
@@ -68,7 +69,7 @@ export function SiswaScanQR() {
       setCameraActive(true)
     } catch (err) {
       // scanner.start() failed — do NOT assign ref, nothing to stop
-      const msg = String(err)
+      const msg = handleApiError(err)
       setIsCameraError(true)
       if (msg.includes("NotAllowedError") || msg.includes("not allowed")) {
         setErrorMessage("Izin kamera ditolak. Berikan izin kamera di pengaturan browser/sistem.")
@@ -112,7 +113,7 @@ export function SiswaScanQR() {
       setPrayerDate(response?.data?.tanggal ?? null)
     } catch (err: any) {
       setState("error")
-      const msg = typeof err === "string" ? err : err?.message ?? "Verifikasi gagal."
+      const msg = handleApiError(err)
       if (msg.includes("Perangkat tidak sesuai") || msg.includes("DEVICE_MISMATCH")) {
         setErrorMessage("Perangkat ini tidak terdaftar. Hubungi admin untuk mendaftarkan perangkat Anda.")
       } else {

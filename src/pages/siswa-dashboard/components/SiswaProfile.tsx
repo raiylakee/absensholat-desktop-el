@@ -8,6 +8,7 @@ import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { KeyRound, Mail } from "lucide-react"
 import { notify } from "@/lib/notify"
+import { handleApiError } from "@/lib/api-utils"
 import { type UserProfileData } from "@/lib/auth-session"
 import { UserDeviceCard } from "@/pages/dashboard/components/UserDeviceCard"
 
@@ -53,7 +54,7 @@ export function SiswaProfile({ user }: { user?: UserProfileData }) {
       notify("Kata sandi berhasil diubah", "success")
       setPasswordDialogOpen(false)
       setCurrentPassword(""); setNewPassword(""); setConfirmPassword("")
-    } catch (err: any) { notify(err.message || "Gagal mengubah kata sandi", "error") }
+    } catch (err: any) { notify(handleApiError(err) || "Gagal mengubah kata sandi", "error") }
     finally { setPwLoading(false) }
   }
 
@@ -67,7 +68,7 @@ export function SiswaProfile({ user }: { user?: UserProfileData }) {
       setEmailDialogOpen(false)
       setOtpDialogOpen(true)
       setNewEmail("")
-    } catch (err: any) { notify(err.message || "Gagal mengirim permintaan", "error") }
+    } catch (err: any) { notify(handleApiError(err) || "Gagal mengirim permintaan", "error") }
     finally { setEmailLoading(false) }
   }
 
@@ -79,7 +80,7 @@ export function SiswaProfile({ user }: { user?: UserProfileData }) {
       notify("Email berhasil diubah", "success")
       setOtpDialogOpen(false)
       setOtp(""); setPendingEmail("")
-    } catch (err: any) { notify(err.message || "Gagal verifikasi OTP", "error") }
+    } catch (err: any) { notify(handleApiError(err) || "Gagal verifikasi OTP", "error") }
     finally { setOtpLoading(false) }
   }
 

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
-import { extractData } from "@/lib/api-utils"
+import { extractData, handleApiError } from "@/lib/api-utils"
 
 interface Device {
   id: number
@@ -81,7 +81,7 @@ export function SiswaDevicesSection() {
       notify("Perangkat siswa berhasil dilepas", "success")
       setDevices(prev => prev.filter(d => d.id !== id))
     } catch (err: any) {
-      notify("Gagal melepas: " + (err.message || err), "error")
+      notify("Gagal melepas: " + handleApiError(err), "error")
     }
   }
 
@@ -91,7 +91,7 @@ export function SiswaDevicesSection() {
       notify("Pengajuan disetujui", "success")
       setRequests(prev => prev.filter(r => r.id !== id))
     } catch (err: any) {
-      notify("Gagal: " + (err.message || err), "error")
+      notify("Gagal: " + handleApiError(err), "error")
     }
   }
 
@@ -101,7 +101,7 @@ export function SiswaDevicesSection() {
       notify("Pengajuan ditolak", "success")
       setRequests(prev => prev.filter(r => r.id !== id))
     } catch (err: any) {
-      notify("Gagal: " + (err.message || err), "error")
+      notify("Gagal: " + handleApiError(err), "error")
     }
   }
 

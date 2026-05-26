@@ -176,18 +176,34 @@ export function genderFromApi(jk: string): "Laki-laki" | "Perempuan" {
 }
 
 /**
- * Handle API errors consistently
+ * Clean Electron IPC boilerplate from error messages.
+ * Strips patterns like:
+ *   "Error: Error invoking remote method 'login': Error: Too many attempts."
+ * down to just:
+ *   "Too many attempts."
+ */
+function stripIpcPrefix(msg: string): string {
+  // Remove "Error invoking remote method '...': " wrapper
+  let cleaned = msg.replace(/Error invoking remote method '[^']*':\s*/gi, "");
+  // Remove leading "Error: " chains (may be repeated)
+  cleaned = cleaned.replace(/^(?:Error:\s*)+/i, "");
+  return cleaned.trim();
+}
+
+/**
+ * Handle API errors consistently and return a user-friendly message
  */
 export function handleApiError(error: any): string {
   if (typeof error === "string") {
-    return error;
+    return stripIpcPrefix(error) || "Terjadi kesalahan saat menghubungi server";
   }
-  
+
   if (error?.message) {
-    return error.message;
+    return stripIpcPrefix(error.message) || "Terjadi kesalahan saat menghubungi server";
   }
-  
-  return "Terjadi kesalahan saat menghubungi server";
+
+  const str = String(error);
+  return stripIpcPrefix(str) || "Terjadi kesalahan saat menghubungi server";
 }
 
 /**

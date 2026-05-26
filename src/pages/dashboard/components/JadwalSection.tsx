@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
-import { extractData } from "@/lib/api-utils"
+import { extractData, handleApiError } from "@/lib/api-utils"
 
 interface JadwalSectionProps {
   readOnly?: boolean
@@ -56,6 +56,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
   const [newPrayerStart, setNewPrayerStart] = useState("06:00")
   const [newPrayerEnd, setNewPrayerEnd] = useState("07:00")
   const [isCreating, setIsCreating] = useState(false)
+  const [deletePrayerTarget, setDeletePrayerTarget] = useState<PrayerCard | null>(null)
 
   const [dynamicMajorOptions, setDynamicMajorOptions] = useState<string[]>(MAJOR_OPTIONS)
   const [prayerTypesList, setPrayerTypesList] = useState<{ id_jenis: number; nama_jenis: string }[]>([])
@@ -339,25 +340,30 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
       setNewPrayerEnd("07:00")
       await fetchSchedules()
     } catch (err: any) {
-      notify(err.message || "Gagal menambahkan jadwal sholat", "error")
+      notify(handleApiError(err) || "Gagal menambahkan jadwal sholat", "error")
     } finally {
       setIsCreating(false)
     }
   }
 
   const handleDeletePrayer = async (prayer: PrayerCard) => {
-    if (!confirm(`Hapus jadwal ${prayer.nama}?`)) return
+    setDeletePrayerTarget(prayer)
+  }
+
+  const confirmDeletePrayer = async () => {
+    if (!deletePrayerTarget) return
     try {
-      // Find the prayer type id from raw schedules
-      const related = rawSchedules.find(s => s.waktu_sholat?.jenis_sholat?.nama_jenis === prayer.nama)
+      const related = rawSchedules.find(s => s.waktu_sholat?.jenis_sholat?.nama_jenis === deletePrayerTarget.nama)
       const idJenis = related?.waktu_sholat?.jenis_sholat?.id_jenis
       if (idJenis) {
         await window.electronAPI.deletePrayerType({ id: idJenis })
-        notify(`Jadwal ${prayer.nama} berhasil dihapus`, "success")
+        notify(`Jadwal ${deletePrayerTarget.nama} berhasil dihapus`, "success")
         await fetchSchedules()
       }
     } catch (err: any) {
-      notify(err.message || "Gagal menghapus jadwal", "error")
+      notify(handleApiError(err) || "Gagal menghapus jadwal", "error")
+    } finally {
+      setDeletePrayerTarget(null)
     }
   }
 
@@ -577,6 +583,21 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreatePrayerOpen(false)}>Batal</Button>
             <Button onClick={handleCreatePrayer} disabled={isCreating}>{isCreating ? "Menyimpan..." : "Simpan"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deletePrayerTarget !== null} onOpenChange={(open) => !open && setDeletePrayerTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Hapus Jadwal Sholat</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus jadwal {deletePrayerTarget?.nama}? Tindakan ini tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletePrayerTarget(null)}>Batal</Button>
+            <Button variant="destructive" onClick={confirmDeletePrayer}>Hapus</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

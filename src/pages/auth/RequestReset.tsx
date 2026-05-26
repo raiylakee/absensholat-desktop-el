@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { AuthShell } from "@/pages/auth/AuthShell"
 import { AuthStatusDialog } from "@/pages/auth/AuthStatusDialog"
 import { useNavigate } from "react-router-dom"
+import { handleApiError } from "@/lib/api-utils"
 
 import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -72,7 +73,7 @@ export default function RequestReset() {
       setDialog({
         open: true,
         title: "Gagal meminta OTP",
-        description: err.toString(),
+        description: handleApiError(err),
         variant: "destructive",
       })
     } finally {
