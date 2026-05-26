@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import {
   BookOpen,
   Calendar,
@@ -81,6 +82,24 @@ const mainMenuItems = [
   },
 ];
 
+const sidebarVariants = {
+  hidden: { x: -280, opacity: 0 },
+  visible: {
+    x: 0,
+    opacity: 1,
+    transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] as const },
+  },
+} as const;
+
+const menuItemVariants = {
+  hidden: { x: -20, opacity: 0 },
+  visible: (i: number) => ({
+    x: 0,
+    opacity: 1,
+    transition: { delay: 0.05 * i, duration: 0.3, ease: [0.25, 0.1, 0.25, 1] as const },
+  }),
+};
+
 interface AppSidebarProps {
   activeItem: string;
   setActiveItem: (item: string) => void;
@@ -106,8 +125,14 @@ export function AppSidebar({ activeItem, setActiveItem, user }: AppSidebarProps)
   };
 
   return (
+    <motion.aside
+      initial="hidden"
+      animate="visible"
+      variants={sidebarVariants}
+      className="flex-shrink-0 overflow-hidden"
+    >
     <Sidebar collapsible="icon">
-      <SidebarHeader 
+      <SidebarHeader
         style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
         className="h-14 justify-center p-0 px-2 cursor-default"
       >
@@ -129,10 +154,17 @@ export function AppSidebar({ activeItem, setActiveItem, user }: AppSidebarProps)
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    tooltip={item.title} 
+              {mainMenuItems.map((item, index) => (
+                <motion.div
+                  key={item.title}
+                  custom={index}
+                  initial="hidden"
+                  animate="visible"
+                  variants={menuItemVariants}
+                >
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip={item.title}
                     isActive={activeItem === item.title}
                     onClick={() => setActiveItem(item.title)}
                   >
@@ -140,6 +172,7 @@ export function AppSidebar({ activeItem, setActiveItem, user }: AppSidebarProps)
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                </motion.div>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -188,5 +221,6 @@ export function AppSidebar({ activeItem, setActiveItem, user }: AppSidebarProps)
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
+    </motion.aside>
   );
 }

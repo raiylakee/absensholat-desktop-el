@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import {
   BookOpen,
   Calendar,
@@ -59,6 +60,24 @@ const guruMenuItems = [
   },
 ];
 
+const sidebarVariants = {
+  hidden: { x: -280, opacity: 0 },
+  visible: {
+    x: 0,
+    opacity: 1,
+    transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] as const },
+  },
+} as const;
+
+const menuItemVariants = {
+  hidden: { x: -20, opacity: 0 },
+  visible: (i: number) => ({
+    x: 0,
+    opacity: 1,
+    transition: { delay: 0.05 * i, duration: 0.3, ease: [0.25, 0.1, 0.25, 1] as const },
+  }),
+};
+
 interface GuruSidebarProps {
   activeItem: string;
   setActiveItem: (item: string) => void;
@@ -84,6 +103,12 @@ export function GuruSidebar({ activeItem, setActiveItem, user }: GuruSidebarProp
   };
 
   return (
+    <motion.aside
+      initial="hidden"
+      animate="visible"
+      variants={sidebarVariants}
+      className="flex-shrink-0 overflow-hidden"
+    >
     <Sidebar collapsible="icon">
       <SidebarHeader 
         style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
@@ -107,8 +132,15 @@ export function GuruSidebar({ activeItem, setActiveItem, user }: GuruSidebarProp
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {guruMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
+              {guruMenuItems.map((item, index) => (
+                <motion.div
+                  key={item.title}
+                  custom={index}
+                  initial="hidden"
+                  animate="visible"
+                  variants={menuItemVariants}
+                >
+                <SidebarMenuItem>
                   <SidebarMenuButton 
                     tooltip={item.title} 
                     isActive={activeItem === item.title}
@@ -118,6 +150,7 @@ export function GuruSidebar({ activeItem, setActiveItem, user }: GuruSidebarProp
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                </motion.div>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -167,5 +200,6 @@ export function GuruSidebar({ activeItem, setActiveItem, user }: GuruSidebarProp
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
+    </motion.aside>
   );
 }

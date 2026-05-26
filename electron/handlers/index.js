@@ -71,6 +71,8 @@ const INVALIDATION_MAP = {
   "/attendance": ["/analytics/", "/attendance/"],
   "/prayer-schedules": ["/prayer-schedules", "/prayer-times"],
   "/prayer-times": ["/prayer-times", "/prayer-schedules"],
+  "/prayer-types": ["/prayer-types", "/prayer-times", "/prayer-schedules"],
+  "/prayer-types": ["/prayer-types", "/prayer-times", "/prayer-schedules"],
   "/jurusan": ["/jurusan", "/dhuha-schedules"],
   "/pengajuan-izin": ["/pengajuan-izin"],
   "/admin/management/kelas": ["/admin/management/kelas", "/kelas", "/admin/management/guru", "/admin/management/wali-kelas"],
