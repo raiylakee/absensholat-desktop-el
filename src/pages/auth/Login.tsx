@@ -68,7 +68,7 @@ export default function Login() {
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="space-y-1">
           <CardTitle className="text-xl">Masuk</CardTitle>
-          <CardDescription>Masuk menggunakan pengenal dan kata sandi Anda.</CardDescription>
+          <CardDescription>Masuk menggunakan pengguna dan kata sandi Anda.</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -86,7 +86,7 @@ export default function Login() {
           )}
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="identifier">Pengenal</Label>
+              <Label htmlFor="identifier">Pengguna</Label>
               <Input
                 id="identifier"
                 name="identifier"

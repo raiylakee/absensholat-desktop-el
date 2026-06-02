@@ -1,19 +1,19 @@
 {
   "name": "absensholat-desktop-el",
-  "productName": "Absensholat Desktop",
+  "productName": "Presensi Sholat Desktop",
   "version": "1.1.9",
   "description": "Sistem Absensi Sholat Terpadu - Desktop",
   "main": "electron/main.js",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron . --no-sandbox\"",
+    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && NODE_ENV=development electron . --no-sandbox\"",
     "build": "vite build && electron-builder",
     "start": "vite build && electron . --no-sandbox",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "postinstall": "node -e \"const fs=require('fs'),p=require('path').join(__dirname,'node_modules/electron/path.txt');if(fs.existsSync(p))fs.writeFileSync(p,fs.readFileSync(p,'utf8').trim())\""
+    "postinstall": "node scripts/postinstall-electron.js"
   },
   "build": {
     "appId": "com.absensholat.desktop",
@@ -98,7 +98,7 @@
     "@vitest/coverage-v8": "^3.2.4",
     "concurrently": "^9.1.2",
     "cross-env": "^7.0.3",
-    "electron": "42.1.0",
+    "electron": "^42.1.0",
     "electron-builder": "^25.1.8",
     "fast-check": "^4.8.0",
     "jsdom": "^26.1.0",

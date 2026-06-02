@@ -81,7 +81,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4 }}
               >
-                Absensholat
+                Presensi Sholat
               </motion.h1>
               <motion.p
                 className="text-sm text-muted-foreground font-medium"

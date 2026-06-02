@@ -56,9 +56,11 @@ const normalizeClassName = (rawClass: unknown, major: string | undefined): strin
   const trimmed = rawClass.trim()
   if (!trimmed) return undefined
 
-  // Backend currently returns numeric class codes for some siswa profiles (e.g. "101").
-  // Convert them to user-facing labels instead of exposing raw IDs.
-  if (/^\d{3}$/.test(trimmed)) {
+  // Already formatted (contains letters) — return as-is
+  if (/[a-zA-Z]/.test(trimmed)) return trimmed
+
+  // Numeric class code: first digit = grade (1=X, 2=XI, 3=XII), rest = class part
+  if (/^\d{2,4}$/.test(trimmed)) {
     const grade = gradeCodeToLabel(trimmed[0])
     const number = String(Number(trimmed.slice(1)))
     if (grade && number !== "0") {

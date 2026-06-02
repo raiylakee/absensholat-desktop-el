@@ -103,10 +103,10 @@ export function SiswaSidebar({ activeItem, setActiveItem, user }: SiswaSidebarPr
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="pointer-events-none!">
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden shrink-0 bg-primary/10">
-                <img src={logoSholat02} alt="Absensholat" className="size-5 object-contain" />
+                <img src={logoSholat02} alt="Presensi Sholat" className="size-5 object-contain" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none overflow-hidden">
-                <span className="font-semibold text-sidebar-foreground truncate">Absensholat</span>
+                <span className="font-semibold text-sidebar-foreground truncate">Presensi Sholat</span>
                 <span className="text-[10px] text-sidebar-foreground/70 truncate italic">Portal Siswa</span>
               </div>
             </SidebarMenuButton>

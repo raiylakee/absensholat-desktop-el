@@ -132,7 +132,7 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold tracking-tight text-primary">Overview Hari Ini</h2>
+        <h2 className="text-xl font-bold tracking-tight text-primary">Ringkasan Hari Ini</h2>
         <Button variant="ghost" size="sm" onClick={fetchDashboardData} className="gap-2">
           <RefreshCw className="size-4" />
           Segarkan
