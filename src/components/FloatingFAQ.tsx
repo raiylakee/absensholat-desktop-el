@@ -17,7 +17,7 @@ const FAQ_DATA: FAQItem[] = [
   },
   {
     question: "Apa yang harus saya lakukan jika lupa kata sandi?",
-    answer: "Klik 'Lupa kata sandi?' di halaman login. Masukkan NIS dan email Anda untuk menerima kode OTP, lalu ikuti langkah-langkah untuk mengatur ulang kata sandi."
+    answer: "Klik 'Lupa kata sandi?' di halaman masuk. Masukkan NIS dan email Anda untuk menerima kode OTP, lalu ikuti langkah-langkah untuk mengatur ulang kata sandi."
   },
   {
     question: "Bagaimana cara mengajukan izin?",

@@ -739,7 +739,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
       <Dialog open={isDownloadDialogOpen} onOpenChange={setIsDownloadDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Download Laporan Absensi</DialogTitle>
+            <DialogTitle>Unduh Laporan Absensi</DialogTitle>
             <DialogDescription>
               Konfigurasi pengaturan laporan sebelum mengunduh.
             </DialogDescription>

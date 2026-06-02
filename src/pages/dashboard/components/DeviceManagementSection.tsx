@@ -147,7 +147,7 @@ export function DeviceManagementSection() {
           </CardHeader>
           <CardContent>
             {requests.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">Tidak ada pengajuan pending</p>
+              <p className="text-center text-muted-foreground py-8">Tidak ada pengajuan tertunda</p>
             ) : (
               <div className="space-y-3">
                 {requests.map(r => (

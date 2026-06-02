@@ -47,7 +47,7 @@ export function SiswaProfile({ user }: { user?: UserProfileData }) {
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword) { notify("Semua field wajib diisi", "error"); return }
-    if (newPassword !== confirmPassword) { notify("Konfirmasi password tidak cocok", "error"); return }
+    if (newPassword !== confirmPassword) { notify("Konfirmasi kata sandi tidak cocok", "error"); return }
     setPwLoading(true)
     try {
       await window.electronAPI.changePassword({ currentPassword, newPassword })

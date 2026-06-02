@@ -163,7 +163,7 @@ export function KelolaGuruSection() {
   }
 
   const handleCreate = async () => {
-    if (!formNama || !formEmail || !formPassword) { notify("Nama, email, dan password wajib diisi", "error"); return }
+    if (!formNama || !formEmail || !formPassword) { notify("Nama, email, dan kata sandi wajib diisi", "error"); return }
     setIsSaving(true)
     try {
       await window.electronAPI.createGuru({ body: { nama: formNama, email: formEmail, password: formPassword, nip: formNip || undefined } })
@@ -407,7 +407,7 @@ export function KelolaGuruSection() {
 
                     <div className="flex items-center gap-1 pt-1 border-t">
                       <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => openEdit(guru)}>
-                        <Pencil className="mr-1 size-3" /> Edit
+                        <Pencil className="mr-1 size-3" /> Ubah
                       </Button>
                       {guru.id_kelas_wali ? (
                         <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-yellow-600" onClick={() => openRemoveWali(guru)}>
@@ -522,7 +522,7 @@ export function KelolaGuruSection() {
       <Dialog open={editOpen} onOpenChange={(o) => { setEditOpen(o) }}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Edit Guru</DialogTitle>
+            <DialogTitle>Ubah Data Guru</DialogTitle>
             <DialogDescription>Perbarui data guru.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">

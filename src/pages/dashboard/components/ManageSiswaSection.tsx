@@ -184,7 +184,7 @@ export function ManageSiswaSection() {
           kelas: `${cols[colIdx["tingkatan"]]?.trim()} ${cols[colIdx["jurusan"]]?.trim()} ${cols[colIdx["part"]]?.trim()}`,
         }
       }).filter((r: { nis: string; nama_siswa: string }) => r.nis && r.nama_siswa)
-      setImportProgressStep(`Ditemukan ${rows.length} siswa, menyiapkan preview...`)
+      setImportProgressStep(`Ditemukan ${rows.length} siswa, menyiapkan pratinjau...`)
       setImportProgressPct(90)
       setImportPreview(rows)
       setImportSelected(new Set(rows.map((_: unknown, i: number) => i)))
@@ -223,12 +223,12 @@ export function ManageSiswaSection() {
       setImportResult(res?.data || res)
       setImportPreview([])
       setImportProgressPct(100)
-      setImportProgressStep("Import selesai.")
-      notify(res?.message || "Import selesai", "success")
+      setImportProgressStep("Impor selesai.")
+      notify(res?.message || "Impor selesai", "success")
       fetchStudents()
       fetchFilters()
     } catch (e: any) {
-      notify(e || "Import gagal", "error")
+      notify(e || "Impor gagal", "error")
     } finally {
       setIsImporting(false)
     }
@@ -994,7 +994,7 @@ export function ManageSiswaSection() {
       <Dialog open={Boolean(editingStudent) || addingStudent} onOpenChange={(open) => !open && (setEditingStudent(null), setAddingStudent(false))}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{addingStudent ? "Tambah Siswa Baru" : "Edit / Mutasi Siswa"}</DialogTitle>
+            <DialogTitle>{addingStudent ? "Tambah Siswa Baru" : "Ubah / Mutasi Siswa"}</DialogTitle>
             <DialogDescription>
               {addingStudent ? "Tambahkan data siswa ke dalam sistem." : "Perbarui data atau mutasi siswa ini."}
             </DialogDescription>
@@ -1200,11 +1200,11 @@ export function ManageSiswaSection() {
       <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
         <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
-            <DialogTitle>{importResult ? "Hasil Import" : "Preview Import Siswa"}</DialogTitle>
+            <DialogTitle>{importResult ? "Hasil Impor" : "Pratinjau Impor Siswa"}</DialogTitle>
             <DialogDescription>
               {importResult
-                ? "Ringkasan proses import siswa."
-                : `${importPreview.length} siswa ditemukan, ${importSelected.size} dipilih untuk import.`}
+                ? "Ringkasan proses impor siswa."
+                : `${importPreview.length} siswa ditemukan, ${importSelected.size} dipilih untuk diimpor.`}
             </DialogDescription>
           </DialogHeader>
 

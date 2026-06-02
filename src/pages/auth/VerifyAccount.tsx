@@ -21,7 +21,7 @@ export default function VerifyAccount() {
     setError(null)
 
     if (newPassword && newPassword !== confirmPassword) {
-      setError("Konfirmasi password tidak cocok")
+      setError("Konfirmasi kata sandi tidak cocok")
       return
     }
 
@@ -55,7 +55,7 @@ export default function VerifyAccount() {
           </div>
           <CardTitle className="text-xl">Verifikasi Akun</CardTitle>
           <CardDescription>
-            Ini adalah login pertama Anda. Silakan konfirmasi akun dan atur password baru (opsional).
+            Ini adalah masuk pertama Anda. Silakan konfirmasi akun dan atur kata sandi baru (opsional).
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -66,7 +66,7 @@ export default function VerifyAccount() {
           )}
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="new-password">Password Baru (Opsional)</Label>
+              <Label htmlFor="new-password">Kata Sandi Baru (Opsional)</Label>
               <PasswordInput
                 id="new-password"
                 placeholder="Kosongkan jika tidak ingin mengubah"
@@ -76,10 +76,10 @@ export default function VerifyAccount() {
             </div>
             {newPassword && (
               <div className="space-y-2">
-                <Label htmlFor="confirm-password">Konfirmasi Password</Label>
+                <Label htmlFor="confirm-password">Konfirmasi Kata Sandi</Label>
                 <PasswordInput
                   id="confirm-password"
-                  placeholder="Ulangi password baru"
+                  placeholder="Ulangi kata sandi baru"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />

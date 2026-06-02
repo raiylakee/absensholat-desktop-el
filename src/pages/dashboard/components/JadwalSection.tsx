@@ -484,7 +484,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
       <Dialog open={editingPrayerIndex !== null} onOpenChange={(open) => !open && closePrayerEdit()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Jadwal {prayerDraft?.nama ?? ""}</DialogTitle>
+            <DialogTitle>Ubah Jadwal {prayerDraft?.nama ?? ""}</DialogTitle>
             <DialogDescription>Ubah data jadwal sholat untuk kartu ini.</DialogDescription>
           </DialogHeader>
           {prayerDraft && (

@@ -75,7 +75,7 @@ export default function ResetPassword() {
     } catch (err: any) {
       setDialog({
         open: true,
-        title: "Gagal reset password",
+        title: "Gagal mengatur ulang kata sandi",
         description: handleApiError(err),
         variant: "destructive",
       })
