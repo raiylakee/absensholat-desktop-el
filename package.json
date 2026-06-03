@@ -1,7 +1,7 @@
 {
   "name": "absensholat-desktop-el",
   "productName": "Presensi Sholat Desktop",
-  "version": "1.1.9",
+  "version": "1.2.0",
   "description": "Sistem Absensi Sholat Terpadu - Desktop",
   "main": "electron/main.js",
   "private": true,
