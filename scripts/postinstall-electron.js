@@ -18,11 +18,22 @@ const frameworkPath = path.join(
 );
 
 // Run the standard electron install
+let installFailed = false;
 try {
   execSync(`node "${installScript}"`, { stdio: 'inherit' });
-} catch {
-  // install.js may exit non-zero if extraction fails, continue to fix
+} catch (err) {
+  installFailed = true;
 }
+
+if (process.platform !== 'darwin') {
+  if (installFailed) {
+    console.error('Electron installation failed.');
+    process.exit(1);
+  }
+  console.log('Non-macOS platform detected, skipping macOS framework fixes.');
+  process.exit(0);
+}
+
 
 // Check if the framework binary was properly extracted (should be >100MB)
 if (fs.existsSync(frameworkPath)) {
