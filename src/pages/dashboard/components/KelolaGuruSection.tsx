@@ -459,12 +459,31 @@ export function KelolaGuruSection() {
                 <Card key={item.id_wali} className="overflow-hidden hover:border-primary/30 transition-colors">
                   <div className="p-4 space-y-3">
                     <div className="flex items-start justify-between">
-                      <div>
-                        <Badge variant="secondary" className="text-xs font-semibold mb-2">{item.kelas_label}</Badge>
-                        <h3 className="font-semibold text-sm">{item.nama_guru}</h3>
-                        {item.nip && <p className="text-xs text-muted-foreground">NIP: {item.nip}</p>}
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm">
+                          {item.nama_guru.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-sm truncate">{item.nama_guru}</h3>
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                            <span className="truncate text-muted-foreground">Wali Kelas</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="secondary" className="text-xs">
+                        {item.kelas_label}
+                      </Badge>
+                      {item.nip && (
+                        <Badge variant="outline" className="text-xs font-normal">
+                          <CreditCard className="mr-1 size-3" />
+                          {item.nip}
+                        </Badge>
+                      )}
+                    </div>
+
                     <div className="flex items-center justify-between pt-1 border-t">
                       <span className="text-xs text-muted-foreground">
                         Sejak {item.berlaku_mulai ? new Date(item.berlaku_mulai).toLocaleDateString("id-ID") : "-"}

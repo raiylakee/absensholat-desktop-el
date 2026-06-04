@@ -1,0 +1,109 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam roundcorner 8
+skinparam shadowing false
+skinparam handwritten true
+
+skinparam actor {
+    BorderColor #2C3E50
+    BackgroundColor #ECF0F1
+    FontName "Segoe UI"
+    FontSize 13
+}
+
+skinparam usecase {
+    BorderColor #34495E
+    BackgroundColor #FAFAFA
+    FontName "Segoe UI"
+    FontSize 12
+    ArrowColor #2980B9
+}
+
+actor "Siswa" as siswa
+actor "Guru / Wali Kelas" as guru
+actor "Admin" as admin
+
+rectangle "Portal Absen Sholat Desktop" {
+    ' Auth & Account Management
+    usecase "Mendaftar Akun" as UC_Reg
+    usecase "Masuk Log (Login)" as UC_Login
+    usecase "Lupa/Reset Kata Sandi" as UC_ResetPW
+    usecase "Mengubah Pengaturan Profil\n(Password, Email)" as UC_UpdateProfile
+    usecase "Verifikasi OTP" as UC_VerifyOTP
+    usecase "Verifikasi Akun" as UC_VerifyAcc
+    
+    ' Attendance Tracking (Presensi)
+    usecase "Generate Token QR Code" as UC_GenQR
+    usecase "Generate Kode Manual" as UC_GenCode
+    usecase "Mencatat Presensi via QR Code" as UC_ScanQR
+    usecase "Mencatat Presensi via Kode Manual" as UC_InputCode
+    usecase "Melihat Riwayat Presensi" as UC_ViewHistory
+    usecase "Ekspor Laporan Presensi" as UC_Export
+    usecase "Verifikasi Hardware ID Perangkat" as UC_VerifyDevice
+    
+    ' Absence & Excuse Management (Izin)
+    usecase "Mengajukan Izin / Sakit" as UC_SubIzin
+    usecase "Meninjau Pengajuan Izin" as UC_RevIzin
+    usecase "Menambahkan Catatan Penolakan" as UC_RejIzin
+    
+    ' Hardware Device Management
+    usecase "Mendaftarkan Perangkat Hardware" as UC_RegDevice
+    usecase "Mengajukan Ganti Perangkat" as UC_ReqDeviceChange
+    usecase "Meninjau Pengajuan Ganti Perangkat" as UC_RevDeviceChange
+    usecase "Melepas Perangkat Terdaftar (Unbind)" as UC_UnbindDevice
+    
+    ' Administrative Setup
+    usecase "Mengelola Data Siswa\n(CRUD, Import CSV/JSON)" as UC_ManageSiswa
+    usecase "Menjalankan Kenaikan Kelas Tahunan" as UC_Rollover
+    usecase "Mengelola Data Guru & Wali Kelas" as UC_ManageGuru
+    usecase "Mengelola Data Kelas & Jurusan" as UC_ManageClass
+    usecase "Mengatur Jadwal Sholat & Dhuha" as UC_ManageSch
+}
+
+' Siswa relationships
+siswa --> UC_Reg
+siswa --> UC_Login
+siswa --> UC_ResetPW
+siswa --> UC_VerifyAcc
+siswa --> UC_UpdateProfile
+siswa --> UC_ScanQR
+siswa --> UC_InputCode
+siswa --> UC_SubIzin
+siswa --> UC_ViewHistory
+siswa --> UC_RegDevice
+siswa --> UC_ReqDeviceChange
+siswa --> UC_UnbindDevice
+
+' Guru relationships
+guru --> UC_Login
+guru --> UC_ResetPW
+guru --> UC_VerifyAcc
+guru --> UC_GenCode
+guru --> UC_ViewHistory
+guru --> UC_RevIzin
+guru --> UC_Export
+
+' Admin relationships
+admin --> UC_Login
+admin --> UC_ResetPW
+admin --> UC_VerifyAcc
+admin --> UC_GenQR
+admin --> UC_GenCode
+admin --> UC_ViewHistory
+admin --> UC_Export
+admin --> UC_RevIzin
+admin --> UC_RevDeviceChange
+admin --> UC_UnbindDevice
+admin --> UC_ManageSiswa
+admin --> UC_Rollover
+admin --> UC_ManageGuru
+admin --> UC_ManageClass
+admin --> UC_ManageSch
+
+' Include and Extend relationships
+UC_UpdateProfile ..> UC_VerifyOTP : <<include>>
+UC_ScanQR ..> UC_VerifyDevice : <<include>>
+UC_InputCode ..> UC_VerifyDevice : <<include>>
+UC_RejIzin ..> UC_RevIzin : <<extend>>
+@enduml

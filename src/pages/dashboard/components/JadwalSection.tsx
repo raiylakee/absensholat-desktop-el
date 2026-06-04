@@ -353,12 +353,24 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
   const confirmDeletePrayer = async () => {
     if (!deletePrayerTarget) return
     try {
-      const related = rawSchedules.find(s => s.waktu_sholat?.jenis_sholat?.nama_jenis === deletePrayerTarget.nama)
-      const idJenis = related?.waktu_sholat?.jenis_sholat?.id_jenis
-      if (idJenis) {
-        await window.electronAPI.deletePrayerType({ id: idJenis })
+      const relatedSchedules = rawSchedules.filter(
+        (s) => s.waktu_sholat?.jenis_sholat?.nama_jenis === deletePrayerTarget.nama
+      )
+      if (relatedSchedules.length > 0) {
+        for (const s of relatedSchedules) {
+          await window.electronAPI.deletePrayerSchedule({ id_jadwal: s.id_jadwal })
+        }
         notify(`Jadwal ${deletePrayerTarget.nama} berhasil dihapus`, "success")
         await fetchSchedules()
+      } else {
+        const typeObj = prayerTypesList.find((t) => t.nama_jenis === deletePrayerTarget.nama)
+        if (typeObj) {
+          await window.electronAPI.deletePrayerType({ id: typeObj.id_jenis })
+          notify(`Jadwal ${deletePrayerTarget.nama} berhasil dihapus`, "success")
+          await fetchSchedules()
+        } else {
+          notify("Data jadwal tidak ditemukan", "error")
+        }
       }
     } catch (err: any) {
       notify(handleApiError(err) || "Gagal menghapus jadwal", "error")

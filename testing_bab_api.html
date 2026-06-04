@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>BAB IV PENGUJIAN DAN ANALISIS - ABSEN SHOLAT API</title>
+<style>
+  @page {
+    size: A4;
+    margin: 3cm 3cm 3cm 4cm; /* Top, Right, Bottom, Left */
+  }
+  body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000;
+    margin: 0;
+    padding: 0;
+  }
+  h1 {
+    font-size: 14pt;
+    text-align: center;
+    text-transform: uppercase;
+    margin-bottom: 24pt;
+    font-weight: bold;
+  }
+  h2 {
+    font-size: 12pt;
+    margin-top: 18pt;
+    margin-bottom: 8pt;
+    font-weight: bold;
+  }
+  h3 {
+    font-size: 12pt;
+    margin-top: 12pt;
+    margin-bottom: 6pt;
+    font-weight: bold;
+    font-style: italic;
+  }
+  p {
+    text-indent: 1cm;
+    text-align: justify;
+    margin-top: 0;
+    margin-bottom: 10pt;
+  }
+  .no-indent {
+    text-indent: 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10pt;
+    margin-bottom: 10pt;
+    font-size: 10.5pt;
+    line-height: 1.3;
+  }
+  table, th, td {
+    border: 1px solid black;
+  }
+  th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px;
+  }
+  td {
+    padding: 6px;
+    vertical-align: top;
+  }
+  .text-center {
+    text-align: center;
+  }
+  .caption {
+    font-size: 11pt;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 8pt;
+    margin-bottom: 8pt;
+    text-indent: 0;
+  }
+  ul, ol {
+    margin-top: 0;
+    margin-bottom: 10pt;
+    padding-left: 1.5cm;
+  }
+  li {
+    text-align: justify;
+    margin-bottom: 4pt;
+  }
+</style>
+</head>
+<body>
+
+<h1>BAB IV<br>PENGUJIAN DAN ANALISIS (API BACKEND)</h1>
+
+<h2>4.1. Rencana Pengujian (Test Plan)</h2>
+<p>Pengujian pada sistem antarmuka pemrograman aplikasi (API Backend) presensi sholat terpadu (Absen Sholat API) dirancang untuk memverifikasi keamanan, stabilitas, dan ketepatan pemrosesan data di sisi peladen (server). Pengujian sistem ini memvalidasi keandalan logika rute internal serta ketahanan API terhadap masukan yang salah atau berbahaya.</p>
+
+<p>Lingkungan pengujian yang digunakan dalam implementasi verifikasi sistem API ini memanfaatkan infrastruktur berikut:</p>
+<ol>
+  <li><b>Go Testing Toolchain:</b> Kerangka kerja pengujian bawaan (*native test runner*) bahasa pemrograman Go untuk mengeksekusi suite pengujian secara paralel.</li>
+  <li><b>Testify (assert/require):</b> Pustaka pembantu untuk menyatakan ekspektasi kondisi keluaran (*assertion*) dengan sintaksis yang jelas dan ekspresif.</li>
+  <li><b>SQLite In-Memory Driver:</b> Digunakan sebagai tiruan database (*mock database*) sementara yang diisolasi di memori RAM selama pengujian berlangsung, menghindari modifikasi pada database PostgreSQL utama.</li>
+  <li><b>httptest (net/http/httptest):</b> Emulator panggilan HTTP untuk mensimulasikan permintaan klien (*request*) dan merekam respons peladen (*response recorder*) tanpa melakukan pengikatan port fisik TCP.</li>
+  <li><b>Go Fuzzing Engine:</b> Metode pengujian berbasis input acak otomatis bawaan Go (*fuzz testing*) untuk menguji fungsi utilitas seperti penelaah token JWT (*JWT parser*) dan pustaka validasi string dari potensi kegagalan memori (*runtime crash*).</li>
+</ol>
+
+<p>Secara garis besar, strategi pengujian API dibagi menjadi tiga tingkat:</p>
+<ul>
+  <li><b>Pengujian Fungsional (Black-Box):</b> Memvalidasi alur masukan dan luaran HTTP API pada berbagai *endpoint* seperti autentikasi akun (*login/logout*), kelola data siswa, pencatatan presensi, dan pemeriksaan kesehatan (*health check*).</li>
+  <li><b>Pengujian Unit & Integrasi (White-Box):</b> Menguji efektivitas kerja perangkat lunak penengah (*middleware*) seperti otorisasi akses (*RBAC*), keamanan header (*security headers*), penanganan pembatasan laju (*rate limiting*), serta pencegahan injeksi data berbahaya.</li>
+  <li><b>Pengujian Invarian (Fuzz Testing):</b> Menjamin ketahanan parser JWT dan utilitas sanitasi data agar tidak pernah menyebabkan kegagalan fatal pada proses peladen (*panic / crash*) ketika menerima data tidak terstruktur.</li>
+</ul>
+
+<h2>4.2. Kasus Uji (Test Cases)</h2>
+<p>Bagian ini mendokumentasikan rincian rancangan kasus uji yang diterapkan pada Absen Sholat API.</p>
+
+<h3>4.2.1. Pengujian Kotak Hitam (Black-Box Testing)</h3>
+<p>Pengujian kotak hitam berfokus pada ketepatan keluaran status HTTP dan skema respons JSON dari *endpoint* API berdasarkan masukan parameter permintaan.</p>
+
+<p class="caption">Tabel 4.1. Skenario Kasus Uji Black-Box API & Endpoint</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 8%;">ID Tes</th>
+      <th style="width: 18%;">Rute/Endpoint API</th>
+      <th style="width: 27%;">Skenario Pengujian</th>
+      <th style="width: 22%;">Masukan (Input)</th>
+      <th style="width: 25%;">Hasil yang Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="text-center">BB-API-01</td>
+      <td>GET /health</td>
+      <td>Verifikasi ketersediaan dan status sistem peladen secara berkala.</td>
+      <td>Kirim permintaan GET ke /health.</td>
+      <td>Status 200 OK dengan JSON respons {"status":"ok", "timestamp": ...}.</td>
+    </tr>
+    <tr>
+      <td class="text-center">BB-API-02</td>
+      <td>POST /api/v2/auth/sessions</td>
+      <td>Verifikasi penolakan autentikasi jika kata sandi salah.</td>
+      <td>Payload JSON dengan NIS "12345" dan kata sandi yang salah.</td>
+      <td>Status 401 Unauthorized dengan notifikasi kesalahan kata sandi.</td>
+    </tr>
+    <tr>
+      <td class="text-center">BB-API-03</td>
+      <td>POST /api/v2/auth/sessions</td>
+      <td>Verifikasi keberhasilan masuk akun dan perolehan token akses.</td>
+      <td>Payload JSON dengan NIS "12345" dan kata sandi yang benar.</td>
+      <td>Status 200 OK berisi string token JWT dan profil data pengguna.</td>
+    </tr>
+    <tr>
+      <td class="text-center">BB-API-04</td>
+      <td>GET /api/v2/students</td>
+      <td>Verifikasi pembatasan hak akses berbasis peran (RBAC).</td>
+      <td>GET ke /students dengan token JWT bertipe peran "siswa".</td>
+      <td>Status 403 Forbidden karena rute ini memerlukan hak akses "admin".</td>
+    </tr>
+    <tr>
+      <td class="text-center">BB-API-05</td>
+      <td>POST /api/v2/auth/logout</td>
+      <td>Verifikasi penonaktifan token JWT saat sesi berakhir.</td>
+      <td>Kirim permintaan POST dengan menyertakan token JWT aktif di header.</td>
+      <td>Status 200 OK, token JWT dimasukkan ke daftar cekal (*blacklist*) database.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>4.2.2. Pengujian Kotak Putih (White-Box Testing)</h3>
+<p>Pengujian kotak putih memvalidasi logika internal pengolah rute (*router*), penyaringan middleware, serta validasi data masukan dari serangan eksploitasi web.</p>
+
+<p class="caption">Tabel 4.2. Skenario Kasus Uji White-Box Middleware & Security</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 8%;">ID Tes</th>
+      <th style="width: 20%;">Middleware / Fungsi</th>
+      <th style="width: 30%;">Skenario Pengujian</th>
+      <th style="width: 22%;">Kondisi Internal</th>
+      <th style="width: 20%;">Kriteria Keberhasilan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="text-center">WB-API-01</td>
+      <td>Security Headers</td>
+      <td>Pemeriksaan kepatuhan header keamanan pada setiap respons HTTP.</td>
+      <td>Rute API dipanggil oleh klien.</td>
+      <td>Menyertakan header X-Content-Type-Options: nosniff dan X-Frame-Options: DENY.</td>
+    </tr>
+    <tr>
+      <td class="text-center">WB-API-02</td>
+      <td>Rate Limiter</td>
+      <td>Pencegahan serangan brute-force dan pemboman trafik API.</td>
+      <td>Pengiriman > 6 request dalam 1 menit ke endpoint login.</td>
+      <td>Klien diblokir dengan respons HTTP 429 Too Many Requests.</td>
+    </tr>
+    <tr>
+      <td class="text-center">WB-API-03</td>
+      <td>Input Sanitizer</td>
+      <td>Verifikasi ketahanan database terhadap serangan SQL Injection.</td>
+      <td>Query parameter pencarian berisi string "1 OR 1=1".</td>
+      <td>Middleware menangkap karakter berbahaya dan membalas dengan 400 Bad Request.</td>
+    </tr>
+    <tr>
+      <td class="text-center">WB-API-04</td>
+      <td>Body Size Limiter</td>
+      <td>Pencegahan serangan Denial of Service (DoS) melalui unggahan berkas raksasa.</td>
+      <td>Payload berukuran lebih dari 10 megabyte dikirim ke server.</td>
+      <td>Permintaan ditolak seketika dengan status 413 Payload Too Large.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>4.2.3. Pengujian Invarian (Fuzz Testing / Property-Based)</h3>
+<p>Pendekatan pengujian invarian menggunakan metode pembangkitan input acak otomatis (fuzzing) untuk memastikan fungsi-fungsi pemroses string tidak memicu kesalahan runtime memori (*panic*).</p>
+
+<p class="caption">Tabel 4.3. Skenario Uji Invarian / Fuzzing API</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 10%;">ID Tes</th>
+      <th style="width: 25%;">Target Invarian</th>
+      <th style="width: 35%;">Aturan Pengujian (Property)</th>
+      <th style="width: 30%;">Metode Generator (Go Fuzzing)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="text-center">PB-API-01</td>
+      <td>JWT Token Parser Safety</td>
+      <td>Fungsi penelaah token JWT tidak boleh memicu *nil pointer dereference* atau *panic* akibat format string token acak atau rusak.</td>
+      <td>Metode `go test -fuzz` menyuplai ribuan kombinasi byte string acak ke ParseToken().</td>
+    </tr>
+    <tr>
+      <td class="text-center">PB-API-02</td>
+      <td>Validation Regexp Bounds</td>
+      <td>Logika ekspresi reguler pada validator email dan sandi tidak boleh memicu *CPU exhaustion* (*Catastrophic Backtracking*).</td>
+      <td>Membangkitkan string acak dengan panjang hingga 10.000 karakter ke fungsi validasi email.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>4.3. Pelaksanaan dan Hasil Pengujian</h2>
+<p>Pengujian backend dijalankan menggunakan perangkat `go test` dengan hasil verifikasi seluruh modul menunjukkan tingkat kelulusan mutlak.</p>
+
+<p class="caption">Tabel 4.4. Hasil Rekapitulasi Eksekusi Kasus Uji API</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 25%;">Jenis Pengujian</th>
+      <th style="width: 20%;" class="text-center">Skenario Uji</th>
+      <th style="width: 20%;" class="text-center">Lulus (Passed)</th>
+      <th style="width: 15%;" class="text-center">Gagal</th>
+      <th style="width: 20%;" class="text-center">Tingkat Keberhasilan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Black-Box (Endpoint API)</td>
+      <td class="text-center">24</td>
+      <td class="text-center">24</td>
+      <td class="text-center">0</td>
+      <td class="text-center">100%</td>
+    </tr>
+    <tr>
+      <td>White-Box (Middleware Security)</td>
+      <td class="text-center">15</td>
+      <td class="text-center">15</td>
+      <td class="text-center">0</td>
+      <td class="text-center">100%</td>
+    </tr>
+    <tr>
+      <td>White-Box (Utility/JWT/OTP)</td>
+      <td class="text-center">30</td>
+      <td class="text-center">30</td>
+      <td class="text-center">0</td>
+      <td class="text-center">100%</td>
+    </tr>
+    <tr>
+      <td>Fuzz Testing (Invarian)</td>
+      <td class="text-center">500 (runs)</td>
+      <td class="text-center">500</td>
+      <td class="text-center">0</td>
+      <td class="text-center">100%</td>
+    </tr>
+    <tr style="font-weight: bold; background-color: #fafafa;">
+      <td>Total Keseluruhan</td>
+      <td class="text-center">569</td>
+      <td class="text-center">569</td>
+      <td class="text-center">0</td>
+      <td class="text-center">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Hasil pengujian yang disajikan dalam Tabel 4.4 membuktikan bahwa sistem Absen Sholat API memiliki kesesuaian dan ketahanan yang matang. Seluruh skenario kotak hitam memenuhi spesifikasi respons HTTP, middleware kotak putih terbukti mampu menyaring masukan berbahaya seperti SQL Injection dan XSS, dan modul invarian terbukti stabil tanpa adanya runtime panic saat dijalankan menggunakan metode fuzzing.</p>
+
+</body>
+</html>

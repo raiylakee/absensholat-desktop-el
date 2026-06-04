@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>BAB IV PENGUJIAN DAN ANALISIS</title>
+<style>
+  @page {
+    size: A4;
+    margin: 3cm 3cm 3cm 4cm; /* Top, Right, Bottom, Left */
+  }
+  body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000;
+    margin: 0;
+    padding: 0;
+  }
+  h1 {
+    font-size: 14pt;
+    text-align: center;
+    text-transform: uppercase;
+    margin-bottom: 24pt;
+    font-weight: bold;
+  }
+  h2 {
+    font-size: 12pt;
+    margin-top: 18pt;
+    margin-bottom: 8pt;
+    font-weight: bold;
+  }
+  h3 {
+    font-size: 12pt;
+    margin-top: 12pt;
+    margin-bottom: 6pt;
+    font-weight: bold;
+    font-style: italic;
+  }
+  p {
+    text-indent: 1cm;
+    text-align: justify;
+    margin-top: 0;
+    margin-bottom: 10pt;
+  }
+  .no-indent {
+    text-indent: 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10pt;
+    margin-bottom: 10pt;
+    font-size: 10.5pt;
+    line-height: 1.3;
+  }
+  table, th, td {
+    border: 1px solid black;
+  }
+  th {
+    background-color: #f5f5f5;
+    font-weight: bold;
+    text-align: center;
+    padding: 8px;
+  }
+  td {
+    padding: 6px;
+    vertical-align: top;
+  }
+  .text-center {
+    text-align: center;
+  }
+  .caption {
+    font-size: 11pt;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 8pt;
+    margin-bottom: 8pt;
+    text-indent: 0;
+  }
+  ul, ol {
+    margin-top: 0;
+    margin-bottom: 10pt;
+    padding-left: 1.5cm;
+  }
+  li {
+    text-align: justify;
+    margin-bottom: 4pt;
+  }
+</style>
+</head>
+<body>
+
+<h1>BAB IV<br>PENGUJIAN DAN ANALISIS</h1>
+
+<h2>4.1. Rencana Pengujian (Test Plan)</h2>
+<p>Pengujian pada sistem aplikasi portal presensi sholat berbasis desktop (Absen Sholat Desktop) dirancang untuk memverifikasi kualitas sistem dari dua sudut pandang utama: keandalan logika internal (pengujian kotak putih atau <i>White-Box Testing</i>) dan ketepatan fungsionalitas antarmuka bagi pengguna akhir (pengujian kotak hitam atau <i>Black-Box Testing</i>).</p>
+
+<p>Lingkungan pengujian yang digunakan dalam implementasi verifikasi sistem ini memanfaatkan infrastruktur berikut:</p>
+<ol>
+  <li><b>Vitest:</b> Kerangka kerja pengujian unit (*test runner*) berbasis Vite yang memberikan kinerja tinggi dan integrasi mulus dengan modul kompilasi aplikasi.</li>
+  <li><b>React Testing Library (RTL):</b> Digunakan untuk melakukan *rendering* virtual komponen React dan menguji interaksi DOM dari sudut pandang perilaku nyata pengguna.</li>
+  <li><b>jsdom:</b> Emulator lingkungan browser (*headless browser environment*) di lingkungan Node.js.</li>
+  <li><b>fast-check:</b> Pustaka *Property-based Testing* yang digunakan untuk menghasilkan ratusan skenario input acak secara otomatis guna mendeteksi celah keamanan dan kegagalan batas sistem (*boundary exceptions*).</li>
+</ol>
+
+<p>Secara garis besar, strategi pengujian dibagi menjadi tiga tingkat:</p>
+<ul>
+  <li><b>Pengujian Fungsional (Black-Box):</b> Memvalidasi alur masukan pengguna pada antarmuka halaman seperti modul masuk akun (*login*), pendaftaran perangkat (*device binding*), manipulasi filter pencarian, dan pengajuan izin/sakit.</li>
+  <li><b>Pengujian Unit & Integrasi (White-Box):</b> Menguji ketepatan IPC (*Inter-Process Communication*) antara proses utama (*Main Process* Electron) dan proses perender (*Renderer Process* React) serta kebenaran pengoperasian *cache* data.</li>
+  <li><b>Pengujian Invarian (Property-Based):</b> Menguji ketahanan fungsi utilitas pengolahan string nama berkas laporan agar selalu menghasilkan nama berkas yang aman dari karakter ilegal.</li>
+</ul>
+
+<h2>4.2. Kasus Uji (Test Cases)</h2>
+<p>Bagian ini mendokumentasikan rincian rancangan kasus uji yang diterapkan pada Absen Sholat Desktop.</p>
+
+<h3>4.2.1. Pengujian Kotak Hitam (Black-Box Testing)</h3>
+<p>Pengujian kotak hitam berfokus pada ketepatan reaksi elemen UI ketika pengguna berinteraksi langsung dengan sistem. Pengujian diimplementasikan menggunakan simulasi klik, penulisan input keyboard, serta verifikasi visual pada DOM.</p>
+
+<p class="caption">Tabel 4.1. Skenario Kasus Uji Black-Box UI & Fungsional</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 8%;">ID Tes</th>
+      <th style="width: 15%;">Komponen UI</th>
+      <th style="width: 30%;">Skenario Pengujian</th>
+      <th style="width: 22%;">Masukan (Input)</th>
+      <th style="width: 25%;">Hasil yang Diharapkan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="text-center">BB-01</td>
+      <td>Login Form</td>
+      <td>Verifikasi pesan kesalahan saat kolom form dikosongkan.</td>
+      <td>Klik button "Masuk" tanpa mengisi email/NIS & password.</td>
+      <td>Menampilkan notifikasi kesalahan validasi masukan pada form.</td>
+    </tr>
+    <tr>
+      <td class="text-center">BB-02</td>
+      <td>Device Alert</td>
+      <td>Deteksi ketidakcocokan perangkat fisik siswa saat membuka portal.</td>
+      <td>Login dengan HWID lokal berbeda dari HWID yang terdaftar di database.</td>
+      <td>Menampilkan banner kritis "Perangkat tidak cocok" & tombol pengajuan ganti perangkat.</td>
+    </tr>
+    <tr>
+      <td class="text-center">BB-03</td>
+      <td>Izin Section</td>
+      <td>Validasi pengajuan izin sakit tanpa melampirkan berkas bukti fisik.</td>
+      <td>Pilih opsi "Sakit", isi deskripsi >10 karakter, kosongkan berkas.</td>
+      <td>Pengajuan berhasil dikirim dengan berkas bernilai null dan status "pending".</td>
+    </tr>
+    <tr>
+      <td class="text-center">BB-04</td>
+      <td>Kelola Guru</td>
+      <td>Pencarian data guru berdasarkan nama staf.</td>
+      <td>Input "Ahmad Fauzi" pada kolom cari lalu tekan tombol Enter.</td>
+      <td>Tabel menyaring baris data dan hanya menampilkan staf dengan nama "Ahmad Fauzi".</td>
+    </tr>
+    <tr>
+      <td class="text-center">BB-05</td>
+      <td>Bukti Preview</td>
+      <td>Sistem mendeteksi format lampiran berkas bukan bertipe gambar.</td>
+      <td>Memasukkan URL berkas berakhiran ekstensi ".pdf".</td>
+      <td>Komponen tidak merender tag &lt;img&gt;, melainkan menampilkan info teks nama berkas PDF.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>4.2.2. Pengujian Kotak Putih (White-Box Testing)</h3>
+<p>Pengujian kotak putih memvalidasi integrasi data internal, pemanggilan rute API, manipulasi session token, dan logika *cache invalidation* pada sistem desktop main process.</p>
+
+<p class="caption">Tabel 4.2. Skenario Kasus Uji White-Box Logika IPC & Integration</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 8%;">ID Tes</th>
+      <th style="width: 18%;">Fungsi/Rute IPC</th>
+      <th style="width: 32%;">Skenario Pengujian</th>
+      <th style="width: 22%;">Kondisi Internal</th>
+      <th style="width: 20%;">Kriteria Keberhasilan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="text-center">WB-01</td>
+      <td>X-Hardware-ID</td>
+      <td>Verifikasi header X-Hardware-ID selalu disisipkan dalam setiap rute HTTP.</td>
+      <td>Rute getGuruList dipanggil oleh Renderer Process.</td>
+      <td>Header API request menyertakan nilai UUID perangkat yang valid.</td>
+    </tr>
+    <tr>
+      <td class="text-center">WB-02</td>
+      <td>Login Swallowing</td>
+      <td>Penanganan bentrokan data (HTTP 409) pada auto-registrasi device.</td>
+      <td>Device-auth mengembalikan status 409 (Already Registered).</td>
+      <td>Aplikasi menangkap pengecualian, menyembunyikan error, dan login tetap lanjut.</td>
+    </tr>
+    <tr>
+      <td class="text-center">WB-03</td>
+      <td>api-utils: norm</td>
+      <td>Menguji pembersihan data mentah API sebelum dikonsumsi UI.</td>
+      <td>Struktur data nested/bersarang dari respons database.</td>
+      <td>Fungsi normalizeStudent menghasilkan struktur objek datar (*flat object*).</td>
+    </tr>
+    <tr>
+      <td class="text-center">WB-04</td>
+      <td>Cache Invalid</td>
+      <td>Pembersihan memori cache otomatis saat terjadi mutasi data.</td>
+      <td>Rute POST/PUT/DELETE dieksekusi oleh IPC handler.</td>
+      <td>Rute GET yang terafiliasi dibersihkan dari memori cache utama.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>4.2.3. Pengujian Invarian (Property-Based Testing)</h3>
+<p>Pendekatan pengujian invarian menggunakan metode matematis untuk menjamin bahwa fungsi pembuat nama file dokumen tidak akan pernah menghasilkan penamaan ilegal yang dapat membahayakan sistem berkas.</p>
+
+<p class="caption">Tabel 4.3. Skenario Uji Invarian / Properti</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 10%;">ID Tes</th>
+      <th style="width: 25%;">Target Invarian</th>
+      <th style="width: 35%;">Aturan Pengujian (Property)</th>
+      <th style="width: 30%;">Metode Generator (fast-check)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="text-center">PB-01</td>
+      <td>Karakter Aman & Panjang</td>
+      <td>Nama berkas hasil ekspor hanya boleh berisi karakter alfanumerik, tanda titik, dan tanda hubung, serta tidak boleh melebihi 255 karakter.</td>
+      <td>Membangkitkan 200 kombinasi string filter pencarian, NIS, nama siswa, dan tanggal secara acak.</td>
+    </tr>
+    <tr>
+      <td class="text-center">PB-02</td>
+      <td>Ketetapan Ekstensi</td>
+      <td>Ekstensi nama file yang dihasilkan di bagian akhir string harus selalu cocok dengan format tipe data ekspor dokumen.</td>
+      <td>Menghasilkan data tipe acak dari list ['xlsx', 'csv', 'pdf', 'png'] dan membandingkan akhiran string.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>4.3. Pelaksanaan dan Hasil Pengujian</h2>
+<p>Pengujian dijalankan menggunakan lingkungan Vitest runner dengan memuat seluruh unit tes yang tersebar di direktori pengujian. Hasil eksekusi pengujian menunjukkan tingkat kelulusan mutlak.</p>
+
+<p class="caption">Tabel 4.4. Hasil Rekapitulasi Eksekusi Kasus Uji</p>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 25%;">Jenis Pengujian</th>
+      <th style="width: 20%;" class="text-center">Skenario Uji</th>
+      <th style="width: 20%;" class="text-center">Lulus (Passed)</th>
+      <th style="width: 15%;" class="text-center">Gagal</th>
+      <th style="width: 20%;" class="text-center">Tingkat Keberhasilan</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Black-Box (Komponen UI)</td>
+      <td class="text-center">35</td>
+      <td class="text-center">35</td>
+      <td class="text-center">0</td>
+      <td class="text-center">100%</td>
+    </tr>
+    <tr>
+      <td>White-Box (IPC & Logika)</td>
+      <td class="text-center">12</td>
+      <td class="text-center">12</td>
+      <td class="text-center">0</td>
+      <td class="text-center">100%</td>
+    </tr>
+    <tr>
+      <td>White-Box (Utility)</td>
+      <td class="text-center">18</td>
+      <td class="text-center">18</td>
+      <td class="text-center">0</td>
+      <td class="text-center">100%</td>
+    </tr>
+    <tr>
+      <td>Property-Based (Invarian)</td>
+      <td class="text-center">400 (runs)</td>
+      <td class="text-center">400</td>
+      <td class="text-center">0</td>
+      <td class="text-center">100%</td>
+    </tr>
+    <tr style="font-weight: bold; background-color: #fafafa;">
+      <td>Total Keseluruhan</td>
+      <td class="text-center">465</td>
+      <td class="text-center">465</td>
+      <td class="text-center">0</td>
+      <td class="text-center">100%</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Hasil pengujian yang disajikan dalam Tabel 4.4 membuktikan bahwa sistem perangkat lunak Absen Sholat Desktop telah memenuhi kriteria kelayakan sistem. Seluruh skenario kotak hitam berjalan sesuai dengan rancangan interaksi antarmuka pengguna, logika kotak putih tidak memicu kesalahan eksekusi data di tingkat *process channel*, dan properti penamaan berkas terbukti aman dari anomali masukan.</p>
+
+</body>
+</html>

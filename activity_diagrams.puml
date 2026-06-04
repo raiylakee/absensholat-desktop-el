@@ -1,0 +1,123 @@
+@startuml attendance_workflow
+title Alur Pencatatan Kehadiran Siswa
+skinparam handwritten true
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ranksep 18
+skinparam nodesep 18
+
+skinparam activity {
+    BorderColor #2C3E50
+    BackgroundColor #FAFAFA
+    FontName "Segoe UI"
+    FontSize 12
+    ArrowColor #2980B9
+}
+
+|Admin / Guru|
+start
+:Generate QR Token / Kode Manual;
+
+|Siswa|
+:Pilih Metode & Input (Scan QR / Kode);
+
+|Sistem|
+:Verifikasi Hardware ID & Token/Kode;
+if (Status Presensi?) then (Valid)
+  :Catat Kehadiran 'Hadir';
+  :Tampilkan Presensi Sukses;
+else (Gagal)
+  :Tampilkan Error (Mismatch / Unregistered);
+endif
+stop
+@enduml
+
+@startuml excuse_workflow
+title Alur Pengajuan dan Verifikasi Izin / Sakit
+skinparam handwritten true
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ranksep 18
+skinparam nodesep 18
+
+skinparam activity {
+    BorderColor #2C3E50
+    BackgroundColor #FAFAFA
+    FontName "Segoe UI"
+    FontSize 12
+    ArrowColor #2980B9
+}
+
+|Siswa|
+start
+:Kirim Form Izin/Sakit & Bukti File;
+
+|Sistem|
+:Simpan Data Pengajuan ('pending');
+
+|Guru / Wali Kelas|
+:Tinjau Detail Pengajuan;
+if (Keputusan?) then (Setujui)
+  :Klik Setujui;
+  |Sistem|
+  :Set Status 'disetujui' & Roster Hadir;
+else (Tolak)
+  |Guru / Wali Kelas|
+  :Klik Tolak & Isi Alasan;
+  |Sistem|
+  :Set Status 'ditolak';
+endif
+
+|Siswa|
+:Melihat Riwayat Status Terbaru;
+stop
+@enduml
+
+@startuml device_workflow
+title Alur Siklus Pendaftaran dan Penggantian Perangkat
+skinparam handwritten true
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ranksep 18
+skinparam nodesep 18
+
+skinparam activity {
+    BorderColor #2C3E50
+    BackgroundColor #FAFAFA
+    FontName "Segoe UI"
+    FontSize 12
+    ArrowColor #2980B9
+}
+
+|Siswa|
+start
+:Login & Cek Perangkat;
+
+|Sistem|
+if (Status Perangkat?) then (Belum Terdaftar)
+  |Siswa|
+  :Klik 'Daftarkan Perangkat';
+  |Sistem|
+  :Simpan Asosiasi Hardware ID;
+else (Terdaftar)
+  if (Hardware ID Cocok?) then (Ya)
+    :Otorisasi & Izinkan Presensi;
+  else (Mismatch)
+    |Siswa|
+    :Ajukan Ganti Perangkat (Isi Alasan);
+    |Admin|
+    :Tinjau Request di Panel;
+    if (Keputusan?) then (Setujui)
+      :Klik Setujui;
+      |Sistem|
+      :Bind Hardware ID Baru;
+    else (Tolak)
+      |Admin|
+      :Klik Tolak;
+      |Sistem|
+      :Blokir Akses Presensi;
+    endif
+  endif
+endif
+stop
+@enduml

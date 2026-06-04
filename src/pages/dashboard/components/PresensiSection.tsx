@@ -59,19 +59,25 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
     return presensiRecords.filter(record => {
       const matchSholat = selectedSholatFilters.length === 0 || selectedSholatFilters.includes(record.jenisSholat as any)
       const matchKelas = selectedPresensiKelasFilters.length === 0 || selectedPresensiKelasFilters.includes(record.kelas)
-      return matchSholat && matchKelas
+      const matchForcedClass = !forcedClass || record.kelas === forcedClass
+      const matchSearch = !presensiSearchQuery || 
+        record.nama.toLowerCase().includes(presensiSearchQuery.toLowerCase()) ||
+        record.nis.toLowerCase().includes(presensiSearchQuery.toLowerCase())
+      return matchSholat && matchKelas && matchForcedClass && matchSearch
     })
-  }, [presensiRecords, selectedSholatFilters, selectedPresensiKelasFilters])
+  }, [presensiRecords, selectedSholatFilters, selectedPresensiKelasFilters, forcedClass, presensiSearchQuery])
 
   const fetchHistory = async () => {
     setIsLoading(true)
     try {
-      const response: any = await window.electronAPI.getAttendanceHistory({
+      const params: Record<string, any> = {
         page: currentPage,
         limit: pageSize,
         search: presensiSearchQuery || undefined,
+        kelas: forcedClass || selectedPresensiKelasFilters[0] || undefined,
         jurusan: selectedPresensiJurusanFilters.length > 0 ? selectedPresensiJurusanFilters[0] : undefined,
-      })
+      }
+      const response: any = await window.electronAPI.getAttendanceHistory(params)
       const wrapper: any = extractData(response);
       const absensi = wrapper?.absensi ?? wrapper ?? [];
       const mapped: PresensiRecord[] = Array.isArray(absensi) ? absensi.map((item: any) => normalizeAttendance(item) as PresensiRecord) : [];
@@ -89,9 +95,9 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
     }
   }
 
+  // Fetch static data on mount
   useEffect(() => {
     isMounted.current = true
-    fetchHistory()
     window.electronAPI.getPrayerTypes().then((res: any) => {
       const types: any[] = extractData(res) ?? []
       if (isMounted.current) setPrayerTypes(types.map(t => t.nama_jenis))
@@ -101,15 +107,24 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
       if (isMounted.current && majors.length > 0) setMajorOptions(majors.map(m => m.nama_jurusan))
     })
     return () => { isMounted.current = false }
-  }, [currentPage])
+  }, [])
 
+  // Debounced fetch when filters/search changes
   useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1)
-    } else {
-      fetchHistory()
-    }
-  }, [presensiSearchQuery, selectedPresensiJurusanFilters])
+    const handler = setTimeout(() => {
+      if (currentPage !== 1) {
+        setCurrentPage(1)
+      } else {
+        fetchHistory()
+      }
+    }, 300)
+    return () => clearTimeout(handler)
+  }, [presensiSearchQuery, selectedPresensiJurusanFilters, selectedPresensiKelasFilters, selectedSholatFilters, forcedClass])
+
+  // Fetch when currentPage changes
+  useEffect(() => {
+    fetchHistory()
+  }, [currentPage])
 
   const handleOpenDetail = async (record: PresensiRecord) => {
     setDetailPresensi(record)
