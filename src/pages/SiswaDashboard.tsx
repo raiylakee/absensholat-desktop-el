@@ -72,7 +72,7 @@ export default function SiswaDashboard() {
           </div>
         </SidebarInset>
       </SidebarProvider>
-      <FloatingFAQ />
+      <FloatingFAQ role="siswa" />
     </TooltipProvider>
   )
 }

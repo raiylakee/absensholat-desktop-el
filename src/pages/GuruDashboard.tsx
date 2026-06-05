@@ -83,7 +83,7 @@ export default function GuruDashboard() {
           </div>
         </SidebarInset>
       </SidebarProvider>
-      <FloatingFAQ />
+      <FloatingFAQ role="guru" />
     </TooltipProvider>
   )
 }

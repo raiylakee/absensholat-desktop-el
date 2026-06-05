@@ -10,51 +10,146 @@ interface FAQItem {
   answer: string
 }
 
-const FAQ_DATA: FAQItem[] = [
+const FAQ_ADMIN: FAQItem[] = [
+  {
+    question: "Bagaimana cara menambahkan siswa baru?",
+    answer: "Buka menu 'Kelola Siswa' lalu klik tombol 'Tambah Siswa'. Isi data siswa seperti NIS, nama, kelas, dan email. Setelah disimpan, siswa akan menerima kredensial untuk login."
+  },
+  {
+    question: "Bagaimana cara membuat kelas baru?",
+    answer: "Masuk ke menu 'Kelola Kelas' dan klik 'Tambah Kelas'. Masukkan nama kelas dan pilih wali kelas dari daftar guru yang tersedia, lalu simpan."
+  },
+  {
+    question: "Bagaimana cara mengelola guru dan wali kelas?",
+    answer: "Buka menu 'Kelola Guru' untuk melihat, menambah, atau mengedit data guru. Anda dapat menetapkan guru sebagai wali kelas dengan memilih kelas yang diampu pada data guru."
+  },
+  {
+    question: "Bagaimana cara membuat QR Code untuk absensi?",
+    answer: "Buka menu 'QR Code', pilih jadwal dan jenis sholat, lalu klik 'Generate QR Code'. QR Code akan ditampilkan dan dapat diproyeksikan atau dicetak untuk dipindai oleh siswa."
+  },
+  {
+    question: "Bagaimana cara melihat laporan presensi?",
+    answer: "Buka menu 'Laporan' dan pilih rentang tanggal serta kelas yang ingin ditampilkan. Anda dapat melihat ringkasan kehadiran dan mengunduh laporan dalam format PDF atau Excel."
+  },
+  {
+    question: "Bagaimana cara menyetujui pengajuan izin?",
+    answer: "Buka menu 'Pengajuan Izin', pilih pengajuan yang ingin ditinjau, lalu klik 'Setujui' atau 'Tolak'. Status pengajuan akan otomatis diperbarui dan siswa akan menerima notifikasi."
+  },
+  {
+    question: "Bagaimana cara mengelola jadwal?",
+    answer: "Buka menu 'Jadwal' untuk menambah atau mengedit waktu sholat. Anda dapat mengatur waktu mulai, waktu akhir, dan batas keterlambatan untuk setiap sesi absensi."
+  },
+  {
+    question: "Apa itu fitur Siswa Belum Terdaftar?",
+    answer: "Fitur ini menampilkan daftar siswa yang telah melakukan scan QR tetapi belum terdaftar di sistem. Anda dapat langsung mendaftarkan mereka melalui menu ini."
+  },
+  {
+    question: "Bagaimana cara mengelola perangkat siswa?",
+    answer: "Buka menu 'Perangkat Siswa' untuk melihat perangkat yang digunakan siswa untuk absensi. Anda dapat membatasi atau menghapus perangkat jika diperlukan."
+  },
+  {
+    question: "Siapa yang harus saya hubungi untuk bantuan teknis?",
+    answer: "Jika Anda mengalami kendala aplikasi, silakan hubungi tim IT Support melalui kontak yang tertera di pengaturan atau hubungi pengembang aplikasi."
+  },
+]
+
+const FAQ_SISWA: FAQItem[] = [
   {
     question: "Bagaimana cara melakukan absensi?",
-    answer: "Anda dapat melakukan absensi dengan memindai kode QR yang ditampilkan di proyektor atau meja piket menggunakan aplikasi mobile, atau melalui fitur absensi manual jika diizinkan oleh admin."
+    answer: "Buka menu 'Pindai QR' dan arahkan kamera ke kode QR yang ditampilkan oleh guru atau admin. Pastikan Anda berada di lokasi sekolah dan waktu absensi masih aktif."
+  },
+  {
+    question: "Kenapa saya tidak bisa melakukan absensi?",
+    answer: "Pastikan kamera Anda berfungsi dengan baik, Anda berada dalam jangkauan lokasi sekolah, dan waktu absensi masih aktif. Jika masalah berlanjut, hubungi admin atau wali kelas."
+  },
+  {
+    question: "Bagaimana cara mengajukan izin?",
+    answer: "Buka menu 'Izin', klik tombol 'Tambah Izin', lalu isi jenis izin (Sakit/Izin), alasan, dan tanggal. Admin atau wali kelas akan memverifikasi pengajuan Anda."
+  },
+  {
+    question: "Bagaimana cara melihat riwayat presensi saya?",
+    answer: "Buka menu 'Beranda' untuk melihat ringkasan kehadiran Anda, termasuk jumlah hadir, izin, sakit, dan alpa. Detail presensi dapat dilihat di bagian ringkasan pada dashboard."
   },
   {
     question: "Apa yang harus saya lakukan jika lupa kata sandi?",
     answer: "Klik 'Lupa kata sandi?' di halaman masuk. Masukkan NIS dan email Anda untuk menerima kode OTP, lalu ikuti langkah-langkah untuk mengatur ulang kata sandi."
   },
   {
-    question: "Bagaimana cara mengajukan izin?",
-    answer: "Buka menu 'Pengajuan Izin' di dashboard Anda, klik tombol 'Tambah Izin', isi detail alasan dan tanggal, lalu kirim. Admin atau Wali Kelas akan memverifikasi pengajuan Anda."
-  },
-  {
-    question: "Kenapa saya tidak bisa melakukan absensi?",
-    answer: "Pastikan Anda berada dalam jangkauan lokasi sekolah dan waktu absensi masih aktif. Jika masalah berlanjut, hubungi Admin untuk pengecekan status akun atau perangkat Anda."
-  },
-  {
     question: "Bagaimana cara mengganti email atau NIS?",
-    answer: "Perubahan data pokok seperti NIS dan Email hanya dapat dilakukan melalui Admin Sekolah. Silakan hubungi bagian TU atau IT Support sekolah."
-  },
-  {
-    question: "Apa fungsi dari fitur Riwayat Presensi?",
-    answer: "Fitur ini memungkinkan Anda untuk melihat rekaman kehadiran Anda di masa lalu, termasuk status kehadiran (Hadir, Izin, Sakit, Alpa) dan waktu Anda melakukan scan."
+    answer: "Perubahan data pokok seperti NIS dan Email hanya dapat dilakukan oleh Admin Sekolah. Silakan hubungi wali kelas atau bagian TU untuk meminta perubahan data."
   },
   {
     question: "Siapa yang harus saya hubungi untuk bantuan teknis?",
-    answer: "Jika Anda mengalami kendala aplikasi, silakan hubungi tim IT Support di ruang IT atau melalui kontak Admin yang tertera di papan pengumuman sekolah."
-  }
+    answer: "Jika Anda mengalami kendala aplikasi, silakan hubungi wali kelas atau admin sekolah untuk mendapatkan bantuan lebih lanjut."
+  },
 ]
 
-export function FloatingFAQ() {
+const FAQ_GURU: FAQItem[] = [
+  {
+    question: "Bagaimana cara melihat presensi kelas yang saya ampu?",
+    answer: "Buka menu 'Presensi' untuk melihat daftar kehadiran siswa di kelas Anda. Data akan otomatis difilter berdasarkan kelas yang Anda ampu sebagai wali kelas."
+  },
+  {
+    question: "Bagaimana cara menyetujui pengajuan izin siswa?",
+    answer: "Buka menu 'Pengajuan Izin', pilih pengajuan dari siswa di kelas Anda, lalu klik 'Setujui' atau 'Tolak'. Status pengajuan akan otomatis diperbarui dan siswa akan menerima notifikasi."
+  },
+  {
+    question: "Bagaimana cara melihat laporan presensi kelas?",
+    answer: "Buka menu 'Laporan' untuk melihat ringkasan kehadiran siswa di kelas Anda. Pilih rentang tanggal yang diinginkan untuk melihat data presensi secara detail."
+  },
+  {
+    question: "Bagaimana cara melihat jadwal?",
+    answer: "Buka menu 'Jadwal' untuk melihat jadwal waktu sholat yang telah ditentukan oleh admin. Sebagai guru, Anda dapat melihat jadwal namun tidak dapat mengubahnya."
+  },
+  {
+    question: "Apa itu fitur Siswa Belum Terdaftar?",
+    answer: "Fitur ini menampilkan daftar siswa di kelas Anda yang telah melakukan scan QR tetapi belum terdaftar di sistem. Anda dapat menghubungi admin untuk mendaftarkan mereka."
+  },
+  {
+    question: "Apa yang harus saya lakukan jika lupa kata sandi?",
+    answer: "Klik 'Lupa kata sandi?' di halaman masuk. Masukkan NIP/NUPTK dan email Anda untuk menerima kode OTP, lalu ikuti langkah-langkah untuk mengatur ulang kata sandi."
+  },
+  {
+    question: "Bagaimana cara mengedit profil saya?",
+    answer: "Buka menu 'Profil' melalui ikon pengguna di sidebar, lalu klik ikon edit untuk memperbarui foto, nama, atau informasi kontak Anda. Perubahan data pokok memerlukan persetujuan admin."
+  },
+  {
+    question: "Siapa yang harus saya hubungi untuk bantuan teknis?",
+    answer: "Jika Anda mengalami kendala aplikasi, silakan hubungi admin sekolah atau tim IT Support untuk mendapatkan bantuan lebih lanjut."
+  },
+]
+
+type FAQRole = "admin" | "siswa" | "guru"
+
+function getFAQData(role: FAQRole): FAQItem[] {
+  switch (role) {
+    case "admin":
+      return FAQ_ADMIN
+    case "siswa":
+      return FAQ_SISWA
+    case "guru":
+      return FAQ_GURU
+    default:
+      return FAQ_SISWA
+  }
+}
+
+export function FloatingFAQ({ role = "siswa" }: { role?: FAQRole }) {
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null)
 
+  const faqData = getFAQData(role)
+
   const filteredFaqs = useMemo(() => {
-    if (!searchQuery.trim()) return FAQ_DATA
+    if (!searchQuery.trim()) return faqData
     const query = searchQuery.toLowerCase()
-    return FAQ_DATA.filter(
+    return faqData.filter(
       item => 
         item.question.toLowerCase().includes(query) || 
         item.answer.toLowerCase().includes(query)
     )
-  }, [searchQuery])
+  }, [searchQuery, faqData])
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">

@@ -82,7 +82,7 @@ export default function Dashboard() {
           </div>
         </SidebarInset>
       </SidebarProvider>
-      <FloatingFAQ />
+      <FloatingFAQ role="admin" />
     </TooltipProvider>
   )
 }
