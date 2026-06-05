@@ -188,7 +188,7 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
 
         <Card className="border shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Jadwal Dhuha per Jurusan</CardTitle>
+            <CardTitle className="text-lg">Jadwal Dhuha per Konsentrasi Keahlian</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 grid-cols-1 sm:grid-cols-2">
             {isDhuhaActive && dhuhaMajors.length > 0 ? (
@@ -209,10 +209,10 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
               <div className="col-span-full flex items-center gap-3 rounded-xl border p-3 shadow-sm bg-gradient-to-br from-slate-500 to-slate-700 text-white border-none">
                 <div className="flex flex-col justify-center">
                   <h3 className="font-bold text-base tracking-tight leading-none">
-                    {isDhuhaActive ? "Tidak ada jurusan" : "Bukan waktu Dhuha"}
+                    {isDhuhaActive ? "Tidak ada Konsentrasi Keahlian" : "Bukan waktu Dhuha"}
                   </h3>
                   <p className="text-[10px] font-medium opacity-90 mt-1 leading-none">
-                    {isDhuhaActive ? "Tidak ada jurusan terjadwal" : "Jadwal Dhuha per jurusan akan muncul saat waktu Dhuha berlangsung"}
+                    {isDhuhaActive ? "Tidak ada Konsentrasi Keahlian terjadwal" : "Jadwal Dhuha per Konsentrasi Keahlian akan muncul saat waktu Dhuha berlangsung"}
                   </p>
                 </div>
               </div>

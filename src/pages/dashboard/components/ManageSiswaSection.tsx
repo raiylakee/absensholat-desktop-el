@@ -86,11 +86,28 @@ export function ManageSiswaSection() {
   const fetchStudents = async () => {
     setIsLoading(true)
     try {
+      let filterTingkatan: number | undefined = undefined
+      let filterJurusan: string | undefined = selectedJurusanFilters.length > 0 ? selectedJurusanFilters[0] : undefined
+      let filterPart: string | undefined = undefined
+
+      if (selectedKelasFilters.length > 0) {
+        const classObj = dynamicClassOptions.find(c => c.label === selectedKelasFilters[0])
+        if (classObj) {
+          filterTingkatan = classObj.tingkatan
+          filterPart = classObj.part
+          if (!filterJurusan) {
+            filterJurusan = classObj.jurusan
+          }
+        }
+      }
+
       const response: any = await window.electronAPI.getStudents({
         page: currentPage,
         page_size: pageSize,
         search: searchQuery || undefined,
-        jurusan: selectedJurusanFilters.length > 0 ? selectedJurusanFilters[0] : undefined,
+        jurusan: filterJurusan,
+        tingkatan: filterTingkatan,
+        part: filterPart,
         jk: selectedGenderFilters.length > 0 ? genderToApi(selectedGenderFilters[0]) : undefined,
         agama: selectedAgamaFilter || undefined,
       })
@@ -269,12 +286,19 @@ export function ManageSiswaSection() {
       }
     }, 300)
     return () => clearTimeout(handler)
-  }, [searchQuery, selectedJurusanFilters, selectedGenderFilters, selectedAgamaFilter])
+  }, [searchQuery, selectedJurusanFilters, selectedKelasFilters, selectedGenderFilters, selectedAgamaFilter])
 
-  const classOptionsForFilter = useMemo(
-    () => Array.from(new Set(dynamicClassOptions.map((c: any) => c.label))),
-    [dynamicClassOptions]
-  )
+  const classOptionsForFilter = useMemo(() => {
+    if (selectedJurusanFilters.length === 0) return []
+    const selectedJurusan = selectedJurusanFilters[0]
+    return Array.from(
+      new Set(
+        dynamicClassOptions
+          .filter((c: any) => c.jurusan === selectedJurusan)
+          .map((c: any) => c.label)
+      )
+    )
+  }, [dynamicClassOptions, selectedJurusanFilters])
 
   const filteredStudents = useMemo(() => {
     if (selectedKelasFilters.length === 0) return students
@@ -283,7 +307,7 @@ export function ManageSiswaSection() {
 
   const activeFilters = useMemo(() => {
     const filters: Record<string, string> = {}
-    if (selectedJurusanFilters.length > 0) filters["Jurusan"] = selectedJurusanFilters.join(", ")
+    if (selectedJurusanFilters.length > 0) filters["Konsentrasi Keahlian"] = selectedJurusanFilters.join(", ")
     if (selectedKelasFilters.length > 0) filters["Kelas"] = selectedKelasFilters.join(", ")
     if (selectedGenderFilters.length > 0) filters["Jenis Kelamin"] = selectedGenderFilters.join(", ")
     if (selectedAgamaFilter) filters["Agama"] = selectedAgamaFilter
@@ -546,7 +570,7 @@ export function ManageSiswaSection() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Jurusan</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Konsentrasi Keahlian</CardTitle>
             <CheckSquare className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -578,39 +602,40 @@ export function ManageSiswaSection() {
                 }
               />
               <DropdownMenuContent className="w-64">
-                <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Jurusan</p>
-                {dynamicMajorOptions.map((major) => {
+                <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Konsentrasi Keahlian</p>
+                 {dynamicMajorOptions.map((major) => {
                   const label = typeof major === 'string' ? major : major.nama_jurusan
                   return (
                     <DropdownMenuCheckboxItem
                       key={`filter-major-${label}`}
                       checked={selectedJurusanFilters.includes(label)}
                       onSelect={(event) => event.preventDefault()}
-                      onCheckedChange={(checked) =>
-                        setSelectedJurusanFilters((prev) =>
-                          checked ? [...prev, label] : prev.filter((item) => item !== label)
-                        )
-                      }
+                      onCheckedChange={(checked) => {
+                        setSelectedJurusanFilters(checked ? [label] : [])
+                        setSelectedKelasFilters([]) // Clear class selection when major changes
+                      }}
                     >
                       {label}
                     </DropdownMenuCheckboxItem>
                   )
                 })}
                 <p className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Kelas</p>
-                {classOptionsForFilter.map((kelas) => (
-                  <DropdownMenuCheckboxItem
-                    key={`filter-class-${kelas}`}
-                    checked={selectedKelasFilters.includes(kelas)}
-                    onSelect={(event) => event.preventDefault()}
-                    onCheckedChange={(checked) =>
-                      setSelectedKelasFilters((prev) =>
-                        checked ? [...prev, kelas] : prev.filter((item) => item !== kelas)
-                      )
-                    }
-                  >
-                    {kelas}
-                  </DropdownMenuCheckboxItem>
-                ))}
+                {selectedJurusanFilters.length === 0 ? (
+                  <p className="px-6 py-2 text-xs italic text-muted-foreground">Pilih konsentrasi keahlian terlebih dahulu</p>
+                ) : (
+                  classOptionsForFilter.map((kelas) => (
+                    <DropdownMenuCheckboxItem
+                      key={`filter-class-${kelas}`}
+                      checked={selectedKelasFilters.includes(kelas)}
+                      onSelect={(event) => event.preventDefault()}
+                      onCheckedChange={(checked) =>
+                        setSelectedKelasFilters(checked ? [kelas] : [])
+                      }
+                    >
+                      {kelas}
+                    </DropdownMenuCheckboxItem>
+                  ))
+                )}
                 <p className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Jenis Kelamin</p>
                 {GENDER_OPTIONS.map((gender) => (
                   <DropdownMenuCheckboxItem
@@ -618,9 +643,7 @@ export function ManageSiswaSection() {
                     checked={selectedGenderFilters.includes(gender)}
                     onSelect={(event) => event.preventDefault()}
                     onCheckedChange={(checked) =>
-                      setSelectedGenderFilters((prev) =>
-                        checked ? [...prev, gender] : prev.filter((item) => item !== gender)
-                      )
+                      setSelectedGenderFilters(checked ? [gender] : [])
                     }
                   >
                     {gender}
@@ -668,7 +691,7 @@ export function ManageSiswaSection() {
                         },
                         dialogFilters: [{ name: 'CSV', extensions: ['csv'] }],
                         fetchData: async () => {
-                          const headers = ['NIS', 'Nama', 'Jenis Kelamin', 'Agama', 'Jurusan', 'Kelas', 'Status Akademik']
+                          const headers = ['NIS', 'Nama', 'Jenis Kelamin', 'Agama', 'Konsentrasi Keahlian', 'Kelas', 'Status Akademik']
                           const rows = filteredStudents.map(s => [
                             s.nis,
                             s.nama,
@@ -760,7 +783,7 @@ export function ManageSiswaSection() {
                   <TableHead>NIS</TableHead>
                   <TableHead>Nama</TableHead>
                   <TableHead>Agama</TableHead>
-                  <TableHead>Jurusan</TableHead>
+                  <TableHead>Konsentrasi Keahlian</TableHead>
                   <TableHead>Kelas</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
@@ -869,7 +892,7 @@ export function ManageSiswaSection() {
             {bulkActionType === "mutasi" && (
               <div className="grid gap-4 sm:grid-cols-2 rounded-lg border p-4 bg-muted/20">
                 <div className="space-y-2">
-                  <Label>Jurusan Tujuan</Label>
+                  <Label>Konsentrasi Keahlian Tujuan</Label>
                   <Combobox
                     options={dynamicMajorOptions.map((m: any) => {
                       const label = typeof m === 'string' ? m : m.nama_jurusan
@@ -877,8 +900,8 @@ export function ManageSiswaSection() {
                     })}
                     value={bulkMutasiDraft.jurusan}
                     onValueChange={(v) => v && setBulkMutasiDraft({ jurusan: v, kelas: "" })}
-                    placeholder="Pilih Jurusan"
-                    searchPlaceholder="Cari jurusan..."
+                    placeholder="Pilih Konsentrasi Keahlian"
+                    searchPlaceholder="Cari konsentrasi keahlian..."
                   />
                 </div>
                 <div className="space-y-2">
@@ -897,7 +920,7 @@ export function ManageSiswaSection() {
 
             {bulkActionType === "upgrade" && (
               <div className="rounded-lg border p-4 bg-emerald-50 text-emerald-800 text-sm">
-                <strong>Informasi Kenaikan Kelas:</strong> Semua siswa yang dipilih akan otomatis naik satu tingkat sesuai dengan jurusannya. Siswa kelas X menjadi XI, kelas XI menjadi XII, dan kelas XII akan diluluskan.
+                <strong>Informasi Kenaikan Kelas:</strong> Semua siswa yang dipilih akan otomatis naik satu tingkat sesuai dengan konsentrasi keahliannya. Siswa kelas X menjadi XI, kelas XI menjadi XII, dan kelas XII akan diluluskan.
               </div>
             )}
             
@@ -981,7 +1004,7 @@ export function ManageSiswaSection() {
             <div className="space-y-2 text-sm">
               <p><span className="text-muted-foreground">NIS:</span> {detailStudent.nis}</p>
               <p><span className="text-muted-foreground">Nama:</span> {detailStudent.nama}</p>
-              <p><span className="text-muted-foreground">Jurusan:</span> {detailStudent.jurusan}</p>
+              <p><span className="text-muted-foreground">Konsentrasi Keahlian:</span> {detailStudent.jurusan}</p>
               <p><span className="text-muted-foreground">Kelas:</span> {detailStudent.kelas}</p>
               <p><span className="text-muted-foreground">Jenis Kelamin:</span> {detailStudent.jenisKelamin}</p>
               <p><span className="text-muted-foreground">Agama:</span> {(detailStudent as any).agama || "Islam"}</p>
@@ -1020,7 +1043,7 @@ export function ManageSiswaSection() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Jurusan</Label>
+                <Label>Konsentrasi Keahlian</Label>
                 <Combobox
                   options={dynamicMajorOptions.map((m: any) => ({ value: String(m.id_jurusan), label: m.nama_jurusan }))}
                   value={studentDraft.id_jurusan !== undefined ? String(studentDraft.id_jurusan) : ""}
@@ -1036,8 +1059,8 @@ export function ManageSiswaSection() {
                       }))
                     }
                   }}
-                  placeholder="Pilih Jurusan"
-                  searchPlaceholder="Cari jurusan..."
+                  placeholder="Pilih Konsentrasi Keahlian"
+                  searchPlaceholder="Cari konsentrasi keahlian..."
                 />
               </div>
               <div className="space-y-2">
@@ -1265,14 +1288,14 @@ export function ManageSiswaSection() {
                   onChange={(e) => setImportSearchQuery(e.target.value)}
                 />
                 <Select
-                  value={importFilterJurusan || "Semua Jurusan"}
-                  onValueChange={(v) => setImportFilterJurusan(v === "Semua Jurusan" || !v ? "" : v)}
+                  value={importFilterJurusan || "Semua Konsentrasi Keahlian"}
+                  onValueChange={(v) => setImportFilterJurusan(v === "Semua Konsentrasi Keahlian" || !v ? "" : v)}
                 >
                   <SelectTrigger size="sm" className="w-auto min-w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Semua Jurusan">Semua Jurusan</SelectItem>
+                    <SelectItem value="Semua Konsentrasi Keahlian">Semua Konsentrasi Keahlian</SelectItem>
                     {importJurusanOptions.map(j => (
                       <SelectItem key={j} value={j}>{j}</SelectItem>
                     ))}
@@ -1330,7 +1353,7 @@ export function ManageSiswaSection() {
                       <th className="p-2 text-left">JK</th>
                       <th className="p-2 text-left">Agama</th>
                       <th className="p-2 text-left">Kelas</th>
-                      <th className="p-2 text-left">Jurusan</th>
+                      <th className="p-2 text-left">Konsentrasi Keahlian</th>
                     </tr>
                   </thead>
                   <tbody>

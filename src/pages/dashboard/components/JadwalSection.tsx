@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Pencil, Clock, Plus, Trash2 } from "lucide-react"
+import { Pencil, Clock, Plus, Trash2, CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -9,10 +9,13 @@ import { Label } from "@/components/ui/label"
 import { MAJOR_OPTIONS, initialJadwalRows, initialPrayerCards } from "@/pages/dashboard/constants"
 import type { JadwalRow, PrayerCard, JadwalCell } from "@/pages/dashboard/types"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
 import { extractData, handleApiError } from "@/lib/api-utils"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 
 interface JadwalSectionProps {
   readOnly?: boolean
@@ -55,6 +58,11 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
   const [newPrayerName, setNewPrayerName] = useState("")
   const [newPrayerStart, setNewPrayerStart] = useState("06:00")
   const [newPrayerEnd, setNewPrayerEnd] = useState("07:00")
+  const [newPrayerJurusan, setNewPrayerJurusan] = useState<string[]>([])
+  // "hari" = weekly repeating, "tanggal" = one-time specific date
+  const [newPrayerMode, setNewPrayerMode] = useState<"hari" | "tanggal">("hari")
+  const [newPrayerHari, setNewPrayerHari] = useState<Set<string>>(new Set(["Senin", "Selasa", "Rabu", "Kamis", "Jumat"]))
+  const [newPrayerTanggal, setNewPrayerTanggal] = useState<Date | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [deletePrayerTarget, setDeletePrayerTarget] = useState<PrayerCard | null>(null)
 
@@ -190,7 +198,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
 
   const formatJurusan = (majors: string[]) => {
     if (majors.length === 0) return "-"
-    if (majors.length === dynamicMajorOptions.length) return "Semua Jurusan"
+    if (majors.length === dynamicMajorOptions.length) return "Semua Konsentrasi Keahlian"
     return majors.join(", ")
   }
 
@@ -305,15 +313,31 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
     }
   }
 
+  const resetCreateForm = () => {
+    setNewPrayerName("")
+    setNewPrayerStart("06:00")
+    setNewPrayerEnd("07:00")
+    setNewPrayerJurusan([])
+    setNewPrayerMode("hari")
+    setNewPrayerHari(new Set(["Senin", "Selasa", "Rabu", "Kamis", "Jumat"]))
+    setNewPrayerTanggal(null)
+  }
+
   const handleCreatePrayer = async () => {
     if (!newPrayerName.trim()) { notify("Nama jenis sholat wajib diisi", "error"); return }
+    if (newPrayerMode === "hari" && newPrayerHari.size === 0) { notify("Pilih minimal satu hari", "error"); return }
+    if (newPrayerMode === "tanggal" && !newPrayerTanggal) { notify("Tanggal khusus wajib dipilih", "error"); return }
+
     setIsCreating(true)
     try {
-      // Check if prayer type already exists
-      let idJenis = prayerTypesList.find(t => t.nama_jenis === newPrayerName.trim())?.id_jenis
+      // Resolve jurusan IDs — default to all jurusan if none selected
+      const selectedJurusanIds = newPrayerJurusan.length > 0
+        ? newPrayerJurusan.map(name => allJurusan.find(j => j.nama_jurusan === name)?.id_jurusan).filter(Boolean) as number[]
+        : allJurusan.map(j => j.id_jurusan)
 
+      // Check / create prayer type
+      let idJenis = prayerTypesList.find(t => t.nama_jenis === newPrayerName.trim())?.id_jenis
       if (!idJenis) {
-        // Create prayer type
         const typeRes: any = await window.electronAPI.createPrayerType({ body: { nama_jenis: newPrayerName.trim(), butuh_giliran: false } })
         const typeData = typeRes?.data ?? typeRes
         idJenis = typeData?.id_jenis
@@ -321,23 +345,27 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
       }
 
       // Create prayer time for this type
-      const timeRes: any = await window.electronAPI.createPrayerTime({ body: { id_jenis: idJenis, waktu_mulai: newPrayerStart, waktu_selesai: newPrayerEnd, berlaku_mulai: new Date().toISOString().slice(0, 10) } })
+      const timeRes: any = await window.electronAPI.createPrayerTime({
+        body: { id_jenis: idJenis, waktu_mulai: newPrayerStart, waktu_selesai: newPrayerEnd, berlaku_mulai: new Date().toISOString().slice(0, 10) }
+      })
       const timeData = timeRes?.data ?? timeRes
       const idWaktu = timeData?.id_waktu
+      if (!idWaktu) throw new Error("Gagal membuat waktu sholat")
 
-      // Create schedule entries for each weekday so it appears in closest/today
-      if (idWaktu) {
-        const days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat"]
-        await Promise.all(days.map(hari =>
-          window.electronAPI.createPrayerSchedule({ body: { hari, id_waktu: idWaktu, jurusan_ids: allJurusan.map(j => j.id_jurusan) } })
+      if (newPrayerMode === "hari") {
+        // Repeating weekly schedule — one entry per selected day
+        await Promise.all(Array.from(newPrayerHari).map(hari =>
+          window.electronAPI.createPrayerSchedule({ body: { hari, id_waktu: idWaktu, jurusan_ids: selectedJurusanIds } })
         ))
+      } else {
+        // One-time specific date
+        const tanggalStr = format(newPrayerTanggal!, "yyyy-MM-dd")
+        await window.electronAPI.createPrayerSchedule({ body: { tanggal_khusus: tanggalStr, id_waktu: idWaktu, jurusan_ids: selectedJurusanIds } })
       }
 
       notify(`Jadwal ${newPrayerName} berhasil ditambahkan`, "success")
       setCreatePrayerOpen(false)
-      setNewPrayerName("")
-      setNewPrayerStart("06:00")
-      setNewPrayerEnd("07:00")
+      resetCreateForm()
       await fetchSchedules()
     } catch (err: any) {
       notify(handleApiError(err) || "Gagal menambahkan jadwal sholat", "error")
@@ -392,7 +420,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
     <div className="space-y-6">
       <Card className="border">
         <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <CardTitle>Jadwal Jurusan Mingguan</CardTitle>
+          <CardTitle>Jadwal Konsentrasi Keahlian Mingguan</CardTitle>
           {!readOnly && hasJadwalChanges && (
             <div className="flex gap-2">
               <Button
@@ -417,8 +445,8 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
               <thead className="bg-muted/40">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">Hari</th>
-                  <th className="px-4 py-3 text-left font-medium">Jurusan 1</th>
-                  <th className="px-4 py-3 text-left font-medium">Jurusan 2</th>
+                  <th className="px-4 py-3 text-left font-medium">Konsentrasi Keahlian 1</th>
+                  <th className="px-4 py-3 text-left font-medium">Konsentrasi Keahlian 2</th>
                 </tr>
               </thead>
               <tbody>
@@ -484,7 +512,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
                   <span className="font-medium">{formatWaktuRange(prayer.waktuMulai, prayer.waktuSelesai)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Jurusan</span>
+                  <span className="text-muted-foreground">Konsentrasi Keahlian</span>
                   <span className="font-medium">{formatJurusan(prayer.jurusan)}</span>
                 </div>
               </CardContent>
@@ -522,11 +550,11 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Jurusan</Label>
+                <Label>Konsentrasi Keahlian</Label>
                 <DropdownMenu>
                   <DropdownMenuTrigger render={
                     <Button variant="outline" className="w-full justify-start font-normal">
-                      {prayerDraft.jurusan.length > 0 ? formatJurusan(prayerDraft.jurusan) : "Pilih jurusan"}
+                      {prayerDraft.jurusan.length > 0 ? formatJurusan(prayerDraft.jurusan) : "Pilih konsentrasi keahlian"}
                     </Button>
                   } />
                   <DropdownMenuContent className="w-[var(--anchor-width)]" align="start">
@@ -553,7 +581,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 {prayerDraft.nama === "Dhuha" && (
-                  <p className="text-xs text-muted-foreground">Maks. 2 jurusan per hari</p>
+                  <p className="text-xs text-muted-foreground">Maks. 2 Konsentrasi Keahlian per hari</p>
                 )}
               </div>
               <div className="flex justify-end gap-2">
@@ -570,17 +598,20 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
       </Dialog>
 
       {/* Create Prayer Type Dialog */}
-      <Dialog open={createPrayerOpen} onOpenChange={setCreatePrayerOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+      <Dialog open={createPrayerOpen} onOpenChange={(open) => { setCreatePrayerOpen(open); if (!open) resetCreateForm() }}>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Tambah Jadwal Sholat</DialogTitle>
-            <DialogDescription>Tambahkan jenis sholat baru beserta waktu pelaksanaannya.</DialogDescription>
+            <DialogDescription>Tambahkan jenis sholat baru beserta waktu dan konsentrasi keahlian.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-2">
+            {/* Nama */}
             <div className="grid gap-2">
               <Label>Nama Jenis Sholat <span className="text-destructive">*</span></Label>
-              <Input value={newPrayerName} onChange={(e) => setNewPrayerName(e.target.value)} placeholder="Contoh: Dhuha, Dzuhur, Ashar" />
+              <Input value={newPrayerName} onChange={(e) => setNewPrayerName(e.target.value)} placeholder="Contoh: Dhuha, Idul Adha, Jumat" />
             </div>
+
+            {/* Waktu */}
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label>Waktu Mulai</Label>
@@ -591,10 +622,130 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
                 <TimePicker value={newPrayerEnd} onChange={setNewPrayerEnd} />
               </div>
             </div>
+
+            {/* Konsentrasi Keahlian */}
+            <div className="grid gap-2">
+              <Label>Konsentrasi Keahlian</Label>
+              <DropdownMenu>
+                <DropdownMenuTrigger render={
+                  <Button variant="outline" className="w-full justify-start font-normal">
+                    {newPrayerJurusan.length === 0
+                      ? "Semua konsentrasi keahlian"
+                      : newPrayerJurusan.length === dynamicMajorOptions.length
+                        ? "Semua Konsentrasi Keahlian"
+                        : newPrayerJurusan.join(", ")}
+                  </Button>
+                } />
+                <DropdownMenuContent className="w-[var(--anchor-width)]" align="start">
+                  {dynamicMajorOptions.map((major) => (
+                    <DropdownMenuCheckboxItem
+                      key={major}
+                      checked={newPrayerJurusan.includes(major)}
+                      onSelect={(e) => e.preventDefault()}
+                      onCheckedChange={(checked) =>
+                        setNewPrayerJurusan(prev =>
+                          checked ? [...prev, major] : prev.filter(m => m !== major)
+                        )
+                      }
+                    >
+                      {major}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <p className="text-xs text-muted-foreground">Kosongkan untuk semua konsentrasi keahlian</p>
+            </div>
+
+            {/* Mode: Berulang / Tanggal Khusus */}
+            <div className="grid gap-2">
+              <Label>Tipe Jadwal</Label>
+              <div className="flex items-center rounded-lg border bg-muted p-1">
+                <Button
+                  type="button"
+                  variant={newPrayerMode === "hari" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="flex-1 h-8 text-xs"
+                  onClick={() => setNewPrayerMode("hari")}
+                >
+                  Berulang (Hari)
+                </Button>
+                <Button
+                  type="button"
+                  variant={newPrayerMode === "tanggal" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="flex-1 h-8 text-xs"
+                  onClick={() => setNewPrayerMode("tanggal")}
+                >
+                  Tanggal Khusus
+                </Button>
+              </div>
+            </div>
+
+            {/* Hari (shown when mode = hari) */}
+            {newPrayerMode === "hari" && (
+              <div className="grid gap-2">
+                <Label>Hari <span className="text-destructive">*</span></Label>
+                <div className="flex flex-wrap gap-2">
+                  {["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"].map((day) => {
+                    const isSelected = newPrayerHari.has(day)
+                    return (
+                      <button
+                        key={day}
+                        type="button"
+                        onClick={() => {
+                          setNewPrayerHari(prev => {
+                            const next = new Set(prev)
+                            if (next.has(day)) next.delete(day)
+                            else next.add(day)
+                            return next
+                          })
+                        }}
+                        className={cn(
+                          "rounded-md border px-3 py-1.5 text-xs font-medium transition",
+                          isSelected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-background hover:bg-muted"
+                        )}
+                      >
+                        {day}
+                      </button>
+                    )
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">Jadwal ini akan berulang setiap minggu pada hari yang dipilih</p>
+              </div>
+            )}
+
+            {/* Tanggal Khusus (shown when mode = tanggal) */}
+            {newPrayerMode === "tanggal" && (
+              <div className="grid gap-2">
+                <Label>Tanggal Khusus <span className="text-destructive">*</span></Label>
+                <Popover>
+                  <PopoverTrigger render={
+                    <Button
+                      variant="outline"
+                      className={cn("w-full justify-start font-normal", !newPrayerTanggal && "text-muted-foreground")}
+                    >
+                      <CalendarIcon className="mr-2 size-4" />
+                      {newPrayerTanggal ? format(newPrayerTanggal, "dd MMMM yyyy") : "Pilih tanggal..."}
+                    </Button>
+                  } />
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={newPrayerTanggal ?? undefined}
+                      onSelect={(d) => setNewPrayerTanggal(d ?? null)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                <p className="text-xs text-muted-foreground">Untuk sholat satu kali, mis. Idul Adha, Idul Fitri, dll.</p>
+              </div>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreatePrayerOpen(false)}>Batal</Button>
-            <Button onClick={handleCreatePrayer} disabled={isCreating}>{isCreating ? "Menyimpan..." : "Simpan"}</Button>
+            <Button variant="outline" onClick={() => { setCreatePrayerOpen(false); resetCreateForm() }}>Batal</Button>
+            <Button onClick={handleCreatePrayer} disabled={isCreating}>{isCreating ? <Spinner size="sm" /> : "Simpan"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

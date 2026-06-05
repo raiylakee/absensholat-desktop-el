@@ -129,16 +129,18 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
   const [statsData, setStatsData] = useState<any>(null)
   const [dynamicMajorOptions, setDynamicMajorOptions] = useState<string[]>(MAJOR_OPTIONS)
   const [dynamicPrayerTypes, setDynamicPrayerTypes] = useState<string[]>(PRAYER_TYPE_OPTIONS)
+  const [allClassOptions, setAllClassOptions] = useState<any[]>([])
 
   useEffect(() => {
     const fetchChartData = async () => {
       try {
-        const [chartRes, filtersRes, statsRes, majorsRes, typesRes]: [any, any, any, any, any] = await Promise.all([
+        const [chartRes, filtersRes, statsRes, majorsRes, typesRes, classesRes]: [any, any, any, any, any, any] = await Promise.all([
           window.electronAPI.getChartData(),
           window.electronAPI.getStudentFilters(),
           window.electronAPI.getAttendanceStatistics(),
           window.electronAPI.getMajors(),
           window.electronAPI.getPrayerTypes(),
+          window.electronAPI.getClasses(),
         ])
         const cd = extractData<ChartDataState>(chartRes)
         if (cd) setChartData(cd)
@@ -149,6 +151,8 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
         if (majors.length > 0) setDynamicMajorOptions(majors.map((m: any) => m.nama_jurusan))
         const types: any[] = extractData(typesRes) ?? []
         if (types.length > 0) setDynamicPrayerTypes(types.map((t: any) => t.nama_jenis))
+        const classes: any[] = Array.isArray(extractData(classesRes)) ? (extractData(classesRes) as any[]) : []
+        setAllClassOptions(classes)
       } catch (error) {
         console.error("Failed to fetch chart data:", error)
       }
@@ -230,10 +234,17 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
     return () => clearTimeout(handler)
   }, [searchQuery, selectedKelasFilters, selectedJurusanFilters, selectedSholatFilters, startDate, endDate])
 
-  const classOptions = useMemo(
-    () => Array.from(new Set(records.map((record) => record.kelas))),
-    [records]
-  )
+  const classOptions = useMemo(() => {
+    if (selectedJurusanFilters.length === 0) return []
+    const selectedJurusan = selectedJurusanFilters[0]
+    return Array.from(
+      new Set(
+        allClassOptions
+          .filter((c: any) => c.jurusan === selectedJurusan)
+          .map((c: any) => c.label)
+      )
+    )
+  }, [allClassOptions, selectedJurusanFilters])
 
   // Client-side filter for sholat type and forcedClass (not sent to API)
   const filteredRecords = useMemo(() => {
@@ -355,7 +366,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
       filters["Kelas"] = forcedClass
     } else {
       if (selectedKelasFilters.length > 0) filters["Kelas"] = selectedKelasFilters.join(", ")
-      if (selectedJurusanFilters.length > 0) filters["Jurusan"] = selectedJurusanFilters.join(", ")
+      if (selectedJurusanFilters.length > 0) filters["Konsentrasi Keahlian"] = selectedJurusanFilters.join(", ")
     }
     if (selectedSholatFilters.length > 0) filters["Sholat"] = selectedSholatFilters.join(", ")
     if (startDate) filters["Dari"] = format(startDate, "dd/MM/yyyy")
@@ -477,17 +488,16 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                   }
                 />
                 <DropdownMenuContent className="w-56" align="end">
-                  <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Jurusan</p>
+                  <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Konsentrasi Keahlian</p>
                   {dynamicMajorOptions.map((major) => (
                     <DropdownMenuCheckboxItem
                       key={`laporan-jurusan-${major}`}
                       checked={selectedJurusanFilters.includes(major)}
                       onSelect={(event) => event.preventDefault()}
-                      onCheckedChange={(checked) =>
-                        setSelectedJurusanFilters((prev) =>
-                          checked ? [...prev, major] : prev.filter((item) => item !== major)
-                        )
-                      }
+                      onCheckedChange={(checked) => {
+                        setSelectedJurusanFilters(checked ? [major] : [])
+                        setSelectedKelasFilters([]) // Clear class selection when major changes
+                      }}
                     >
                       {major}
                     </DropdownMenuCheckboxItem>
@@ -509,20 +519,22 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                   ))}
                   <p className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Kelas</p>
                   <div className="max-h-[200px] overflow-y-auto">
-                    {classOptions.map((kelas) => (
-                      <DropdownMenuCheckboxItem
-                        key={`laporan-kelas-${kelas}`}
-                        checked={selectedKelasFilters.includes(kelas)}
-                        onSelect={(event) => event.preventDefault()}
-                        onCheckedChange={(checked) =>
-                          setSelectedKelasFilters((prev) =>
-                            checked ? [...prev, kelas] : prev.filter((item) => item !== kelas)
-                          )
-                        }
-                      >
-                        {kelas}
-                      </DropdownMenuCheckboxItem>
-                    ))}
+                    {selectedJurusanFilters.length === 0 ? (
+                      <p className="px-6 py-2 text-xs italic text-muted-foreground">Pilih konsentrasi keahlian terlebih dahulu</p>
+                    ) : (
+                      classOptions.map((kelas) => (
+                        <DropdownMenuCheckboxItem
+                          key={`laporan-kelas-${kelas}`}
+                          checked={selectedKelasFilters.includes(kelas)}
+                          onSelect={(event) => event.preventDefault()}
+                          onCheckedChange={(checked) =>
+                            setSelectedKelasFilters(checked ? [kelas] : [])
+                          }
+                        >
+                          {kelas}
+                        </DropdownMenuCheckboxItem>
+                      ))
+                    )}
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>

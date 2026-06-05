@@ -220,7 +220,7 @@ export function KelolaKelasSection() {
                 render={
                   <Button variant="outline">
                     <Filter className="mr-2 size-4" />
-                    Jurusan
+                    Konsentrasi Keahlian
                   </Button>
                 }
               />

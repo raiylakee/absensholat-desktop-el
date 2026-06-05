@@ -44,9 +44,19 @@ export function SiswaDevicesSection() {
   const fetchDevices = async () => {
     setIsLoading(true)
     try {
-      const res = await window.electronAPI.getAdminDevices({ role: "siswa", search: search || undefined })
+      // Note: backend returns 500 when role query param is supplied,
+      // so we fetch all devices and filter client-side by role === "siswa"
+      const res = await window.electronAPI.getAdminDevices()
       if (!isMounted.current) return
-      setDevices(extractData<Device[]>(res) ?? [])
+      const all = extractData<Device[]>(res) ?? []
+      const siswaOnly = all.filter(d => d.role === "siswa")
+      const filtered = search
+        ? siswaOnly.filter(d =>
+            d.user_name?.toLowerCase().includes(search.toLowerCase()) ||
+            d.email?.toLowerCase().includes(search.toLowerCase())
+          )
+        : siswaOnly
+      setDevices(filtered)
     } catch {
       if (isMounted.current) setDevices([])
     } finally {

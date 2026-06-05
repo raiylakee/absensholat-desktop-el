@@ -67,6 +67,7 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
   // Filter options
   const [majorOptions, setMajorOptions] = useState<MajorOption[]>([])
   const [teacherOptions, setTeacherOptions] = useState<TeacherOption[]>([])
+  const [classOptions, setClassOptions] = useState<any[]>([])
 
   // Debounced name filter value (the value actually sent to API)
   const [debouncedName, setDebouncedName] = useState("")
@@ -76,12 +77,14 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
   useEffect(() => {
     async function fetchFilterOptions() {
       try {
-        const [majorsRes, teachersRes]: [any, any] = await Promise.all([
+        const [majorsRes, teachersRes, classesRes]: [any, any, any] = await Promise.all([
           window.electronAPI.getMajors(),
           window.electronAPI.getStaffGuruLookup(),
+          window.electronAPI.getClasses(),
         ])
         setMajorOptions(extractData(majorsRes))
         setTeacherOptions(extractData(teachersRes))
+        setClassOptions(extractData(classesRes))
       } catch (error) {
         console.error("Gagal mengambil opsi filter:", error)
         notify("Gagal mengambil data filter", "error")
@@ -100,6 +103,13 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
       if (name.trim()) params.search = name.trim()
       if (jurusan) params.jurusan = jurusan
       if (waliKelas) params.wali_kelas = waliKelas
+
+      if (forcedClass && classOptions.length > 0) {
+        const matchedClass = classOptions.find(c => c.label === forcedClass)
+        if (matchedClass) {
+          params.id_kelas = matchedClass.id_kelas
+        }
+      }
 
       const response: any = await window.electronAPI.getUnregisteredStudents(params)
       const data = extractData(response);
@@ -121,7 +131,7 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [forcedClass, classOptions])
 
   // Fetch when page or any filter changes
   useEffect(() => {
@@ -214,17 +224,17 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
             </div>
             {!forcedClass && (
             <div className="min-w-[180px]">
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Jurusan</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Konsentrasi Keahlian</label>
               <Select value={jurusanFilter || "__all__"} onValueChange={handleJurusanChange}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Semua Jurusan">
+                  <SelectValue placeholder="Semua Konsentrasi Keahlian">
                     {!jurusanFilter || jurusanFilter === "__all__"
-                      ? "Semua Jurusan"
+                      ? "Semua Konsentrasi Keahlian"
                       : majorOptions.find(m => m.id_jurusan.toString() === jurusanFilter)?.nama_jurusan || jurusanFilter}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__all__">Semua Jurusan</SelectItem>
+                  <SelectItem value="__all__">Semua Konsentrasi Keahlian</SelectItem>
                   {majorOptions.map((major) => (
                     <SelectItem key={major.id_jurusan} value={major.id_jurusan.toString()}>
                       {major.nama_jurusan}
@@ -295,7 +305,7 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
                         <th className="px-4 py-3 text-left font-medium w-32">NIS</th>
                         <th className="px-4 py-3 text-left font-medium">Nama</th>
                         <th className="px-4 py-3 text-left font-medium w-32">Kelas</th>
-                        <th className="px-4 py-3 text-left font-medium w-40">Jurusan</th>
+                        <th className="px-4 py-3 text-left font-medium w-40">Konsentrasi Keahlian</th>
                         <th className="px-4 py-3 text-left font-medium w-44">Wali Kelas</th>
                         <th className="px-4 py-3 text-left font-medium w-28">Aksi</th>
                       </tr>
@@ -391,7 +401,7 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
                   <span className="text-sm">{selectedStudent.kelas || "-"}</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Jurusan</span>
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Konsentrasi Keahlian</span>
                   <span className="text-sm">{selectedStudent.jurusan || "-"}</span>
                 </div>
                 <div className="flex flex-col gap-1">

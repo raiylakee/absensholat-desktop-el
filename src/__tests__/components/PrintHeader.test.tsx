@@ -34,7 +34,7 @@ describe("PrintHeader", () => {
   })
 
   it("renders filter key-value pairs when filters provided", () => {
-    render(<PrintHeader title="Laporan" filters={{ Jurusan: "RPL", Kelas: "X RPL 1" }} />)
+    render(<PrintHeader title="Laporan" filters={{ "Konsentrasi Keahlian": "RPL", Kelas: "X RPL 1" }} />)
     // Use getAllByText since "RPL" appears in both "RPL" and "X RPL 1"
     const rplMatches = screen.getAllByText(/RPL/)
     expect(rplMatches.length).toBeGreaterThanOrEqual(1)

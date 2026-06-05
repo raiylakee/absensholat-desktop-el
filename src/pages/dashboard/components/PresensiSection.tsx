@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react"
-import { Eye, Filter, Paperclip, Printer } from "lucide-react"
+import { Eye, Filter, Paperclip, Printer, CalendarIcon, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
 import type { PresensiRecord } from "@/pages/dashboard/types"
 import { notify } from "@/lib/notify"
 import { extractData, normalizeAttendance } from "@/lib/api-utils"
@@ -14,6 +16,8 @@ import { usePrintAction } from "@/hooks/use-print-action"
 import { PrintHeader } from "@/components/print-header"
 import { BuktiFotoPreview } from "@/components/bukti-foto-preview"
 import { useDownloadAction } from "@/hooks/use-download-action"
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
+import { cn } from "@/lib/utils"
 
 interface IzinDetail {
   id_pengajuan: number
@@ -36,10 +40,14 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
   const [presensiRecords, setPresensiRecords] = useState<PresensiRecord[]>([])
   const [prayerTypes, setPrayerTypes] = useState<string[]>([])
   const [majorOptions, setMajorOptions] = useState<string[]>([])
+  const [allClassOptions, setAllClassOptions] = useState<any[]>([])
   const [presensiSearchQuery, setPresensiSearchQuery] = useState("")
   const [selectedSholatFilters, setSelectedSholatFilters] = useState<PresensiRecord["jenisSholat"][]>([])
   const [selectedPresensiJurusanFilters, setSelectedPresensiJurusanFilters] = useState<string[]>([])
   const [selectedPresensiKelasFilters, setSelectedPresensiKelasFilters] = useState<string[]>([])
+  const [dateRangeType, setDateRangeType] = useState<"all" | "today" | "week" | "month" | "custom">("all")
+  const [customStartDate, setCustomStartDate] = useState<Date | null>(null)
+  const [customEndDate, setCustomEndDate] = useState<Date | null>(null)
   const [detailPresensi, setDetailPresensi] = useState<PresensiRecord | null>(null)
   const [izinDetail, setIzinDetail] = useState<IzinDetail | null>(null)
   const [isLoadingIzin, setIsLoadingIzin] = useState(false)
@@ -50,10 +58,17 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
   const pageSize = 50
   const isMounted = useRef(true)
 
-  const presensiClassOptions = useMemo(
-    () => Array.from(new Set(presensiRecords.map((record) => record.kelas))),
-    [presensiRecords]
-  )
+  const presensiClassOptions = useMemo(() => {
+    if (selectedPresensiJurusanFilters.length === 0) return []
+    const selectedJurusan = selectedPresensiJurusanFilters[0]
+    return Array.from(
+      new Set(
+        allClassOptions
+          .filter((c: any) => c.jurusan === selectedJurusan)
+          .map((c: any) => c.label)
+      )
+    )
+  }, [allClassOptions, selectedPresensiJurusanFilters])
 
   const filteredRecords = useMemo(() => {
     return presensiRecords.filter(record => {
@@ -70,12 +85,34 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
   const fetchHistory = async () => {
     setIsLoading(true)
     try {
+      let start_date: string | undefined = undefined
+      let end_date: string | undefined = undefined
+
+      if (dateRangeType === "today") {
+        const now = new Date()
+        start_date = format(now, "yyyy-MM-dd")
+        end_date = format(now, "yyyy-MM-dd")
+      } else if (dateRangeType === "week") {
+        const now = new Date()
+        start_date = format(startOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd")
+        end_date = format(endOfWeek(now, { weekStartsOn: 1 }), "yyyy-MM-dd")
+      } else if (dateRangeType === "month") {
+        const now = new Date()
+        start_date = format(startOfMonth(now), "yyyy-MM-dd")
+        end_date = format(endOfMonth(now), "yyyy-MM-dd")
+      } else if (dateRangeType === "custom") {
+        if (customStartDate) start_date = format(customStartDate, "yyyy-MM-dd")
+        if (customEndDate) end_date = format(customEndDate, "yyyy-MM-dd")
+      }
+
       const params: Record<string, any> = {
         page: currentPage,
         limit: pageSize,
         search: presensiSearchQuery || undefined,
         kelas: forcedClass || selectedPresensiKelasFilters[0] || undefined,
         jurusan: selectedPresensiJurusanFilters.length > 0 ? selectedPresensiJurusanFilters[0] : undefined,
+        start_date,
+        end_date,
       }
       const response: any = await window.electronAPI.getAttendanceHistory(params)
       const wrapper: any = extractData(response);
@@ -106,6 +143,10 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
       const majors: any[] = extractData(res) ?? []
       if (isMounted.current && majors.length > 0) setMajorOptions(majors.map(m => m.nama_jurusan))
     })
+    window.electronAPI.getClasses().then((res: any) => {
+      const classes: any[] = extractData(res) ?? []
+      if (isMounted.current) setAllClassOptions(classes)
+    })
     return () => { isMounted.current = false }
   }, [])
 
@@ -119,7 +160,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
       }
     }, 300)
     return () => clearTimeout(handler)
-  }, [presensiSearchQuery, selectedPresensiJurusanFilters, selectedPresensiKelasFilters, selectedSholatFilters, forcedClass])
+  }, [presensiSearchQuery, selectedPresensiJurusanFilters, selectedPresensiKelasFilters, selectedSholatFilters, forcedClass, dateRangeType, customStartDate, customEndDate])
 
   // Fetch when currentPage changes
   useEffect(() => {
@@ -228,6 +269,149 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
         <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Lihat Presensi</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center rounded-lg border bg-muted p-1 text-muted-foreground">
+                <Button
+                  variant={dateRangeType === "all" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 rounded-md px-3 text-xs font-medium"
+                  onClick={() => {
+                    setDateRangeType("all")
+                    setCustomStartDate(null)
+                    setCustomEndDate(null)
+                    setCurrentPage(1)
+                  }}
+                >
+                  Semua
+                </Button>
+                <Button
+                  variant={dateRangeType === "today" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 rounded-md px-3 text-xs font-medium"
+                  onClick={() => {
+                    setDateRangeType("today")
+                    setCustomStartDate(null)
+                    setCustomEndDate(null)
+                    setCurrentPage(1)
+                  }}
+                >
+                  Hari Ini
+                </Button>
+                <Button
+                  variant={dateRangeType === "week" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 rounded-md px-3 text-xs font-medium"
+                  onClick={() => {
+                    setDateRangeType("week")
+                    setCustomStartDate(null)
+                    setCustomEndDate(null)
+                    setCurrentPage(1)
+                  }}
+                >
+                  Minggu Ini
+                </Button>
+                <Button
+                  variant={dateRangeType === "month" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 rounded-md px-3 text-xs font-medium"
+                  onClick={() => {
+                    setDateRangeType("month")
+                    setCustomStartDate(null)
+                    setCustomEndDate(null)
+                    setCurrentPage(1)
+                  }}
+                >
+                  Bulan Ini
+                </Button>
+                <Button
+                  variant={dateRangeType === "custom" ? "secondary" : "ghost"}
+                  size="sm"
+                  className="h-8 rounded-md px-3 text-xs font-medium"
+                  onClick={() => {
+                    setDateRangeType("custom")
+                    setCurrentPage(1)
+                  }}
+                >
+                  Kustom
+                </Button>
+              </div>
+              {dateRangeType === "custom" && (
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger
+                      render={
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "h-8 text-xs justify-start font-normal",
+                            !customStartDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-1.5 size-3.5" />
+                          {customStartDate ? format(customStartDate, "dd/MM/yyyy") : "Dari tanggal"}
+                        </Button>
+                      }
+                    />
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={customStartDate ?? undefined}
+                        onSelect={(d) => {
+                          setCustomStartDate(d ?? null)
+                          setCurrentPage(1)
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-xs text-muted-foreground">—</span>
+                  <Popover>
+                    <PopoverTrigger
+                      render={
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "h-8 text-xs justify-start font-normal",
+                            !customEndDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-1.5 size-3.5" />
+                          {customEndDate ? format(customEndDate, "dd/MM/yyyy") : "Sampai tanggal"}
+                        </Button>
+                      }
+                    />
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={customEndDate ?? undefined}
+                        onSelect={(d) => {
+                          setCustomEndDate(d ?? null)
+                          setCurrentPage(1)
+                        }}
+                        disabled={(date) => customStartDate ? date < customStartDate : false}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {(customStartDate || customEndDate) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => {
+                        setCustomStartDate(null)
+                        setCustomEndDate(null)
+                        setCurrentPage(1)
+                      }}
+                    >
+                      <X className="size-3.5" />
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
             <Input
               placeholder="Cari presensi..."
               className="w-[220px]"
@@ -260,36 +444,37 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                       {type}
                     </DropdownMenuCheckboxItem>
                   ))}
-                  <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Jurusan</p>
+                  <p className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Konsentrasi Keahlian</p>
                   {majorOptions.map((major) => (
                     <DropdownMenuCheckboxItem
                       key={`presensi-jurusan-${major}`}
                       checked={selectedPresensiJurusanFilters.includes(major)}
                       onSelect={(event) => event.preventDefault()}
-                      onCheckedChange={(checked) =>
-                        setSelectedPresensiJurusanFilters((prev) =>
-                          checked ? [...prev, major] : prev.filter((item) => item !== major)
-                        )
-                      }
+                      onCheckedChange={(checked) => {
+                        setSelectedPresensiJurusanFilters(checked ? [major] : [])
+                        setSelectedPresensiKelasFilters([]) // Clear class selection when major changes
+                      }}
                     >
                       {major}
                     </DropdownMenuCheckboxItem>
                   ))}
-                  <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Kelas</p>
-                  {presensiClassOptions.map((kelas) => (
-                    <DropdownMenuCheckboxItem
-                      key={`presensi-kelas-${kelas}`}
-                      checked={selectedPresensiKelasFilters.includes(kelas)}
-                      onSelect={(event) => event.preventDefault()}
-                      onCheckedChange={(checked) =>
-                        setSelectedPresensiKelasFilters((prev) =>
-                          checked ? [...prev, kelas] : prev.filter((item) => item !== kelas)
-                        )
-                      }
-                    >
-                      {kelas}
-                    </DropdownMenuCheckboxItem>
-                  ))}
+                  <p className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Kelas</p>
+                  {selectedPresensiJurusanFilters.length === 0 ? (
+                    <p className="px-6 py-2 text-xs italic text-muted-foreground">Pilih konsentrasi keahlian terlebih dahulu</p>
+                  ) : (
+                    presensiClassOptions.map((kelas) => (
+                      <DropdownMenuCheckboxItem
+                        key={`presensi-kelas-${kelas}`}
+                        checked={selectedPresensiKelasFilters.includes(kelas)}
+                        onSelect={(event) => event.preventDefault()}
+                        onCheckedChange={(checked) =>
+                          setSelectedPresensiKelasFilters(checked ? [kelas] : [])
+                        }
+                      >
+                        {kelas}
+                      </DropdownMenuCheckboxItem>
+                    ))
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
