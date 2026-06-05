@@ -1,9 +1,112 @@
 import { describe, it, expect, vi, beforeEach, beforeAll } from "vitest";
+import { createRequire } from "module";
 
-// Mock electron
+const { mockNotificationShow, mockNotificationConstructor } = vi.hoisted(() => ({
+  mockNotificationShow: vi.fn(),
+  mockNotificationConstructor: vi.fn(),
+}));
+
+class MockNotification {
+  constructor(options) {
+    mockNotificationConstructor(options);
+    this.options = options;
+  }
+  show() {
+    mockNotificationShow(this.options);
+  }
+}
+
+// Inject mock into require.cache for CJS require calls
+const req = createRequire(import.meta.url);
+try {
+  const electronPath = req.resolve("electron");
+  req.cache[electronPath] = {
+    id: electronPath,
+    filename: electronPath,
+    loaded: true,
+    exports: {
+      dialog: { showOpenDialog: vi.fn(), showSaveDialog: vi.fn() },
+      app: { isPackaged: false, getPath: vi.fn(() => "/tmp/userdata") },
+      Notification: MockNotification,
+    },
+  };
+} catch (e) {
+  console.error("Failed to inject electron mock into require.cache:", e);
+}
+
+try {
+  const cachePath = req.resolve("../cache.js");
+  const mockCache = {
+    init: vi.fn(),
+    get: vi.fn(() => null),
+    set: vi.fn(),
+    invalidate: vi.fn(),
+  };
+  mockCache.default = mockCache;
+  req.cache[cachePath] = {
+    id: cachePath,
+    filename: cachePath,
+    loaded: true,
+    exports: mockCache,
+  };
+} catch (e) {
+  console.error("Failed to inject cache mock into require.cache:", e);
+}
+
+try {
+  const fsPath = req.resolve("fs");
+  req.cache[fsPath] = {
+    id: fsPath,
+    filename: fsPath,
+    loaded: true,
+    exports: {
+      readFileSync: vi.fn(() => "stored-hwid-1234"),
+      writeFileSync: vi.fn(),
+    },
+  };
+} catch (e) {
+  console.error("Failed to inject fs mock into require.cache:", e);
+}
+
+// Mock electron for ESM
 vi.mock("electron", () => ({
   dialog: { showOpenDialog: vi.fn(), showSaveDialog: vi.fn() },
   app: { isPackaged: false, getPath: vi.fn(() => "/tmp/userdata") },
+  Notification: MockNotification,
+}));
+
+// Mock electron-updater
+const { mockCheckForUpdates, mockQuitAndInstall } = vi.hoisted(() => ({
+  mockCheckForUpdates: vi.fn(() => Promise.resolve({ versionInfo: { version: "1.3.0" } })),
+  mockQuitAndInstall: vi.fn(),
+}));
+
+// Mock electron-updater for CJS require
+try {
+  const updaterPath = req.resolve("electron-updater");
+  req.cache[updaterPath] = {
+    id: updaterPath,
+    filename: updaterPath,
+    loaded: true,
+    exports: {
+      autoUpdater: {
+        checkForUpdates: () => mockCheckForUpdates(),
+        quitAndInstall: () => mockQuitAndInstall(),
+        on: vi.fn(),
+      },
+    },
+  };
+} catch (e) {
+  console.error("Failed to inject electron-updater mock into require.cache:", e);
+}
+
+// Mock electron-updater for ESM
+vi.mock("electron-updater", () => ({
+  autoUpdater: {
+    checkForUpdates: () => mockCheckForUpdates(),
+    quitAndInstall: () => mockQuitAndInstall(),
+    on: vi.fn(),
+  },
 }));
 
 // Mock fs (sync) - must be before handler import
@@ -288,4 +391,34 @@ describe("electron handlers", () => {
       expect(invalidatedPatterns.some(p => p.includes("/admin/management/wali-kelas"))).toBe(true);
     });
   });
+
+  describe("show-system-notification", () => {
+    it("instantiates Notification with options and calls show", async () => {
+      await handlers["show-system-notification"](mockEvent, { title: "Presensi Sholat Desktop", body: "Hello World" });
+      expect(mockNotificationConstructor).toHaveBeenCalledWith({
+        title: "Presensi Sholat Desktop",
+        body: "Hello World",
+      });
+      expect(mockNotificationShow).toHaveBeenCalledWith({
+        title: "Presensi Sholat Desktop",
+        body: "Hello World",
+      });
+    });
+  });
+
+  describe("auto-updater", () => {
+    it("calls autoUpdater.checkForUpdates in check-for-updates", async () => {
+      mockCheckForUpdates.mockClear();
+      const res = await handlers["check-for-updates"](mockEvent);
+      expect(mockCheckForUpdates).toHaveBeenCalled();
+      expect(res).toEqual({ versionInfo: { version: "1.3.0" } });
+    });
+
+    it("calls autoUpdater.quitAndInstall in quit-and-install", async () => {
+      mockQuitAndInstall.mockClear();
+      await handlers["quit-and-install"](mockEvent);
+      expect(mockQuitAndInstall).toHaveBeenCalled();
+    });
+  });
 });
+

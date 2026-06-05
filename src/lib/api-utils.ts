@@ -202,8 +202,7 @@ export function handleApiError(error: any): string {
     return stripIpcPrefix(error.message) || "Terjadi kesalahan saat menghubungi server";
   }
 
-  const str = String(error);
-  return stripIpcPrefix(str) || "Terjadi kesalahan saat menghubungi server";
+  return "Terjadi kesalahan saat menghubungi server";
 }
 
 /**

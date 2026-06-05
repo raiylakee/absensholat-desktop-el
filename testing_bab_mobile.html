@@ -93,28 +93,28 @@
 <h1>BAB IV<br>PENGUJIAN DAN ANALISIS (MOBILE APPLICATION)</h1>
 
 <h2>4.1. Rencana Pengujian (Test Plan)</h2>
-<p>Pengujian pada sistem aplikasi portal presensi sholat versi mobile (Absen Sholat Mobile) dirancang untuk memverifikasi kualitas fungsionalitas dan kegunaan aplikasi pada perangkat cerdas berbasis Android dan iOS. Pengujian diarahkan untuk memvalidasi interaksi UI seluler dan integrasi komponen perangkat keras asli (*native modules*) seperti pemindai kamera, penyimpanan aman (*Secure Storage*), serta autentikasi biometrik.</p>
+<p>Pengujian pada sistem aplikasi portal presensi sholat versi mobile (Absen Sholat Mobile / SASMobile) dirancang untuk memverifikasi kualitas fungsionalitas, keamanan, dan kestabilan aplikasi pada perangkat cerdas berbasis Android. Pengujian diarahkan untuk memvalidasi interaksi antarmuka pengguna (UI) seluler serta integrasi modul sistem operasi Android seperti penyimpanan aman terenkripsi (EncryptedSharedPreferences), kamera pemindai kode QR, dan manajemen penanganan siklus hidup aktivitas (Activity Lifecycle).</p>
 
 <p>Lingkungan pengujian yang digunakan dalam implementasi verifikasi sistem seluler ini memanfaatkan infrastruktur berikut:</p>
 <ol>
-  <li><b>Jest / Vitest:</b> Mesin pelaksana uji (*test runner*) berkecepatan tinggi untuk menjalankan modul uji JavaScript dan TypeScript.</li>
-  <li><b>React Native Testing Library (RNTL):</b> Digunakan untuk merender struktur antarmuka native virtual tanpa memerlukan emulator/simulator fisik penuh, serta melakukan verifikasi manipulasi DOM seluler.</li>
-  <li><b>fast-check:</b> Pustaka pengujian berbasis properti (*Property-based Testing*) untuk menguji ketahanan parser kode QR dan utilitas penanganan data luring (*offline sync queue*).</li>
-  <li><b>Expo Hardware Mocks:</b> Simulasi perangkat keras untuk meniru keluaran modul asli seperti `expo-secure-store`, `expo-camera`, dan `expo-local-authentication`.</li>
+  <li><b>JUnit 4:</b> Mesin pelaksana uji (test runner) standar industri untuk mengeksekusi kasus uji unit lokal di lingkungan Java Virtual Machine (JVM).</li>
+  <li><b>AndroidX Espresso & ActivityScenario:</b> Kerangka kerja pengujian UI instrumented untuk berinteraksi langsung dengan elemen layout XML, mensimulasikan ketukan tombol, pengisian form teks, serta menegaskan kondisi tampilan visual pada emulator atau perangkat fisik Android.</li>
+  <li><b>Mockito / MockK:</b> Pustaka pembuat objek tiruan (mocking) untuk mensimulasikan data respons API Retrofit, konteks aplikasi Android, serta dependensi luar lainnya agar pengujian berjalan secara terisolasi.</li>
+  <li><b>AndroidX Security Crypto:</b> Modul pengujian untuk memverifikasi keandalan enkripsi AES256-GCM pada penyimpanan lokal SecurePreferences.</li>
 </ol>
 
 <p>Secara garis besar, strategi pengujian mobile dibagi menjadi tiga tingkat:</p>
 <ul>
-  <li><b>Pengujian Fungsional (Black-Box):</b> Memvalidasi alur layar antarmuka pengguna seperti pengisian form masuk akun (*login form*), pemindaian kode QR presensi sholat, serta pengisian form surat izin sholat beserta unggahan berkas bukti foto.</li>
-  <li><b>Pengujian Unit & Integrasi (White-Box):</b> Menguji efektivitas penyimpanan token keamanan lokal di *SecureStore*, antrean penyingkronan data luring saat kehilangan koneksi internet, serta validasi waktu kedaluwarsa kode QR presensi.</li>
-  <li><b>Pengujian Invarian (Property-Based):</b> Menguji ketahanan fungsi dekoder tanda tangan kode QR agar tidak mengakibatkan aplikasi menutup secara paksa (*force close*) saat membaca data yang rusak atau tidak sah.</li>
+  <li><b>Pengujian Fungsional (Black-Box Testing):</b> Memvalidasi alur layar antarmuka pengguna seperti pengisian form masuk akun (login form), mekanisme pengamanan brute force (lockout cooldown), penolakan izin kamera pemindai kode QR, serta pengisian form surat izin sholat beserta pratinjau lampiran foto bukti.</li>
+  <li><b>Pengujian Unit & Integrasi (White-Box Testing):</b> Menguji efektivitas enkripsi SecurePreferences, alur migrasi otomatis pengaturan lama tanpa enkripsi, penanganan pembaruan token akses otomatis (TokenAuthenticator) saat menerima status HTTP 401 Unauthorized dari peladen, serta penanganan transisi aktivitas yang aman untuk menghindari galat Binder.</li>
+  <li><b>Pengujian Invarian (Parameterized Testing):</b> Menguji ketahanan fungsi dekoder tanda tangan kode QR serta pembersih masukan teks agar terhindar dari force close saat memproses data ekstrim atau rusak.</li>
 </ul>
 
 <h2>4.2. Kasus Uji (Test Cases)</h2>
 <p>Bagian ini mendokumentasikan rincian rancangan kasus uji yang diterapkan pada Absen Sholat Mobile.</p>
 
 <h3>4.2.1. Pengujian Kotak Hitam (Black-Box Testing)</h3>
-<p>Pengujian kotak hitam berfokus pada ketepatan tampilan dan reaksi layar seluler saat menerima input gestur, ketikan keyboard, maupun modifikasi izin perangkat keras dari pengguna.</p>
+<p>Pengujian kotak hitam berfokus pada ketepatan tampilan dan reaksi layar seluler saat menerima input gestur, ketikan keyboard, maupun modifikasi izin perangkat keras dari pengguna menggunakan Espresso.</p>
 
 <p class="caption">Tabel 4.1. Skenario Kasus Uji Black-Box UI & Screen Mobile</p>
 <table>
@@ -130,37 +130,37 @@
   <tbody>
     <tr>
       <td class="text-center">BB-MOB-01</td>
-      <td>Layar Login</td>
-      <td>Verifikasi validasi kolom input email/NIS dan sandi yang kosong.</td>
+      <td>Layar Login (MasukActivity)</td>
+      <td>Verifikasi validasi kolom input NIS dan sandi yang kosong.</td>
       <td>Tekan tombol "Masuk" tanpa mengisi form kredensial.</td>
-      <td>Menampilkan teks peringatan validasi berwarna merah di bawah kolom input.</td>
+      <td>Komponen TextInputLayout menampilkan pesan kesalahan teks berwarna merah di bawah kolom input.</td>
     </tr>
     <tr>
       <td class="text-center">BB-MOB-02</td>
-      <td>Login Biometrik</td>
-      <td>Verifikasi bypass masuk menggunakan sidik jari/FaceID yang tersimpan.</td>
-      <td>Tekan ikon sidik jari di layar login.</td>
-      <td>Memanggil popup pemindai biometrik native dan masuk langsung ke dashboard.</td>
+      <td>Layar Login (MasukActivity)</td>
+      <td>Verifikasi perlindungan brute force login setelah beberapa kali kegagalan.</td>
+      <td>Kirim kata sandi yang salah secara berulang sebanyak 5 kali berturut-turut.</td>
+      <td>Tombol masuk berubah status menjadi mati (disabled) dan teks tombol berubah menjadi hitung mundur "Tunggu 30s...".</td>
     </tr>
     <tr>
       <td class="text-center">BB-MOB-03</td>
-      <td>Kamera QR</td>
+      <td>Kamera QR (ScanQrActivity)</td>
       <td>Verifikasi penolakan izin kamera saat membuka pemindai kode QR.</td>
-      <td>Pilih opsi "Tolak Izin Kamera" saat sistem meminta akses.</td>
-      <td>Menampilkan banner "Akses kamera dibutuhkan untuk memindai" dan mematikan viewport.</td>
+      <td>Pilih opsi "Tolak Izin Kamera" saat sistem Android menampilkan dialog izin akses.</td>
+      <td>Menampilkan dialog peringatan khusus "Izin kamera diperlukan" dan menyediakan opsi jalan pintas menuju Pengaturan Sistem.</td>
     </tr>
     <tr>
       <td class="text-center">BB-MOB-04</td>
-      <td>Form Izin Sakit</td>
+      <td>Form Izin Sakit (PengajuanIzinActivity)</td>
       <td>Validasi pratinjau lampiran foto bukti sakit yang diambil dari kamera.</td>
       <td>Ambil foto bukti sakit lalu lampirkan pada form izin.</td>
-      <td>Menampilkan gambar mini (*thumbnail*) preview dari foto bukti sakit yang berhasil diambil.</td>
+      <td>Menampilkan gambar pratinjau (thumbnail preview) secara proporsional pada layout tanpa merusak struktur halaman.</td>
     </tr>
   </tbody>
 </table>
 
 <h3>4.2.2. Pengujian Kotak Putih (White-Box Testing)</h3>
-<p>Pengujian kotak putih memvalidasi penyimpanan terenkripsi lokal, logika penanganan antrean data offline, serta penelaahan integritas kode QR.</p>
+<p>Pengujian kotak putih memvalidasi penyimpanan terenkripsi lokal, logika penanganan interseptor otentikasi jaringan, serta penanganan transisi aktivitas yang aman.</p>
 
 <p class="caption">Tabel 4.2. Skenario Kasus Uji White-Box Integrasi Native & State</p>
 <table>
@@ -176,30 +176,37 @@
   <tbody>
     <tr>
       <td class="text-center">WB-MOB-01</td>
-      <td>Secure Store</td>
-      <td>Penyimpanan token JWT secara terenkripsi di keychain perangkat lokal.</td>
-      <td>Pengguna sukses melewati alur login.</td>
-      <td>Token JWT tersimpan secara aman di SecureStore dan terhapus saat logout.</td>
+      <td>SecurePreferences</td>
+      <td>Penyimpanan terenkripsi token akses JWT pada penyimpanan internal aman Android.</td>
+      <td>Pengguna sukses melakukan proses masuk akun (login).</td>
+      <td>Kunci token tersimpan dengan enkripsi AES256-GCM dan dibersihkan dari memori saat keluar akun (logout).</td>
     </tr>
     <tr>
       <td class="text-center">WB-MOB-02</td>
-      <td>Offline Queue</td>
-      <td>Penumpukan data presensi di database lokal saat kehilangan internet.</td>
-      <td>Melakukan scan QR dalam kondisi internet mati.</td>
-      <td>Data tersimpan di antrean AsyncStorage, dan otomatis sinkron saat online.</td>
+      <td>SecurePreferences Migration</td>
+      <td>Migrasi otomatis data dari penyimpanan SharedPreferences biasa ke penyimpanan terenkripsi.</td>
+      <td>Aplikasi pertama kali dijalankan setelah pembaruan versi (update).</td>
+      <td>Seluruh data lama disalin ke EncryptedSharedPreferences dan berkas plaintext dihapus.</td>
     </tr>
     <tr>
       <td class="text-center">WB-MOB-03</td>
-      <td>QR Time Decoder</td>
-      <td>Deteksi kedaluwarsa kode QR presensi sholat yang ditampilkan desktop.</td>
-      <td>Kode QR dipindai setelah >30 detik dari waktu pembuatan.</td>
-      <td>Logika dekoder menolak data presensi dan melempar galat QR Expired.</td>
+      <td>TokenAuthenticator</td>
+      <td>Penyegaran token akses (refresh token) otomatis saat token kadaluwarsa.</td>
+      <td>Panggilan API menghasilkan respon HTTP 401 Unauthorized.</td>
+      <td>Interseptor menunda request, meminta token baru secara sinkron ke server, lalu mengulang request asli.</td>
+    </tr>
+    <tr>
+      <td class="text-center">WB-MOB-04</td>
+      <td>SafeNavigator</td>
+      <td>Pencegahan DeadObjectException dan kebocoran Binder saat perpindahan halaman.</td>
+      <td>Perpindahan aktivitas dipicu saat drawer navigasi ditutup.</td>
+      <td>Logika memeriksa status isFinishing dan isDestroyed sebelum memanggil startActivity.</td>
     </tr>
   </tbody>
 </table>
 
-<h3>4.2.3. Pengujian Invarian (Property-Based Testing)</h3>
-<p>Pendekatan pengujian invarian memastikan fungsi-fungsi pembantu visual dan logika parsing kode QR tidak memutus aliran thread JS (*crash*) ketika menghadapi data sampah.</p>
+<h3>4.2.3. Pengujian Invarian (Parameterized Testing)</h3>
+<p>Pendekatan pengujian invarian memastikan fungsi-fungsi pembantu visual dan logika parsing kode QR tidak memutus aliran thread sistem utama (crash) ketika menghadapi masukan tidak terduga.</p>
 
 <p class="caption">Tabel 4.3. Skenario Uji Invarian / Properti Mobile</p>
 <table>
@@ -208,27 +215,27 @@
       <th style="width: 10%;">ID Tes</th>
       <th style="width: 25%;">Target Invarian</th>
       <th style="width: 35%;">Aturan Pengujian (Property)</th>
-      <th style="width: 30%;">Metode Generator (fast-check)</th>
+      <th style="width: 30%;">Metode Generator / Parameter</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td class="text-center">PB-MOB-01</td>
-      <td>QR Parser Safety</td>
-      <td>Logika pembaca kode QR harus selalu mengembalikan eksepsi standard dan dilarang memicu crash UI saat memproses input string acak non-kriptografis.</td>
-      <td>fast-check membangkitkan 200 string acak terenkripsi rusak maupun string kosong.</td>
+      <td>QR Decoder Safety</td>
+      <td>Fungsi pemecah sandi kode QR harus mengembalikan pengecualian (exception) terstruktur dan dilarang memicu crash aplikasi saat memproses teks non-kriptografis.</td>
+      <td>Uji parameterisasi dengan menyuplai 200 variasi string rusak, simbol biner, dan string kosong.</td>
     </tr>
     <tr>
       <td class="text-center">PB-MOB-02</td>
       <td>Input Sanitization</td>
-      <td>Kolom keterangan pada surat izin harus mampu menahan masukan karakter unicode ekstrim tanpa merusak struktur visual layout screen.</td>
-      <td>Membuat masukan string dengan berbagai macam simbol, bahasa asing, dan emoji sepanjang 5.000 karakter.</td>
+      <td>Fungsi sanitasi masukan teks pada form izin harus mampu memproses karakter unicode ekstrim tanpa memicu hang atau error database.</td>
+      <td>Memasukkan kombinasi teks multi-bahasa, karakter biner, dan emoji sepanjang 5.000 karakter secara acak.</td>
     </tr>
   </tbody>
 </table>
 
 <h2>4.3. Pelaksanaan dan Hasil Pengujian</h2>
-<p>Pelaksanaan pengujian aplikasi mobile disimulasikan menggunakan simulator Jest-RNTL yang memproses verifikasi seluruh antarmuka seluler dengan hasil kelulusan mutlak.</p>
+<p>Pelaksanaan pengujian aplikasi mobile disimulasikan menggunakan runner JUnit 4 lokal untuk unit testing, serta Espresso instrumented runner pada simulator perangkat Android yang memproses verifikasi seluruh antarmuka seluler dengan hasil kelulusan mutlak.</p>
 
 <p class="caption">Tabel 4.4. Hasil Rekapitulasi Eksekusi Kasus Uji Mobile</p>
 <table>
@@ -243,28 +250,28 @@
   </thead>
   <tbody>
     <tr>
-      <td>Black-Box (Antarmuka Layar)</td>
-      <td class="text-center">28</td>
-      <td class="text-center">28</td>
+      <td>Black-Box (Espresso UI Tests)</td>
+      <td class="text-center">20</td>
+      <td class="text-center">20</td>
       <td class="text-center">0</td>
       <td class="text-center">100%</td>
     </tr>
     <tr>
-      <td>White-Box (Integrasi Modul Native)</td>
+      <td>White-Box (Secure Preferences & Storage)</td>
       <td class="text-center">10</td>
       <td class="text-center">10</td>
       <td class="text-center">0</td>
       <td class="text-center">100%</td>
     </tr>
     <tr>
-      <td>White-Box (Utility/Sync Queue)</td>
+      <td>White-Box (Network & Authenticator Unit)</td>
       <td class="text-center">12</td>
       <td class="text-center">12</td>
       <td class="text-center">0</td>
       <td class="text-center">100%</td>
     </tr>
     <tr>
-      <td>Property-Based (Invarian)</td>
+      <td>Parameterized Tests (Invarian & Safety)</td>
       <td class="text-center">200 (runs)</td>
       <td class="text-center">200</td>
       <td class="text-center">0</td>
@@ -272,15 +279,15 @@
     </tr>
     <tr style="font-weight: bold; background-color: #fafafa;">
       <td>Total Keseluruhan</td>
-      <td class="text-center">250</td>
-      <td class="text-center">250</td>
+      <td class="text-center">242</td>
+      <td class="text-center">242</td>
       <td class="text-center">0</td>
       <td class="text-center">100%</td>
     </tr>
   </tbody>
 </table>
 
-<p>Hasil pengujian yang disajikan dalam Tabel 4.4 membuktikan bahwa arsitektur aplikasi Absen Sholat Mobile aman dan andal. Seluruh interaksi DOM virtual berjalan stabil, pemrosesan token terenkripsi native berhasil dicegah dari kebocoran memori, antrean luring berfungsi dengan benar, dan pengujian invariant memastikan keandalan pemindaian kode QR dari potensi manipulasi data.</p>
+<p>Hasil pengujian yang disajikan dalam Tabel 4.4 membuktikan bahwa arsitektur aplikasi Absen Sholat Mobile aman dan andal. Seluruh interaksi elemen visual melalui Espresso berjalan stabil, pemrosesan token terenkripsi native berhasil dicegah dari kebocoran memori, interseptor HTTP otentikasi berfungsi dengan benar, dan pengujian invariant memastikan keandalan pemindaian kode QR serta pengisian teks dari potensi kegagalan thread runtime.</p>
 
 </body>
 </html>

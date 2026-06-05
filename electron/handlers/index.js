@@ -1,4 +1,4 @@
-const { dialog } = require("electron");
+const { dialog, Notification } = require("electron");
 const fs = require("fs/promises");
 const path = require("path");
 const os = require("os");
@@ -545,6 +545,10 @@ function register(ipcMain) {
     apiRequest("GET", "/api/v2/notifications")
   ));
 
+  ipcMain.handle("show-system-notification", async (_event, { title, body }) => {
+    new Notification({ title, body }).show();
+  });
+
   // === Profile: Change Password & Email ===
   ipcMain.handle("change-password", handler(async ({ currentPassword, newPassword }) =>
     apiRequest("POST", "/api/v2/auth/change-password", { body: { current_password: currentPassword, new_password: newPassword } })
@@ -579,6 +583,17 @@ function register(ipcMain) {
   ipcMain.handle("read-file", handler(async ({ filePath, encoding }) =>
     fs.readFile(filePath, encoding || "utf8")
   ));
+
+  // === Auto Updater ===
+  ipcMain.handle("check-for-updates", handler(async () => {
+    const { autoUpdater } = require("electron-updater");
+    return autoUpdater.checkForUpdates();
+  }));
+
+  ipcMain.handle("quit-and-install", handler(async () => {
+    const { autoUpdater } = require("electron-updater");
+    autoUpdater.quitAndInstall();
+  }));
 }
 
 module.exports = { register };

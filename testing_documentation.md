@@ -51,7 +51,7 @@ These tests inspect how the Electron main process interacts with HTTP services, 
 
 | Test Scenario | Target Logic Checked | Mock Requirements | Expected Assertion |
 | :--- | :--- | :--- | :--- |
-| **X-Hardware-ID inclusion** | Header injection in network requests | Mock `os.homedir` & file read for `.absensholat-hwid` | All HTTP headers contain `"X-Hardware-ID": "stored-hwid-1234"` |
+| **X-Hardware-ID inclusion** | Header injection in network requests | Mock `os.homedir` & file read for `.presensisholat-hwid` | All HTTP headers contain `"X-Hardware-ID": "stored-hwid-1234"` |
 | **Login handler conflict** | Swallowing HTTP 409 (already registered device) | Mock login success (200) followed by device registration (409) | Login succeeds and resolves token; error is caught and ignored internally |
 | **Parallel dashboard fetches** | Orchestrated concurrent API requests via `Promise.all` | Mock `fetch` endpoints for `/charts`, `/attendance`, `/closest` | Returns consolidated dashboard data object in a single transaction |
 | **Cache invalidation mapping** | Cache clearing on mutation requests (POST/PUT/DELETE) | Mock cache storage and `invalidateRelated` lookup | Mutation routes clear dependency queries (e.g. updating a student invalidates `/analytics`) |

@@ -1,136 +1,130 @@
 # Testing Documentation & Specification: Absen Sholat Mobile
 
-This document provides a comprehensive analysis and specification of the testing architecture designed for the **Absen Sholat Mobile Application** (built with React Native & Expo). It maps out the directory layout, mocking requirements, and testing methodologies (White-Box, Black-Box, and Property-Based testing) to serve as a guideline for QA engineers, mobile developers, and future test suites.
+This document provides a comprehensive analysis and specification of the testing architecture designed for the **Absen Sholat Mobile Application** (built with Native Android & Kotlin). It maps out the directory layout, mocking requirements, and testing methodologies (White-Box, Black-Box, and Parameterized/Property-Based testing) to serve as a guideline for QA engineers, mobile developers, and test automation suites.
 
 ---
 
 ## 1. Testing Architecture & Tooling
 
-The testing suite is designed around the standard React Native ecosystem, utilizing Vitest/Jest and Testing Library to render screens and simulate user interactions on simulated devices:
+The testing suite is integrated within the standard Android build toolchain, utilizing Gradle to compile and run local unit tests and device-based instrumented tests:
 
-*   **Test Runner**: [Jest](https://jestjs.io/) or [Vitest](https://vitest.dev/) (Vite-native test runner optimized for speed).
-*   **Component Rendering**: [@testing-library/react-native](https://callstack.github.io/react-native-testing-library/) (React Native Testing Library) to render virtual Native views and assert DOM/UI states.
-*   **User Interactions**: `@testing-library/user-event` or native press wrappers (simulating gestures like tapping, typing, scrolling, and camera permission toggles).
-*   **Property-Based Testing**: [fast-check](https://github.com/dubzzz/fast-check) (generates randomized inputs to test boundary conditions in token decoders, offline storage structures, and QR parsing).
-*   **Native Modules Mocking**: Custom mock setups for hardware-dependent packages:
-    *   `expo-secure-store`: Mocks persistent secure storage for session JWT tokens.
-    *   `expo-local-authentication`: Mocks biometric sensors (Fingerprint, FaceID) to test device binding.
-    *   `expo-camera` / `expo-barcode-scanner`: Mocks viewfinder captures and returns successful QR payload scans.
-    *   `@react-native-async-storage/async-storage`: Mocks persistent offline cache storage.
+*   **Test Runner**: JUnit 4 (configured via `androidx.test.runner.AndroidJUnitRunner`).
+*   **Local Unit Tests (JVM)**: Runs quickly on the host machine to test domain logic, helper utilities, and network token decoders.
+*   **Instrumented UI Tests (device/emulator)**: [Espresso](https://developer.android.com/training/testing/espresso) combined with `ActivityScenario` to launch activities, click views, type text, and assert UI hierarchies.
+*   **Mocking Library**: [Mockito](https://site.mockito.org/) (specifically `mockito-core` and `mockito-android`) or MockK to mock `Context`, `SharedPreferences`, and Retrofit API client interfaces.
+*   **Secure Storage Engine**: `androidx.security:security-crypto` (`EncryptedSharedPreferences`) used to store persistent session JWT credentials.
+*   **QR Scanner engine**: ZXing (`com.journeyapps:zxing-android-embedded`) for scanning physical check-in QR codes.
 
 ### Directory Layout
 ```
-├── src/
-│   └── __tests__/
-│       ├── setup.ts                  # Global mock declarations (SecureStore, Camera, LocalAuth)
-│       ├── screens/                  # Black-box screen flow tests
-│       │   ├── LoginScreen.test.tsx
-│       │   ├── DashboardScreen.test.tsx
-│       │   ├── QRCodeScannerScreen.test.tsx
-│       │   └── ExcuseSubmissionScreen.test.tsx
-│       ├── components/               # UI component-level integration tests
-│       │   ├── BiometricButton.test.tsx
-│       │   ├── ExcusePhotoPreview.test.tsx
-│       │   └── HistoryListItem.test.tsx
-│       ├── hooks/                    # Unit tests for custom React hooks
-│       │   ├── useAuth.test.ts       # Validates stateful authentication lifecycle
-│       │   └── useAttendance.test.ts # Validates offline synchronization and API queues
-│       └── lib/                      # White-box unit & property-based tests
-│           ├── qr-decoder.property.test.ts
-│           ├── qr-decoder.test.ts
-│           ├── secure-storage.test.ts
-│           └── date-helper.test.ts
+├── app/
+│   └── src/
+│       ├── test/java/com/xirpl2/SASMobile/          # Local JVM Unit Tests
+│       │   ├── utils/
+│       │   │   ├── SecurePreferencesTest.kt          # Tests token encryption & database migration
+│       │   │   └── SafeNavigatorTest.kt              # Verifies navigation lifecycle exception checks
+│       │   ├── network/
+│       │   │   └── TokenAuthenticatorTest.kt         # Tests JWT token interception & renewal
+│       │   └── ExampleUnitTest.kt
+│       └── androidTest/java/com/xirpl2/SASMobile/   # Instrumented Device UI Tests
+│           ├── MasukActivityTest.kt                  # Espresso tests for Form validation & Brute Force Lockout
+│           ├── ScanQrActivityTest.kt                 # Espresso tests for Camera permission & Scanner verification
+│           ├── PengajuanIzinActivityTest.kt          # Espresso tests for attachments & photo previewing
+│           └── ExampleInstrumentedTest.kt
 ```
 
 ---
 
 ## 2. White-Box Testing Specifications
 
-White-box testing validates native storage operations, biometric access paths, cryptographic signature decoding, and offline syncing queues.
+White-box testing validates native storage operations, token authenticator interception, navigation crash-prevention lifecycle assertions, and input sanitization bounds.
 
-### A. Native Storage and Sensor Integrations
-
-These tests verify interaction with native APIs through mock structures.
+### A. Secure Storage and Network Autentikasi
+These tests verify correct interaction with the Android Operating System APIs through Mockito stubs.
 
 | Test Scenario | Target Logic Checked | Mock Requirements | Expected Assertion |
 | :--- | :--- | :--- | :--- |
-| **Secure Token Persistence** | Writing, reading, and deleting JWT tokens | Mock `expo-secure-store` | Tokens are written successfully on login and deleted on logout; invalid tokens return null |
-| **Biometric Authentication** | Checking support and triggering FaceID/Fingerprint | Mock `expo-local-authentication` | If hardware is supported, trigger fingerprint popup. Clicking success resolves login credentials |
-| **Offline Cache Synced** | Caching attendance scans when connection is lost | Mock `@react-native-async-storage` | Attendance data is saved locally when offline; synced and deleted when connection restores |
-| **QR Code Decryption** | Validating digital signature and timestamp of check-in QR | Cryptographic signature mock | Resolves checking payload details if signature is valid; fails if QR signature is spoofed |
+| **Secure Preferences Persistence** | Writing, reading, and deleting JWT keys in secure keystore | Mock `Context` and plain `SharedPreferences` | Verify values are written using AES256-GCM encryption wrappers and cleared cleanly on logout |
+| **Legacy Preference Migration** | First-run migration of plain text configs to EncryptedSharedPreferences | Mock `Context` holding legacy key-value pairs | Legacy plaintext data is copied to the encrypted file; plaintext keys are purged upon commit |
+| **Token HTTP Interception** | Intercepting requests to append JWT Bearer headers | Mock OkHttp Interceptor Chain | Requests are decorated with `Authorization: Bearer <token>` and matching device identifier headers |
+| **Token Refresher (401)** | Renewing access tokens during invalid token returns | Mock Retrofit auth client & 401 callback | Authenticator captures HTTP 401, issues synchronous renew request, saves new token, or logs out user |
 
-### B. Utility Libraries (`src/__tests__/lib/`)
+### B. Navigation Stability (`SafeNavigator` & `UniversalSafeNavigator`)
+*   **Lifecycle Check**: Asserts that during transitions between activities, the navigator flags `isFinishing` or `isDestroyed` before attempting transitions to prevent `android.os.DeadObjectException` and Binder buffer overflow.
 
-*   `qr-decoder.test.ts`: Asserts parser extracts coordinates, school IDs, and signature timestamps, and flags expired QR codes (e.g. >30 seconds old) as invalid.
-*   `secure-storage.test.ts`: Verifies secure credential handling and keys encryption validations.
-*   `date-helper.test.ts`: Formats timestamps matching timezone configurations of the server.
-
-### C. Property-Based Testing (`fast-check`)
-
-*   **QR Scanner Input Boundaries (`qr-decoder.property.test.ts`)**:
-    *   **Invariant**: The decoding function must handle any random string payload without causing a JavaScript thread crash, returning either a parsed object or a graceful signature validation exception.
-    *   **Execution**: Generates 200 iterations containing random strings, symbols, or broken base64 payloads to verify decoder crash safety.
-*   **Excuse Text Sanitization**:
-    *   **Invariant**: Excuse text fields must process raw text of any length and character set (including Emojis and Unicode) without breaking form layout or causing GORM parse errors in local SQLite storage.
+### C. Parameterized & Property-Based Testing
+*   **Input Sanitization Boundaries**:
+    *   **Invariant**: The sanitization utilities must parse strings of any size, including extreme Unicode sequences, Asian fonts, and emojis, without causing regular expression engine hangs (Catastrophic Backtracking) or formatting errors.
+    *   **Execution**: Parameterized tests supply 200 combinations of extreme characters to validation methods.
+*   **QR Scanner Decoder robustness**:
+    *   **Invariant**: The QR base64 deserializer must gracefully catch parsing exceptions when encountering corrupted strings or non-json scans, rather than triggering a thread crash.
 
 ---
 
 ## 3. Black-Box Testing Specifications
 
-Black-box testing verifies user journeys, reactive UI feedback, layouts, and permissions on native screens.
+Black-box testing asserts reactive UI widgets, form layouts, custom Toast notifications, and hardware runtime permission gates.
 
-### A. UI Mock Setup (`src/__tests__/setup.ts`)
+### A. Espresso Android UI Test Setup
+Android Instrumented tests setup standard testing rules to execute UI assertions:
 
-Before executing tests, native platform views must be stubbed or mocked:
+```kotlin
+@RunWith(AndroidJUnit4::class)
+class MasukActivityTest {
+    
+    @get:Rule
+    val activityRule = ActivityScenarioRule(MasukActivity::class.java)
 
-```typescript
-// Example from setup.ts: Mocking Expo camera and biometric modules
-jest.mock('expo-camera', () => ({
-  Camera: {
-    requestCameraPermissionsAsync: jest.fn(() => Promise.resolve({ status: 'granted' })),
-  },
-}));
-
-jest.mock('expo-local-authentication', () => ({
-  hasHardwareAsync: jest.fn(() => Promise.resolve(true)),
-  supportedAuthenticationTypesAsync: jest.fn(() => Promise.resolve([1])), // Fingerprint
-  authenticateAsync: jest.fn(() => Promise.resolve({ success: true })),
-}));
+    @get:Rule
+    val grantPermissionRule: GrantPermissionRule = GrantPermissionRule.grant(
+        Manifest.permission.CAMERA
+    )
+}
 ```
 
-### B. Screen Interaction Scenarios (`src/__tests__/screens/`)
+### B. Screen Interaction Scenarios (`src/androidTest/`)
 
-#### 1. Student Login Screen (`LoginScreen.test.tsx`)
-*   **Authentication Validation**: Verifies entering empty forms yields warning text. Entering correct parameters submits to server, triggers biometrics enrollment proposal, and redirects to dashboard.
-*   **Biometric Login Bypass**: If credentials are saved, tapping the Biometric button invokes `expo-local-authentication` immediately, bypassing manual form entries.
+#### 1. Student Login Screen (`MasukActivityTest.kt`)
+*   **Input Form Validation**:
+    *   Simulates submitting empty credentials. Verifies that `TextInputLayout` display elements render validation messages (e.g. "NIS tidak boleh kosong").
+*   **Brute Force Cooldown Lockout**:
+    *   Simulates typing incorrect passwords and clicking "Masuk" 5 consecutive times.
+    *   Asserts that the "Masuk" button becomes disabled (`isEnabled = false`) and displays a timer countdown (e.g., "Tunggu 30s...").
+*   **Login Success**:
+    *   Enters correct test credentials. Simulates clicking "Masuk". Asserts launcher navigates successfully to `BerandaActivity` and saves credentials.
 
-#### 2. QR Scanner Screen (`QRCodeScannerScreen.test.tsx`)
-*   **Permission Requests**: If camera permission is denied, asserts that a banner is rendered: "Camera permission is required to scan QR". If approved, renders the active viewport wrapper.
-*   **Check-in Callback**: Simulating a camera frame scan triggers a mock API request, showing a check-in success tick anim or an error alert overlay.
+#### 2. QR Scanner Screen (`ScanQrActivityTest.kt`)
+*   **Camera Permission Gates**:
+    *   Simulates entering screen with Camera Permission denied. Asserts that the application renders a custom permission warning dialog prompting the user to open device Settings.
+*   **Check-In Result View**:
+    *   Simulates camera scanning. Injects a mock success scan event. Asserts that `cardResult` becomes visible, displaying student name, class, prayer type, and timestamp values.
 
-#### 3. Excuse Submission Screen (`ExcuseSubmissionScreen.test.tsx`)
-*   **Attachment Preview**: Renders thumbnail of the photo captured using the device camera or chosen from the library. Submitting without attachment sends request to backend with file attribute as null.
+#### 3. Excuse Submission Screen (`PengajuanIzinActivityTest.kt`)
+*   **Attachment Preview**:
+    *   Simulates launching photo capture and returning a mock thumbnail. Asserts that the ImageView component updates with the thumbnail preview, and the layout remains visually stable.
 
 ---
 
 ## 4. Test Execution Guide
 
-To run the mobile test suites, run these commands inside the mobile repository:
+To execute the mobile test suite locally, use Gradle tasks within the `../mobile_ta` directory:
 
-### Run All Tests
+### Run Local Unit Tests (JVM)
 ```bash
-npm run test
+./gradlew test
 ```
-*Launches Jest/Vitest in watch mode for changes.*
+*Compiles the Kotlin source sets and executes all JVM-based unit tests quickly.*
 
-### Run Single Run for CI Pipelines
+### Run Instrumented UI Tests (Android Device / Emulator)
+Ensure an emulator is active or a test device is connected via ADB, then run:
 ```bash
-npx jest --watchAll=false
+./gradlew connectedAndroidTest
 ```
-*Performs a single complete scan and returns code 0 (success) or 1 (failure).*
+*Installs the test APK and runs Espresso UI interactions on the simulated hardware.*
 
-### Compile Coverage Report
+### Compile Test Coverage Reports
+To generate code coverage profiles using JaCoCo:
 ```bash
-npm run test -- --coverage
+./gradlew testDebugUnitTest --coverage
 ```
-*Generates HTML visualizer files outlining component coverage levels.*
+*Compiles HTML visualizer charts displaying code path coverage statistics inside `app/build/reports/tests/`.*

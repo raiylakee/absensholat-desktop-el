@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, nativeImage } = require("electron");
 const path = require("path");
 const handlers = require("./handlers");
+const { initAutoUpdater } = require("./updater");
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -37,6 +38,8 @@ function createWindow() {
   ipcMain.handle("window-start-drag", () => {
     // No-op: drag is handled via CSS -webkit-app-region
   });
+
+  initAutoUpdater(win);
 }
 
 app.whenReady().then(() => {

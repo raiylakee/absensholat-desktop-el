@@ -103,6 +103,7 @@ interface ElectronAPI {
 
   // Notifications
   getNotifications: () => Promise<any>;
+  showSystemNotification: (args: { title: string; body: string }) => Promise<void>;
 
   // Profile
   changePassword: (args: any) => Promise<any>;
@@ -114,6 +115,12 @@ interface ElectronAPI {
   showSaveDialog: (args?: any) => Promise<string | null>;
   writeFile: (args: any) => Promise<void>;
   readFile: (args: any) => Promise<string>;
+
+  // Auto Updater
+  checkForUpdates: () => Promise<any>;
+  quitAndInstall: () => Promise<void>;
+  onUpdateStatus: (callback: (status: string, info: any) => void) => () => void;
+  onUpdateProgress: (callback: (percent: number) => void) => () => void;
 
   // Window
   windowMinimize: () => Promise<void>;

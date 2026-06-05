@@ -20,6 +20,24 @@ export function setNotificationAdder(fn: AddNotificationFn | null): void {
   addNotificationFn = fn;
 }
 
+function triggerSystemNotification(message: string): void {
+  if (
+    typeof window !== "undefined" &&
+    window.electronAPI &&
+    typeof window.electronAPI.showSystemNotification === "function"
+  ) {
+    const promise = window.electronAPI.showSystemNotification({
+      title: "Presensi Sholat Desktop",
+      body: message,
+    });
+    if (promise && typeof promise.catch === "function") {
+      promise.catch((err) => {
+        console.error("Failed to show system notification:", err);
+      });
+    }
+  }
+}
+
 /**
  * Show a Sonner toast and add a notification entry to the store.
  * If severity is not provided, defaults to "info".
@@ -49,6 +67,8 @@ export function notify(message: string, severity?: NotifySeverity): void {
       severity: level,
     });
   }
+
+  triggerSystemNotification(message);
 }
 
 /**
@@ -79,4 +99,6 @@ export function notifyDialogAction(
       outcome,
     });
   }
+
+  triggerSystemNotification(message);
 }

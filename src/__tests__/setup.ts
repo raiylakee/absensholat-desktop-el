@@ -106,6 +106,11 @@ const mockElectronAPI = {
   windowMaximize: vi.fn(),
   windowClose: vi.fn(),
   windowStartDrag: vi.fn(),
+  showSystemNotification: vi.fn(),
+  checkForUpdates: vi.fn(),
+  quitAndInstall: vi.fn(),
+  onUpdateStatus: vi.fn(() => () => {}),
+  onUpdateProgress: vi.fn(() => () => {}),
 };
 
 if (typeof window !== "undefined") {

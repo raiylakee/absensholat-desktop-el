@@ -406,20 +406,20 @@ export function KelolaGuruSection() {
                     </div>
 
                     <div className="flex items-center gap-1 pt-1 border-t">
-                      <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => openEdit(guru)}>
+                      <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" onClick={() => openEdit(guru)} title="Edit">
                         <Pencil className="mr-1 size-3" /> Ubah
                       </Button>
                       {guru.id_kelas_wali ? (
-                        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-yellow-600" onClick={() => openRemoveWali(guru)}>
+                        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-yellow-600" onClick={() => openRemoveWali(guru)} title="Lepas Wali Kelas">
                           <UserMinus className="mr-1 size-3" /> Lepas Wali
                         </Button>
                       ) : (
-                        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-green-600" onClick={() => openAssign(guru)}>
+                        <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-green-600" onClick={() => openAssign(guru)} title="Tetapkan Wali Kelas">
                           <UserCheck className="mr-1 size-3" /> Tetapkan Wali
                         </Button>
                       )}
                       <div className="flex-1" />
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => openDelete(guru)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => openDelete(guru)} title="Hapus">
                         <Trash2 className="size-3.5" />
                       </Button>
                     </div>

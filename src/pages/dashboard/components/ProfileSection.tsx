@@ -159,16 +159,16 @@ export function ProfileSection({ user }: { user?: UserProfile }) {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label>Kata Sandi Saat Ini</Label>
-              <PasswordInput value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+              <Label htmlFor="currentPassword">Kata Sandi Saat Ini</Label>
+              <PasswordInput id="currentPassword" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
             </div>
             <div className="grid gap-2">
-              <Label>Kata Sandi Baru</Label>
-              <PasswordInput value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              <Label htmlFor="newPassword">Kata Sandi Baru</Label>
+              <PasswordInput id="newPassword" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
             </div>
             <div className="grid gap-2">
-              <Label>Konfirmasi Kata Sandi Baru</Label>
-              <PasswordInput value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              <Label htmlFor="confirmPassword">Konfirmasi Kata Sandi Baru</Label>
+              <PasswordInput id="confirmPassword" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
             </div>
           </div>
           <DialogFooter>

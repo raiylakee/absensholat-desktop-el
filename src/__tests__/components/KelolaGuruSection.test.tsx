@@ -3,6 +3,27 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { KelolaGuruSection } from "@/pages/dashboard/components/KelolaGuruSection";
 
+vi.mock("@/components/ui/select", () => {
+  return {
+    Select: ({ children, value, onValueChange }: any) => (
+      <select
+        value={value}
+        onChange={(e) => onValueChange(e.target.value)}
+        data-testid="select-mock"
+      >
+        <option value="">Pilih kelas...</option>
+        {children}
+      </select>
+    ),
+    SelectTrigger: () => null,
+    SelectValue: () => null,
+    SelectContent: ({ children }: any) => <>{children}</>,
+    SelectItem: ({ children, value }: any) => <option value={value}>{children}</option>,
+  };
+});
+
+
+
 const mockGurus = [
   { id_staff: 1, id_account: 10, nama: "Ahmad Fauzi", nip: "198501", email: "ahmad@smk.id", wali_kelas: "XI RPL 1", id_kelas_wali: 2, label_kelas: "XI RPL 1", berlaku_mulai: "2024-01-01" },
   { id_staff: 2, id_account: 11, nama: "Siti Rahayu", nip: null, email: "siti@smk.id", wali_kelas: null, id_kelas_wali: null, label_kelas: null, berlaku_mulai: null },
@@ -45,16 +66,15 @@ describe("KelolaGuruSection", () => {
     expect(await screen.findByText("Ahmad Fauzi")).toBeInTheDocument();
     expect(screen.getByText("ahmad@smk.id")).toBeInTheDocument();
     expect(screen.getByText("198501")).toBeInTheDocument();
-    expect(screen.getByText("XI RPL 1")).toBeInTheDocument();
+    expect(screen.getByText(/XI RPL 1/)).toBeInTheDocument();
   });
 
-  it("guru without wali_kelas shows '-'", async () => {
+  it("guru without wali_kelas shows 'Belum jadi wali'", async () => {
     setupGuruList();
     render(<KelolaGuruSection />);
     await screen.findByText("Siti Rahayu");
-    const row = screen.getByText("Siti Rahayu").closest("tr")!;
-    const dashes = within(row).getAllByText("-");
-    expect(dashes.length).toBeGreaterThanOrEqual(1);
+    const row = screen.getByText("Siti Rahayu").closest("[data-slot='card']")!;
+    expect(within(row).getByText("Belum jadi wali")).toBeInTheDocument();
   });
 
   it("empty list shows 'Tidak ada data guru.'", async () => {
@@ -85,19 +105,19 @@ describe("KelolaGuruSection", () => {
     });
   });
 
-  it("'Cari' button triggers search", async () => {
+  it("typing in search triggers debounced search", async () => {
     setupGuruList();
     render(<KelolaGuruSection />);
     await screen.findByPlaceholderText("Cari nama atau email...");
     const input = screen.getByPlaceholderText("Cari nama atau email...");
     await user.type(input, "Test");
-    await user.click(screen.getByRole("button", { name: "Cari" }));
     await waitFor(() => {
       expect(window.electronAPI.getGuruList).toHaveBeenCalledWith(
         expect.objectContaining({ search: "Test" })
       );
     });
   });
+
 
   it("pagination hidden when totalPages=1", async () => {
     setupGuruList(mockGurus, { total_pages: 1, total: 2, limit: 15 });
@@ -235,7 +255,7 @@ describe("KelolaGuruSection", () => {
     setupGuruList();
     render(<KelolaGuruSection />);
     await screen.findByText("Ahmad Fauzi");
-    const row = screen.getByText("Ahmad Fauzi").closest("tr")!;
+    const row = screen.getByText("Ahmad Fauzi").closest("[data-slot='card']")!;
     const editBtn = within(row).getByTitle("Edit");
     await user.click(editBtn);
     await waitFor(() => {
@@ -250,7 +270,7 @@ describe("KelolaGuruSection", () => {
     setupGuruList();
     render(<KelolaGuruSection />);
     await screen.findByText("Ahmad Fauzi");
-    const row = screen.getByText("Ahmad Fauzi").closest("tr")!;
+    const row = screen.getByText("Ahmad Fauzi").closest("[data-slot='card']")!;
     await user.click(within(row).getByTitle("Edit"));
     await screen.findByText("Perbarui data guru.");
     expect(document.querySelector("[role='dialog'] input[type='password']")).toBeNull();
@@ -261,7 +281,7 @@ describe("KelolaGuruSection", () => {
     window.electronAPI.updateGuru = vi.fn().mockResolvedValue({});
     render(<KelolaGuruSection />);
     await screen.findByText("Ahmad Fauzi");
-    const row = screen.getByText("Ahmad Fauzi").closest("tr")!;
+    const row = screen.getByText("Ahmad Fauzi").closest("[data-slot='card']")!;
     await user.click(within(row).getByTitle("Edit"));
     await screen.findByText("Perbarui data guru.");
     const namaInput = screen.getByDisplayValue("Ahmad Fauzi");
@@ -280,7 +300,7 @@ describe("KelolaGuruSection", () => {
     setupGuruList();
     render(<KelolaGuruSection />);
     await screen.findByText("Ahmad Fauzi");
-    const row = screen.getByText("Ahmad Fauzi").closest("tr")!;
+    const row = screen.getByText("Ahmad Fauzi").closest("[data-slot='card']")!;
     await user.click(within(row).getByTitle("Hapus"));
     await waitFor(() => {
       expect(screen.getByText(/tidak dapat dibatalkan/)).toBeInTheDocument();
@@ -294,7 +314,7 @@ describe("KelolaGuruSection", () => {
     window.electronAPI.deleteGuru = vi.fn().mockResolvedValue({});
     render(<KelolaGuruSection />);
     await screen.findByText("Ahmad Fauzi");
-    const row = screen.getByText("Ahmad Fauzi").closest("tr")!;
+    const row = screen.getByText("Ahmad Fauzi").closest("[data-slot='card']")!;
     await user.click(within(row).getByTitle("Hapus"));
     await screen.findByText(/tidak dapat dibatalkan/);
     await user.click(screen.getByRole("button", { name: "Hapus" }));
@@ -307,11 +327,14 @@ describe("KelolaGuruSection", () => {
     setupGuruList();
     render(<KelolaGuruSection />);
     await screen.findByText("Siti Rahayu");
-    const row = screen.getByText("Siti Rahayu").closest("tr")!;
+    const row = screen.getByText("Siti Rahayu").closest("[data-slot='card']")!;
     await user.click(within(row).getByTitle("Tetapkan Wali Kelas"));
     await waitFor(() => {
       expect(screen.getByText(/Pilih kelas untuk Siti Rahayu/)).toBeInTheDocument();
     });
+    const dialog = screen.getByText(/Pilih kelas untuk Siti Rahayu/).closest("[role='dialog']") as HTMLElement;
+    const select = within(dialog).getByTestId("select-mock");
+    expect(within(select).getByText("X RPL 1")).toBeInTheDocument();
   });
 
   it("assign without kelas selection shows error toast", async () => {
@@ -319,7 +342,7 @@ describe("KelolaGuruSection", () => {
     const { toast } = await import("sonner");
     render(<KelolaGuruSection />);
     await screen.findByText("Siti Rahayu");
-    const row = screen.getByText("Siti Rahayu").closest("tr")!;
+    const row = screen.getByText("Siti Rahayu").closest("[data-slot='card']")!;
     await user.click(within(row).getByTitle("Tetapkan Wali Kelas"));
     await screen.findByText(/Pilih kelas untuk Siti Rahayu/);
     await user.click(screen.getByRole("button", { name: "Tetapkan" }));
@@ -329,18 +352,18 @@ describe("KelolaGuruSection", () => {
   it("assign with kelas calls assignGuruWaliKelas correctly", async () => {
     setupGuruList();
     window.electronAPI.assignGuruWaliKelas = vi.fn().mockResolvedValue({});
-    const userNoPointerCheck = userEvent.setup({ pointerEventsCheck: 0 });
     render(<KelolaGuruSection />);
     await screen.findByText("Siti Rahayu");
-    const row = screen.getByText("Siti Rahayu").closest("tr")!;
-    await userNoPointerCheck.click(within(row).getByTitle("Tetapkan Wali Kelas"));
+    const row = screen.getByText("Siti Rahayu").closest("[data-slot='card']")!;
+    await user.click(within(row).getByTitle("Tetapkan Wali Kelas"));
     await screen.findByText(/Pilih kelas untuk Siti Rahayu/);
-    // Click the select trigger
-    await userNoPointerCheck.click(screen.getByText("Pilih kelas..."));
-    // Click an option
-    await waitFor(() => screen.getByText("X RPL 1"));
-    await userNoPointerCheck.click(screen.getByText("X RPL 1"));
-    await userNoPointerCheck.click(screen.getByRole("button", { name: "Tetapkan" }));
+    
+    // Select option using native select interaction scoped to dialog
+    const dialog = screen.getByText(/Pilih kelas untuk Siti Rahayu/).closest("[role='dialog']") as HTMLElement;
+    const select = within(dialog).getByTestId("select-mock");
+    await user.selectOptions(select, "1");
+    
+    await user.click(screen.getByRole("button", { name: "Tetapkan" }));
     await waitFor(() => {
       expect(window.electronAPI.assignGuruWaliKelas).toHaveBeenCalledWith({
         id: 2,
@@ -349,11 +372,13 @@ describe("KelolaGuruSection", () => {
     });
   });
 
+
+
   it("remove wali dialog opens with guru name and kelas", async () => {
     setupGuruList();
     render(<KelolaGuruSection />);
     await screen.findByText("Ahmad Fauzi");
-    const row = screen.getByText("Ahmad Fauzi").closest("tr")!;
+    const row = screen.getByText("Ahmad Fauzi").closest("[data-slot='card']")!;
     await user.click(within(row).getByTitle("Lepas Wali Kelas"));
     await waitFor(() => {
       expect(screen.getByText(/Yakin ingin melepas/)).toBeInTheDocument();
@@ -368,7 +393,7 @@ describe("KelolaGuruSection", () => {
     window.electronAPI.removeGuruWaliKelas = vi.fn().mockResolvedValue({});
     render(<KelolaGuruSection />);
     await screen.findByText("Ahmad Fauzi");
-    const row = screen.getByText("Ahmad Fauzi").closest("tr")!;
+    const row = screen.getByText("Ahmad Fauzi").closest("[data-slot='card']")!;
     await user.click(within(row).getByTitle("Lepas Wali Kelas"));
     await screen.findByText(/Yakin ingin melepas/);
     await user.click(screen.getByRole("button", { name: "Lepas" }));
@@ -376,6 +401,7 @@ describe("KelolaGuruSection", () => {
       expect(window.electronAPI.removeGuruWaliKelas).toHaveBeenCalledWith({ id: 1 });
     });
   });
+
 
   it("clicking 'Wali Kelas Aktif' tab triggers getWaliKelasList", async () => {
     setupGuruList();

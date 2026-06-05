@@ -14,6 +14,7 @@ import { ResizeHandle } from "@/components/resize-handle"
 import { Toaster } from "@/components/ui/sonner"
 import { NotificationProvider } from "@/lib/notification-store"
 import { AutoLoginGuard } from "@/components/AutoLoginGuard"
+import { AutoUpdaterListener } from "@/components/AutoUpdaterListener"
 import inorasi from "@/assets/inorasi.png"
 
 function AnimatedRoutes() {
@@ -59,6 +60,7 @@ function App() {
           <div className="relative z-10 min-h-screen">
             <AnimatedRoutes />
             <Toaster />
+            <AutoUpdaterListener />
           </div>
         </HashRouter>
       </NotificationProvider>

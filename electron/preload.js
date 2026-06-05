@@ -104,6 +104,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   // Notifications
   getNotifications: () => ipcRenderer.invoke("get-notifications"),
+  showSystemNotification: (args) => ipcRenderer.invoke("show-system-notification", args),
 
   // Profile: Change Password & Email
   changePassword: (args) => ipcRenderer.invoke("change-password", args),
@@ -115,6 +116,20 @@ contextBridge.exposeInMainWorld("electronAPI", {
   showSaveDialog: (args) => ipcRenderer.invoke("show-save-dialog", args),
   writeFile: (args) => ipcRenderer.invoke("write-file", args),
   readFile: (args) => ipcRenderer.invoke("read-file", args),
+
+  // Auto Updater
+  checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),
+  quitAndInstall: () => ipcRenderer.invoke("quit-and-install"),
+  onUpdateStatus: (callback) => {
+    const subscription = (event, status, info) => callback(status, info);
+    ipcRenderer.on("update-status", subscription);
+    return () => ipcRenderer.removeListener("update-status", subscription);
+  },
+  onUpdateProgress: (callback) => {
+    const subscription = (event, percent) => callback(percent);
+    ipcRenderer.on("update-progress", subscription);
+    return () => ipcRenderer.removeListener("update-progress", subscription);
+  },
 
   // Window controls (replacing @tauri-apps/api/window)
   windowMinimize: () => ipcRenderer.invoke("window-minimize"),
