@@ -13,6 +13,8 @@ export type PrayerCard = {
   waktuSelesai: string
   jurusan: string[]
   kelas: string[]
+  hari?: string[]           // weekdays this prayer repeats on
+  tanggalKhusus?: string    // specific date for one-time prayers (yyyy-MM-dd)
 }
 
 export type Student = {

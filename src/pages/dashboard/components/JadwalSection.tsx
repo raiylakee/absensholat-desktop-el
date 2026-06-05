@@ -30,7 +30,8 @@ interface JurusanData {
 interface JadwalSholatData {
   id_jadwal: number
   id_waktu: number
-  hari: string
+  hari: string | null
+  tanggal_khusus?: string | null
   jurusans?: JurusanData[]
   waktu_sholat?: {
     id_waktu: number
@@ -133,17 +134,19 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
       setJadwalRows(rows)
 
       // Build prayer cards from schedules grouped by prayer type
-      const prayerTypeCardMap = new Map<string, { waktuSholat: any; jurusans: Set<string>; idJadwal: number }>()
+      const prayerTypeCardMap = new Map<string, { waktuSholat: any; jurusans: Set<string>; haris: Set<string>; tanggalKhusus: string | null; idJadwal: number }>()
       for (const s of schedules) {
         const name = s.waktu_sholat?.jenis_sholat?.nama_jenis
         if (!name) continue
         if (!prayerTypeCardMap.has(name)) {
-          prayerTypeCardMap.set(name, { waktuSholat: s.waktu_sholat, jurusans: new Set(), idJadwal: s.id_jadwal })
+          prayerTypeCardMap.set(name, { waktuSholat: s.waktu_sholat, jurusans: new Set(), haris: new Set(), tanggalKhusus: s.tanggal_khusus ?? null, idJadwal: s.id_jadwal })
         }
         const entry = prayerTypeCardMap.get(name)!
         if (s.jurusans) {
           for (const j of s.jurusans) entry.jurusans.add(j.nama_jurusan)
         }
+        if (s.hari) entry.haris.add(s.hari)
+        if (s.tanggal_khusus) entry.tanggalKhusus = s.tanggal_khusus
       }
 
       // For Dhuha, use rotation data for today's Jakarta day (max 2 majors)
@@ -158,13 +161,16 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
         }
       }
 
-      const cards: PrayerCard[] = Array.from(prayerTypeCardMap.entries()).map(([name, { waktuSholat, jurusans, idJadwal }]) => ({
+      const DAY_ORDER = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
+      const cards: PrayerCard[] = Array.from(prayerTypeCardMap.entries()).map(([name, { waktuSholat, jurusans, haris, tanggalKhusus, idJadwal }]) => ({
         id: idJadwal,
         nama: name,
         waktuMulai: formatHHMM(waktuSholat.waktu_mulai),
         waktuSelesai: formatHHMM(waktuSholat.waktu_selesai),
         jurusan: Array.from(jurusans),
         kelas: [],
+        hari: haris.size > 0 ? Array.from(haris).sort((a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b)) : undefined,
+        tanggalKhusus: tanggalKhusus ?? undefined,
       }))
 
       // Add cards for prayer times that have no schedules yet
@@ -511,10 +517,29 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
                   <span className="text-muted-foreground">Waktu</span>
                   <span className="font-medium">{formatWaktuRange(prayer.waktuMulai, prayer.waktuSelesai)}</span>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between border-b pb-2">
                   <span className="text-muted-foreground">Konsentrasi Keahlian</span>
-                  <span className="font-medium">{formatJurusan(prayer.jurusan)}</span>
+                  <span className="font-medium text-right max-w-[60%]">{formatJurusan(prayer.jurusan)}</span>
                 </div>
+                {prayer.tanggalKhusus ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Tanggal</span>
+                    <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-900/20 dark:text-amber-400">
+                      {new Date(prayer.tanggalKhusus + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+                    </span>
+                  </div>
+                ) : prayer.hari && prayer.hari.length > 0 ? (
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-muted-foreground shrink-0">Hari</span>
+                    <div className="flex flex-wrap justify-end gap-1">
+                      {prayer.hari.map(h => (
+                        <span key={h} className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                          {h}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
           ))}
