@@ -13,7 +13,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
 import { extractData, handleApiError } from "@/lib/api-utils"
 import { useDownloadAction } from "@/hooks/use-download-action"
-import { arrayToCsv } from "@/lib/export-filename"
+import { arrayToXlsxBase64 } from "@/lib/export-xlsx"
 
 interface GuruResponse {
   id_staff: number
@@ -163,10 +163,10 @@ export function KelolaGuruSection() {
   }
 
   const handleCreate = async () => {
-    if (!formNama || !formEmail || !formPassword) { notify("Nama, email, dan kata sandi wajib diisi", "error"); return }
+    if (!formNama || !formEmail || !formPassword || !formNip) { notify("Nama, email, NIP, dan kata sandi wajib diisi", "error"); return }
     setIsSaving(true)
     try {
-      await window.electronAPI.createGuru({ body: { nama: formNama, email: formEmail, password: formPassword, nip: formNip || undefined } })
+      await window.electronAPI.createGuru({ body: { nama: formNama, email: formEmail, password: formPassword, nip: formNip } })
       notify("Guru berhasil ditambahkan", "success")
       setCreateOpen(false)
       fetchGuru(1)
@@ -184,10 +184,10 @@ export function KelolaGuruSection() {
 
   const handleEdit = async () => {
     if (!selectedGuru) return
-    if (!formNama || !formEmail) { notify("Nama dan email wajib diisi", "error"); return }
+    if (!formNama || !formEmail || !formNip) { notify("Nama, email, dan NIP wajib diisi", "error"); return }
     setIsSaving(true)
     try {
-      await window.electronAPI.updateGuru({ id: selectedGuru.id_staff, body: { nama: formNama, email: formEmail, nip: formNip || undefined } })
+      await window.electronAPI.updateGuru({ id: selectedGuru.id_staff, body: { nama: formNama, email: formEmail, nip: formNip } })
       notify("Data guru berhasil diperbarui", "success")
       setEditOpen(false)
       fetchGuru(page)
@@ -259,7 +259,7 @@ export function KelolaGuruSection() {
     download({
       filenameOptions: {
         dataType: "daftar-guru",
-        format: "csv",
+        format: "xlsx",
       },
       fetchData: async () => {
         const headers = ["Nama", "Email", "NIP", "Wali Kelas"]
@@ -269,10 +269,10 @@ export function KelolaGuruSection() {
           guru.nip ?? "",
           guru.label_kelas ?? "",
         ])
-        const csv = arrayToCsv(headers, rows)
-        return { data: btoa(unescape(encodeURIComponent(csv))), encoding: "base64" as const }
+        const data = arrayToXlsxBase64(headers, rows)
+        return { data, encoding: "base64" as const }
       },
-      dialogFilters: [{ name: "CSV Files", extensions: ["csv"] }],
+      dialogFilters: [{ name: "Excel Files", extensions: ["xlsx"] }],
     })
   }
 
@@ -526,8 +526,8 @@ export function KelolaGuruSection() {
               <PasswordInput value={formPassword} onChange={(e) => setFormPassword(e.target.value)} />
             </div>
             <div className="grid gap-2">
-              <Label>NIP</Label>
-              <Input value={formNip} onChange={(e) => setFormNip(e.target.value)} placeholder="Opsional" />
+              <Label>NIP <span className="text-destructive">*</span></Label>
+              <Input value={formNip} onChange={(e) => setFormNip(e.target.value)} placeholder="Nomor Induk Pegawai" />
             </div>
           </div>
           <DialogFooter>
@@ -554,8 +554,8 @@ export function KelolaGuruSection() {
               <Input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} />
             </div>
             <div className="grid gap-2">
-              <Label>NIP</Label>
-              <Input value={formNip} onChange={(e) => setFormNip(e.target.value)} placeholder="Opsional" />
+              <Label>NIP <span className="text-destructive">*</span></Label>
+              <Input value={formNip} onChange={(e) => setFormNip(e.target.value)} placeholder="Nomor Induk Pegawai" />
             </div>
           </div>
           <DialogFooter>

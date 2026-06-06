@@ -18,7 +18,7 @@ import {
 import { Download, Printer } from "lucide-react"
 import { useDownloadAction } from "@/hooks/use-download-action"
 import { usePrintAction } from "@/hooks/use-print-action"
-import { arrayToCsv } from "@/lib/export-filename"
+import { arrayToXlsxBase64 } from "@/lib/export-xlsx"
 import { PrintHeader } from "@/components/print-header"
 
 interface AbsensiStaffItem {
@@ -68,17 +68,17 @@ export function AttendanceHistoryPanel({
     download({
       filenameOptions: {
         dataType: 'riwayat-kehadiran',
-        format: 'csv',
+        format: 'xlsx',
         studentName,
         nis,
       },
       fetchData: async () => {
         const headers = ['Tanggal', 'Hari', 'Jenis Sholat', 'Status']
         const rows = records.map((r) => [r.tanggal, r.hari, r.jenis_sholat, r.status])
-        const csv = arrayToCsv(headers, rows)
-        return { data: csv, encoding: 'utf8' as const }
+        const data = arrayToXlsxBase64(headers, rows)
+        return { data, encoding: 'base64' as const }
       },
-      dialogFilters: [{ name: 'CSV', extensions: ['csv'] }],
+      dialogFilters: [{ name: 'Excel Files', extensions: ['xlsx'] }],
     })
   }, [download, records, studentName, nis])
 

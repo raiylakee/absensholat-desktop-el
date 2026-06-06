@@ -205,10 +205,11 @@ describe("KelolaGuruSection", () => {
     await user.type(screen.getByPlaceholderText("Nama lengkap"), "Budi");
     await user.type(screen.getByPlaceholderText("email@sekolah.sch.id"), "budi@smk.id");
     await user.type(document.querySelector("[role=\"dialog\"] input[type=\"password\"]")!, "Pass123");
+    await user.type(screen.getByPlaceholderText("Nomor Induk Pegawai"), "199001");
     await user.click(screen.getByRole("button", { name: "Simpan" }));
     await waitFor(() => {
       expect(window.electronAPI.createGuru).toHaveBeenCalledWith({
-        body: expect.objectContaining({ nama: "Budi", email: "budi@smk.id", password: "Pass123" }),
+        body: expect.objectContaining({ nama: "Budi", email: "budi@smk.id", password: "Pass123", nip: "199001" }),
       });
     });
   });
@@ -224,6 +225,7 @@ describe("KelolaGuruSection", () => {
     await user.type(screen.getByPlaceholderText("Nama lengkap"), "Budi");
     await user.type(screen.getByPlaceholderText("email@sekolah.sch.id"), "budi@smk.id");
     await user.type(document.querySelector("[role=\"dialog\"] input[type=\"password\"]")!, "Pass123");
+    await user.type(screen.getByPlaceholderText("Nomor Induk Pegawai"), "199001");
     await user.click(screen.getByRole("button", { name: "Simpan" }));
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalled();
@@ -244,6 +246,7 @@ describe("KelolaGuruSection", () => {
     await user.type(screen.getByPlaceholderText("Nama lengkap"), "Budi");
     await user.type(screen.getByPlaceholderText("email@sekolah.sch.id"), "budi@smk.id");
     await user.type(document.querySelector("[role=\"dialog\"] input[type=\"password\"]")!, "Pass123");
+    await user.type(screen.getByPlaceholderText("Nomor Induk Pegawai"), "199001");
     await user.click(screen.getByRole("button", { name: "Simpan" }));
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalled();

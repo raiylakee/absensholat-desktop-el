@@ -10,7 +10,7 @@ import { extractData, normalizeAttendance } from "@/lib/api-utils"
 import type { UserProfileData } from "@/lib/auth-session"
 import { useDownloadAction } from "@/hooks/use-download-action"
 import { usePrintAction } from "@/hooks/use-print-action"
-import { arrayToCsv } from "@/lib/export-filename"
+import { arrayToXlsxBase64 } from "@/lib/export-xlsx"
 import { PrintHeader } from "@/components/print-header"
 
 interface SiswaOverviewProps {
@@ -45,7 +45,7 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
     download({
       filenameOptions: {
         dataType: 'riwayat-absensi-saya',
-        format: 'csv',
+        format: 'xlsx',
       },
       fetchData: async () => {
         const normalized = historyData.map(normalizeAttendance)
@@ -56,10 +56,10 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
           r.waktu ?? '',
           r.status ?? '',
         ])
-        const csv = arrayToCsv(headers, rows)
-        return { data: csv, encoding: 'utf8' as const }
+        const data = arrayToXlsxBase64(headers, rows)
+        return { data, encoding: 'base64' as const }
       },
-      dialogFilters: [{ name: 'CSV', extensions: ['csv'] }],
+      dialogFilters: [{ name: 'Excel Files', extensions: ['xlsx'] }],
     })
   }, [download, historyData])
 

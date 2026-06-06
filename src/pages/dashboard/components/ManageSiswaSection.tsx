@@ -19,7 +19,7 @@ import { extractData, extractPagination, normalizeStudent, genderToApi } from "@
 import { Combobox } from "@/components/ui/combobox"
 import { usePrintAction } from "@/hooks/use-print-action"
 import { useDownloadAction } from "@/hooks/use-download-action"
-import { arrayToCsv } from "@/lib/export-filename"
+import { arrayToXlsxBase64 } from "@/lib/export-xlsx"
 import { PrintHeader } from "@/components/print-header"
 
 
@@ -686,10 +686,10 @@ export function ManageSiswaSection() {
                       download({
                         filenameOptions: {
                           dataType: 'data-siswa',
-                          format: 'csv',
+                          format: 'xlsx',
                           filter: activeJurusan,
                         },
-                        dialogFilters: [{ name: 'CSV', extensions: ['csv'] }],
+                        dialogFilters: [{ name: 'Excel Files', extensions: ['xlsx'] }],
                         fetchData: async () => {
                           const headers = ['NIS', 'Nama', 'Jenis Kelamin', 'Agama', 'Konsentrasi Keahlian', 'Kelas', 'Status Akademik']
                           const rows = filteredStudents.map(s => [
@@ -701,8 +701,7 @@ export function ManageSiswaSection() {
                             s.kelas,
                             (s as any).status_akademik || '',
                           ])
-                          const csv = arrayToCsv(headers, rows)
-                          const data = btoa(unescape(encodeURIComponent(csv)))
+                          const data = arrayToXlsxBase64(headers, rows)
                           return { data, encoding: 'base64' }
                         },
                       })
