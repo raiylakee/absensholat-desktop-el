@@ -53,6 +53,9 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
   const [prayerCards, setPrayerCards] = useState<PrayerCard[]>(initialPrayerCards)
   const [editingPrayerIndex, setEditingPrayerIndex] = useState<number | null>(null)
   const [prayerDraft, setPrayerDraft] = useState<any | null>(null)
+  const [editMode, setEditMode] = useState<"hari" | "tanggal">("hari")
+  const [editHari, setEditHari] = useState<Set<string>>(new Set())
+  const [editTanggal, setEditTanggal] = useState<Date | null>(null)
 
   // Create prayer type state
   const [createPrayerOpen, setCreatePrayerOpen] = useState(false)
@@ -262,8 +265,18 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
   }
 
   const openPrayerEdit = (index: number) => {
+    const card = prayerCards[index]
     setEditingPrayerIndex(index)
-    setPrayerDraft({ ...prayerCards[index] })
+    setPrayerDraft({ ...card })
+    if (card.tanggalKhusus) {
+      setEditMode("tanggal")
+      setEditTanggal(new Date(card.tanggalKhusus + "T00:00:00"))
+      setEditHari(new Set())
+    } else {
+      setEditMode("hari")
+      setEditHari(new Set(card.hari ?? []))
+      setEditTanggal(null)
+    }
   }
 
   const closePrayerEdit = () => {
@@ -276,9 +289,12 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
     setIsSaving(true)
 
     const originalName = prayerCards[editingPrayerIndex].nama
-    // Optimistic: update card immediately
     const prevCards = [...prayerCards]
-    setPrayerCards(cards => cards.map((c, i) => i === editingPrayerIndex ? { ...c, nama: prayerDraft.nama, waktuMulai: prayerDraft.waktuMulai, waktuSelesai: prayerDraft.waktuSelesai, jurusan: prayerDraft.jurusan } : c))
+
+    const newHari = editMode === "hari" ? Array.from(editHari) : []
+    const newTanggal = editMode === "tanggal" && editTanggal ? format(editTanggal, "yyyy-MM-dd") : null
+
+    setPrayerCards(cards => cards.map((c, i) => i === editingPrayerIndex ? { ...c, nama: prayerDraft.nama, waktuMulai: prayerDraft.waktuMulai, waktuSelesai: prayerDraft.waktuSelesai, jurusan: prayerDraft.jurusan, hari: newHari.length > 0 ? newHari : undefined, tanggalKhusus: newTanggal ?? undefined } : c))
     closePrayerEdit()
 
     try {
@@ -287,7 +303,6 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
       const jenisId = relatedSchedules[0]?.waktu_sholat?.jenis_sholat?.id_jenis
         ?? prayerTypesList.find(t => t.nama_jenis === originalName)?.id_jenis
 
-      // Update prayer type name if changed
       if (jenisId && prayerDraft.nama !== originalName) {
         await window.electronAPI.updatePrayerType({ id: jenisId, body: { nama_jenis: prayerDraft.nama } })
       }
@@ -303,7 +318,24 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
         .map((name: string) => allJurusan.find(j => j.nama_jurusan === name)?.id_jurusan)
         .filter(Boolean)
 
-      if (relatedSchedules.length > 0) {
+      const originalHari = prayerCards[editingPrayerIndex].hari ?? []
+      const originalTanggal = prayerCards[editingPrayerIndex].tanggalKhusus ?? null
+      const modeChanged = (editMode === "hari" && originalTanggal) || (editMode === "tanggal" && originalHari.length > 0)
+      const hariChanged = editMode === "hari" && JSON.stringify(newHari.sort()) !== JSON.stringify([...originalHari].sort())
+      const tanggalChanged = editMode === "tanggal" && newTanggal !== originalTanggal
+
+      if ((modeChanged || hariChanged || tanggalChanged) && relatedSchedules.length > 0) {
+        for (const s of relatedSchedules) {
+          await window.electronAPI.deletePrayerSchedule({ id_jadwal: s.id_jadwal })
+        }
+        if (editMode === "hari" && newHari.length > 0) {
+          await Promise.all(newHari.map(hari =>
+            window.electronAPI.createPrayerSchedule({ body: { hari, id_waktu: waktuId, jurusan_ids: jurusanIds } })
+          ))
+        } else if (editMode === "tanggal" && newTanggal) {
+          await window.electronAPI.createPrayerSchedule({ body: { tanggal_khusus: newTanggal, id_waktu: waktuId, jurusan_ids: jurusanIds } })
+        }
+      } else if (relatedSchedules.length > 0) {
         await Promise.all(relatedSchedules.map(s =>
           window.electronAPI.updatePrayerSchedule({ id_jadwal: s.id_jadwal, body: { jurusan_ids: jurusanIds } })
         ))
@@ -311,7 +343,6 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
 
       notify(`Jadwal ${prayerDraft.nama} berhasil diperbarui`, "success")
     } catch (error) {
-      // Rollback
       setPrayerCards(prevCards)
       notify("Gagal menyimpan perubahan: " + error, "error")
     } finally {
@@ -609,6 +640,94 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
                   <p className="text-xs text-muted-foreground">Maks. 2 Konsentrasi Keahlian per hari</p>
                 )}
               </div>
+
+              {/* Mode: Berulang / Tanggal Khusus */}
+              <div className="space-y-2">
+                <Label>Tipe Jadwal</Label>
+                <div className="flex items-center rounded-lg border bg-muted p-1">
+                  <Button
+                    type="button"
+                    variant={editMode === "hari" ? "secondary" : "ghost"}
+                    size="sm"
+                    className="flex-1 h-8 text-xs"
+                    onClick={() => setEditMode("hari")}
+                  >
+                    Berulang (Hari)
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={editMode === "tanggal" ? "secondary" : "ghost"}
+                    size="sm"
+                    className="flex-1 h-8 text-xs"
+                    onClick={() => setEditMode("tanggal")}
+                  >
+                    Tanggal Khusus
+                  </Button>
+                </div>
+              </div>
+
+              {/* Hari (shown when mode = hari) */}
+              {editMode === "hari" && (
+                <div className="space-y-2">
+                  <Label>Hari <span className="text-destructive">*</span></Label>
+                  <div className="flex flex-wrap gap-2">
+                    {["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"].map((day) => {
+                      const isSelected = editHari.has(day)
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => {
+                            setEditHari(prev => {
+                              const next = new Set(prev)
+                              if (next.has(day)) next.delete(day)
+                              else next.add(day)
+                              return next
+                            })
+                          }}
+                          className={cn(
+                            "rounded-md border px-3 py-1.5 text-xs font-medium transition",
+                            isSelected
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border bg-background hover:bg-muted"
+                          )}
+                        >
+                          {day}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Jadwal ini akan berulang setiap minggu pada hari yang dipilih</p>
+                </div>
+              )}
+
+              {/* Tanggal Khusus (shown when mode = tanggal) */}
+              {editMode === "tanggal" && (
+                <div className="space-y-2">
+                  <Label>Tanggal Khusus <span className="text-destructive">*</span></Label>
+                  <Popover>
+                    <PopoverTrigger render={
+                      <Button
+                        variant="outline"
+                        className={cn("w-full justify-start font-normal", !editTanggal && "text-muted-foreground")}
+                      >
+                        <CalendarIcon className="mr-2 size-4" />
+                        {editTanggal ? format(editTanggal, "dd MMMM yyyy") : "Pilih tanggal..."}
+                      </Button>
+                    } />
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={editTanggal ?? undefined}
+                        onSelect={(d) => setEditTanggal(d ?? null)}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-xs text-muted-foreground">Untuk sholat satu kali, mis. Idul Adha, Idul Fitri, dll.</p>
+                </div>
+              )}
+
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={closePrayerEdit} disabled={isSaving}>
                   Batal

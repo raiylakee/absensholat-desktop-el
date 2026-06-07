@@ -223,6 +223,18 @@ export function FloatingFAQ({ role = "siswa" }: { role?: FAQRole }) {
                         <p className="text-sm">Pertanyaan tidak ditemukan.</p>
                       </div>
                     )}
+
+                    <div className="border-t pt-3 mt-3">
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Anda bisa menghubungi layanan informasi resmi SMK Negeri 2 Singosari melalui kontak berikut:
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1.5">
+                        Telepon/Faks: (0341) 4345127
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Email: smkn2.singosari@yahoo.co.id atau singosarismkn2@gmail.com
+                      </p>
+                    </div>
                   </div>
                 </div>
 
