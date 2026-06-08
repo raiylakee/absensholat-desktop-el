@@ -362,6 +362,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
 
   const handleCreatePrayer = async () => {
     if (!newPrayerName.trim()) { notify("Nama jenis sholat wajib diisi", "error"); return }
+    if (newPrayerName.trim() === "Dhuha") { notify("Dhuha adalah jenis sholat bawaan dan tidak dapat ditambahkan lagi", "error"); return }
     if (newPrayerMode === "hari" && newPrayerHari.size === 0) { notify("Pilih minimal satu hari", "error"); return }
     if (newPrayerMode === "tanggal" && !newPrayerTanggal) { notify("Tanggal khusus wajib dipilih", "error"); return }
 
@@ -532,7 +533,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
             <Card key={prayer.nama} className="border">
               <CardHeader className="flex-row items-start justify-between">
                 <CardTitle>{prayer.nama}</CardTitle>
-                {!readOnly && (
+                {!readOnly && prayer.nama !== "Dhuha" && (
                   <div className="flex gap-1">
                     <Button variant="outline" size="icon-sm" onClick={() => openPrayerEdit(index)}>
                       <Pencil className="size-4" />
