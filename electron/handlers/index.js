@@ -4,7 +4,7 @@ const path = require("path");
 const os = require("os");
 const cache = require("../cache");
 
-const BASE_URL = process.env.API_BASE_URL || (require("electron").app.isPackaged ? "http://209.74.82.80:3000" : "http://localhost:3000");
+const BASE_URL = process.env.API_BASE_URL || (require("electron").app.isPackaged ? "https://absensholat-api.vercel.app" : "http://localhost:3000");
 let authToken = null;
 
 // Initialize cache with userData path

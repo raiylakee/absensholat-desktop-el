@@ -470,38 +470,43 @@ export function ManageSiswaSection() {
           break
 
         case "upgrade":
-          // Promote each student: increment tingkatan by 1
           for (const nis of selectedNis) {
             const student = students.find(s => s.nis === nis)
-            if (!student) continue
-            const parts = student.kelas.split(" ")
-            if (parts.length >= 3) {
-              const nextTingkatan = parseInt(parts[0]) + 1
-              if (nextTingkatan > 12) {
-                // Graduate students beyond grade 12
-                await window.electronAPI.bulkStudentControl({
-                  body: { nis_list: [nis], action: "mark_dropout", note: "Lulus otomatis" }
-                })
-              } else {
-                const targetClass = `${nextTingkatan} ${parts.slice(1).join(" ")}`
-                await window.electronAPI.bulkStudentControl({
-                  body: { nis_list: [nis], action: "promote", target_class: targetClass, note: "Naik kelas otomatis" }
-                })
-              }
+            if (!student || !student.jurusan || !student.part) continue
+            const currentTingkatan = parseInt(student.kelas.split(" ")[0]) || 0
+            if (currentTingkatan < 10 || currentTingkatan > 12) continue
+            const nextTingkatan = currentTingkatan + 1
+            if (nextTingkatan > 12) {
+              await window.electronAPI.bulkStudentControl({
+                body: { nis_list: [nis], action: "mark_dropout", note: "Lulus otomatis" }
+              })
+            } else {
+              const targetClass = `${nextTingkatan} ${student.jurusan} ${student.part}`
+              await window.electronAPI.bulkStudentControl({
+                body: { nis_list: [nis], action: "promote", target_class: targetClass, note: "Naik kelas otomatis" }
+              })
             }
           }
           notify(`${selectedNis.length} siswa berhasil dinaikkan`, "success")
           break
 
         case "downgrade":
-          await window.electronAPI.bulkStudentControl({
-            body: {
-              nis_list: selectedNis,
-              action: "retain",
-              note: "Tinggal kelas massal dari Dashboard Desktop"
+          for (const nis of selectedNis) {
+            const student = students.find(s => s.nis === nis)
+            if (!student || !student.jurusan || !student.part) continue
+            const currentTingkatan = parseInt(student.kelas.split(" ")[0]) || 0
+            if (currentTingkatan < 10 || currentTingkatan > 12) continue
+            const prevTingkatan = currentTingkatan - 1
+            if (prevTingkatan < 10) {
+              notify(`Siswa ${nis} sudah di tingkat terendah (10)`, "warning")
+              continue
             }
-          })
-          notify(`${selectedNis.length} siswa ditinggalkan`, "success")
+            const targetClass = `${prevTingkatan} ${student.jurusan} ${student.part}`
+            await window.electronAPI.bulkStudentControl({
+              body: { nis_list: [nis], action: "demote", target_class: targetClass, note: "Tinggal kelas otomatis" }
+            })
+          }
+          notify(`${selectedNis.length} siswa berhasil diturunkan`, "success")
           break
 
         case "lulus":
@@ -541,7 +546,8 @@ export function ManageSiswaSection() {
       await fetchStudents()
     } catch (error) {
       console.error("Bulk action error:", error)
-      notify("Gagal menjalankan aksi massal: " + error, "error")
+      const errMsg = error instanceof Error ? error.message : String(error)
+      notify("Gagal menjalankan aksi massal: " + errMsg, "error")
     } finally {
       setIsSaving(false)
     }
