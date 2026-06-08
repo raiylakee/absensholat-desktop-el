@@ -232,7 +232,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
       }
     }, 300)
     return () => clearTimeout(handler)
-  }, [searchQuery, selectedKelasFilters, selectedJurusanFilters, selectedSholatFilters, startDate, endDate])
+  }, [searchQuery, selectedKelasFilters, selectedJurusanFilters, startDate, endDate])
 
   const classOptions = useMemo(() => {
     if (selectedJurusanFilters.length === 0) return []

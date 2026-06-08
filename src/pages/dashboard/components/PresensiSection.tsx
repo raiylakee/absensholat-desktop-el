@@ -160,7 +160,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
       }
     }, 300)
     return () => clearTimeout(handler)
-  }, [presensiSearchQuery, selectedPresensiJurusanFilters, selectedPresensiKelasFilters, selectedSholatFilters, forcedClass, dateRangeType, customStartDate, customEndDate])
+  }, [presensiSearchQuery, selectedPresensiJurusanFilters, selectedPresensiKelasFilters, forcedClass, dateRangeType, customStartDate, customEndDate])
 
   // Fetch when currentPage changes
   useEffect(() => {

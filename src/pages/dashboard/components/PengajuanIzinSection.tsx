@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Eye, ExternalLink, Paperclip } from "lucide-react"
+import { Eye, ExternalLink, Paperclip, Search, CalendarIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,6 +18,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { format } from "date-fns"
+import { cn } from "@/lib/utils"
 import { Spinner } from "@/components/ui/spinner"
 import { Textarea } from "@/components/ui/textarea"
 import { extractData } from "@/lib/api-utils"
@@ -71,6 +76,9 @@ function formatKelas(siswa: PengajuanIzinItem["siswa"]): string {
 export function PengajuanIzinSection() {
   const [items, setItems] = useState<PengajuanIzinItem[]>([])
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTERS)[number]["value"]>("pending")
+  const [searchQuery, setSearchQuery] = useState("")
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined)
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
   const [detail, setDetail] = useState<PengajuanIzinItem | null>(null)
   const [rejectTarget, setRejectTarget] = useState<PengajuanIzinItem | null>(null)
@@ -103,9 +111,25 @@ export function PengajuanIzinSection() {
   }, [fetchItems])
 
   const filtered = useMemo(() => {
-    if (statusFilter === "all") return items
-    return items.filter((i) => i.status === statusFilter)
-  }, [items, statusFilter])
+    let result = statusFilter === "all" ? items : items.filter((i) => i.status === statusFilter)
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase()
+      result = result.filter((i) =>
+        (i.siswa?.nis ?? "").toLowerCase().includes(q) ||
+        (i.siswa?.nama_siswa ?? "").toLowerCase().includes(q) ||
+        (i.siswa?.kelas ?? "").toLowerCase().includes(q)
+      )
+    }
+    if (startDate) {
+      const s = format(startDate, "yyyy-MM-dd")
+      result = result.filter((i) => i.tanggal_awal?.slice(0, 10) >= s)
+    }
+    if (endDate) {
+      const e = format(endDate, "yyyy-MM-dd")
+      result = result.filter((i) => i.tanggal_akhir?.slice(0, 10) <= e)
+    }
+    return result
+  }, [items, statusFilter, searchQuery, startDate, endDate])
 
   const handleApprove = useCallback(
     async (item: PengajuanIzinItem) => {
@@ -164,21 +188,54 @@ export function PengajuanIzinSection() {
               Verifikasi pengajuan izin/sakit yang dikirim siswa.
             </CardDescription>
           </div>
-          <div className="min-w-[180px]">
-            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
-              <SelectTrigger className="w-full">
-                <SelectValue>
-                  {STATUS_FILTERS.find((f) => f.value === statusFilter)?.label}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_FILTERS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-[200px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                placeholder="Cari NIS, nama, kelas..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+            <Popover>
+              <PopoverTrigger render={
+                <Button variant="outline" className={cn("w-[130px] justify-start font-normal", !startDate && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 size-4" />
+                  {startDate ? format(startDate, "dd/MM/yy") : "Dari"}
+                </Button>
+              } />
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger render={
+                <Button variant="outline" className={cn("w-[130px] justify-start font-normal", !endDate && "text-muted-foreground")}>
+                  <CalendarIcon className="mr-2 size-4" />
+                  {endDate ? format(endDate, "dd/MM/yy") : "Sampai"}
+                </Button>
+              } />
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
+              </PopoverContent>
+            </Popover>
+            <div className="min-w-[140px]">
+              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue>
+                    {STATUS_FILTERS.find((f) => f.value === statusFilter)?.label}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_FILTERS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
