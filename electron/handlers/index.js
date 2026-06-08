@@ -360,7 +360,7 @@ function register(ipcMain) {
   ));
 
   ipcMain.handle("notify-wali-kelas", handler(async ({ nis_list }) => {
-    return { message: "Notifikasi terkirim", nis_list };
+    return apiRequest("POST", "/api/v2/students/notify-wali-kelas", { body: { nis_list } });
   }));
 
   // === Attendance ===

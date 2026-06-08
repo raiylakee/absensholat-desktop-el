@@ -188,7 +188,7 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
     setIsNotifying(true)
     try {
       await window.electronAPI.notifyWaliKelas({ nis_list: Array.from(selectedNIS) })
-      notify("Notifikasi berhasil dikirim ke siswa", "success")
+      notify("Notifikasi berhasil dikirim ke wali kelas", "success")
       setSelectedNIS(new Set())
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
@@ -280,14 +280,14 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
             </div>
           ) : (
             <>
-              {selectedNIS.size > 0 && (
+              {selectedNIS.size > 0 && !forcedClass && (
                 <div className="mb-4">
                   <Button
                     onClick={handleNotifyWaliKelas}
                     disabled={isNotifying}
                   >
                     <Bell className="size-4 mr-2" />
-                    {isNotifying ? "Mengirim..." : `Kirim Notifikasi ke Siswa (${selectedNIS.size})`}
+                    {isNotifying ? "Mengirim..." : `Kirim Notifikasi ke Wali Kelas (${selectedNIS.size})`}
                   </Button>
                 </div>
               )}
