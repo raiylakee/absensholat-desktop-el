@@ -1,7 +1,7 @@
 {
   "name": "presensisholat-desktop",
   "productName": "Presensi Sholat Desktop",
-  "version": "1.2.5",
+  "version": "1.2.6",
   "description": "Sistem Presensi Sholat Terpadu - Desktop",
   "main": "electron/main.js",
   "private": true,
