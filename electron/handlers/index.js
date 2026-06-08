@@ -73,7 +73,7 @@ const INVALIDATION_MAP = {
   "/prayer-times": ["/prayer-times", "/prayer-schedules"],
   "/prayer-types": ["/prayer-types", "/prayer-times", "/prayer-schedules"],
   "/prayer-types": ["/prayer-types", "/prayer-times", "/prayer-schedules"],
-  "/jadwal-sholat": ["/jadwal-sholat", "/prayer-times"],
+
   "/jurusan": ["/jurusan", "/dhuha-schedules"],
   "/pengajuan-izin": ["/pengajuan-izin"],
   "/admin/management/kelas": ["/admin/management/kelas", "/kelas", "/admin/management/guru", "/admin/management/wali-kelas"],
@@ -234,19 +234,19 @@ function register(ipcMain) {
 
   // === Prayer Schedules (Jadwal Sholat) ===
   ipcMain.handle("get-prayer-schedules", handler(async () =>
-    apiRequest("GET", "/api/v2/admin/management/jadwal-sholat")
+    apiRequest("GET", "/api/v2/prayer-schedules")
   ));
 
   ipcMain.handle("create-prayer-schedule", handler(async ({ body }) =>
-    apiRequest("POST", "/api/v2/admin/management/jadwal-sholat", { body })
+    apiRequest("POST", "/api/v2/prayer-schedules", { body })
   ));
 
   ipcMain.handle("update-prayer-schedule", handler(async ({ id_jadwal, body }) =>
-    apiRequest("PUT", `/api/v2/admin/management/jadwal-sholat/${id_jadwal}`, { body })
+    apiRequest("PUT", `/api/v2/prayer-schedules/${id_jadwal}`, { body })
   ));
 
   ipcMain.handle("delete-prayer-schedule", handler(async ({ id_jadwal }) =>
-    apiRequest("DELETE", `/api/v2/admin/management/jadwal-sholat/${id_jadwal}`)
+    apiRequest("DELETE", `/api/v2/prayer-schedules/${id_jadwal}`)
   ));
 
   ipcMain.handle("get-prayer-times", handler(async () =>

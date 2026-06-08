@@ -173,7 +173,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
         jurusan: Array.from(jurusans),
         kelas: [],
         hari: haris.size > 0 ? Array.from(haris).sort((a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b)) : undefined,
-        tanggalKhusus: tanggalKhusus ?? undefined,
+        tanggalKhusus: tanggalKhusus ? tanggalKhusus.slice(0, 10) : undefined,
       }))
 
       // Add cards for prayer times that have no schedules yet
@@ -270,7 +270,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
     setPrayerDraft({ ...card })
     if (card.tanggalKhusus) {
       setEditMode("tanggal")
-      setEditTanggal(new Date(card.tanggalKhusus + "T00:00:00"))
+      setEditTanggal(new Date(card.tanggalKhusus!.slice(0, 10) + "T00:00:00"))
       setEditHari(new Set())
     } else {
       setEditMode("hari")
@@ -556,7 +556,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Tanggal</span>
                     <span className="inline-flex items-center rounded-md bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-900/20 dark:text-amber-400">
-                      {new Date(prayer.tanggalKhusus + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
+                      {new Date(prayer.tanggalKhusus.slice(0, 10) + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })}
                     </span>
                   </div>
                 ) : prayer.hari && prayer.hari.length > 0 ? (
