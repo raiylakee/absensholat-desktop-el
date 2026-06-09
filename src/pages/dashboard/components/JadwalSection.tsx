@@ -753,7 +753,23 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
             {/* Nama */}
             <div className="grid gap-2">
               <Label>Nama Jenis Sholat <span className="text-destructive">*</span></Label>
-              <Input value={newPrayerName} onChange={(e) => setNewPrayerName(e.target.value)} placeholder="Contoh: Dhuha, Idul Adha, Jumat" />
+              <div className="flex gap-2">
+                <Select value={prayerTypesList.find(t => t.nama_jenis === newPrayerName) ? newPrayerName : "__custom__"} onValueChange={(val) => { if (val && val !== "__custom__") setNewPrayerName(val) }}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Pilih atau ketik nama sholat" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {prayerTypesList.map((t) => (
+                      <SelectItem key={t.id_jenis} value={t.nama_jenis}>{t.nama_jenis}</SelectItem>
+                    ))}
+                    <SelectItem value="__custom__">Ketik sendiri...</SelectItem>
+                  </SelectContent>
+                </Select>
+                {(!prayerTypesList.find(t => t.nama_jenis === newPrayerName) || newPrayerName === "") && (
+                  <Input value={newPrayerName} onChange={(e) => setNewPrayerName(e.target.value)} placeholder="Ketik nama baru" className="flex-1" />
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">Pilih dari yang sudah ada atau ketik nama jenis sholat baru</p>
             </div>
 
             {/* Waktu */}

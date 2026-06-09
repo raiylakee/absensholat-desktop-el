@@ -13,7 +13,7 @@ export const MAJOR_CLASS_MAP: Record<string, string[]> = {
 
 export const MAJOR_OPTIONS = Object.keys(MAJOR_CLASS_MAP)
 export const GENDER_OPTIONS: Student["jenisKelamin"][] = ["Laki-laki", "Perempuan"]
-export const PRAYER_TYPE_OPTIONS: PresensiRecord["jenisSholat"][] = ["Dhuha", "Dzuhur", "Ashar"]
+export const PRAYER_TYPE_OPTIONS: string[] = []
 export const PRESENSI_STATUS_OPTIONS: PresensiRecord["status"][] = ["Hadir", "Izin", "Sakit", "Alpha"]
 export const IZIN_IMAGE_TYPE_OPTIONS: NonNullable<PresensiRecord["izinDetail"]>["imageType"][] = [
   "Surat Sakit",

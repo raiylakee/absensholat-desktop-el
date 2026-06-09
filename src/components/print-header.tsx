@@ -1,7 +1,7 @@
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 
-const SCHOOL_NAME = "SMKN 2 Bandung"
+const SCHOOL_NAME = "SMKN 2 Singosari"
 
 export interface PrintHeaderProps {
   title: string

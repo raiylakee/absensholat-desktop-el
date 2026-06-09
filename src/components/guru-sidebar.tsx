@@ -92,6 +92,13 @@ export function GuruSidebar({ activeItem, setActiveItem, user }: GuruSidebarProp
     ? `${currentUserName.trim().split(/\s+/)[0][0]}${currentUserName.trim().split(/\s+/)[1][0]}`.toUpperCase()
     : currentUserName.slice(0, 2).toUpperCase();
 
+  const hasClass = Boolean(user?.className);
+
+  const filteredMenuItems = guruMenuItems.filter(item => {
+    if (item.title === "Siswa Belum Terdaftar" && !hasClass) return false;
+    return true;
+  });
+
   const handleLogout = async () => {
     try {
       await logoutSession();
@@ -132,7 +139,7 @@ export function GuruSidebar({ activeItem, setActiveItem, user }: GuruSidebarProp
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {guruMenuItems.map((item, index) => (
+              {filteredMenuItems.map((item, index) => (
                 <motion.div
                   key={item.title}
                   custom={index}

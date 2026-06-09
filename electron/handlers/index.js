@@ -320,13 +320,9 @@ function register(ipcMain) {
     apiRequest("DELETE", `/api/v2/students/${encodeURIComponent(nis)}`)
   ));
 
-  ipcMain.handle("get-student-filters", handler(async () => {
-    const [jurusan, kelas] = await Promise.all([
-      apiRequest("GET", "/api/v2/jurusan"),
-      apiRequest("GET", "/api/v2/kelas"),
-    ]);
-    return { jurusan, kelas };
-  }));
+  ipcMain.handle("get-student-filters", handler(async () =>
+    apiRequest("GET", "/api/v2/students/filters")
+  ));
 
   ipcMain.handle("get-unregistered-students", handler(async (args) =>
     apiRequest("GET", "/api/v2/students/unregistered", { query: args })

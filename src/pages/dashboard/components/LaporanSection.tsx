@@ -105,6 +105,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
   const isMounted = useRef(true)
+  const fetchHistoryRef = useRef<() => void>(() => {})
 
   // Download Dialog State
   const [isDownloadDialogOpen, setIsDownloadDialogOpen] = useState(false)
@@ -185,7 +186,6 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
       const params: Record<string, any> = {
         page: currentPage,
         limit: 50,
-        search: searchQuery || undefined,
         kelas: forcedClass || selectedKelasFilters[0] || undefined,
         jurusan: selectedJurusanFilters[0] || undefined,
       }
@@ -216,6 +216,8 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
     }
   }
 
+  fetchHistoryRef.current = fetchHistory
+
   useEffect(() => {
     isMounted.current = true
     fetchHistory()
@@ -228,11 +230,11 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
       if (currentPage !== 1) {
         setCurrentPage(1)
       } else {
-        fetchHistory()
+        fetchHistoryRef.current()
       }
     }, 300)
     return () => clearTimeout(handler)
-  }, [searchQuery, selectedKelasFilters, selectedJurusanFilters, startDate, endDate])
+  }, [selectedKelasFilters, selectedJurusanFilters, startDate, endDate])
 
   const classOptions = useMemo(() => {
     if (selectedJurusanFilters.length === 0) return []
@@ -246,15 +248,17 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
     )
   }, [allClassOptions, selectedJurusanFilters])
 
-  // Client-side filter for sholat type and forcedClass (not sent to API)
+  // Client-side filter for search, sholat type, and forcedClass
   const filteredRecords = useMemo(() => {
+    const q = searchQuery.toLowerCase()
     return records.filter((record) => {
+      const matchSearch = !q || record.nama.toLowerCase().includes(q)
       const matchSholat =
         selectedSholatFilters.length === 0 || selectedSholatFilters.includes(record.jenisSholat)
       const matchForcedClass = !forcedClass || record.kelas === forcedClass
-      return matchSholat && matchForcedClass
+      return matchSearch && matchSholat && matchForcedClass
     })
-  }, [records, selectedSholatFilters, forcedClass])
+  }, [records, searchQuery, selectedSholatFilters, forcedClass])
 
   const getStatusBadgeClassName = (status: string) => {
     if (status === "Hadir") return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"

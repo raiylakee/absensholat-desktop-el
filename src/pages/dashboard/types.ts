@@ -32,7 +32,7 @@ export type PresensiRecord = {
   nama: string
   jurusan: string
   kelas: string
-  jenisSholat: "Dhuha" | "Dzuhur" | "Ashar"
+  jenisSholat: string
   status: "Hadir" | "Izin" | "Sakit" | "Alpha"
   tanggal?: string
   waktu?: string

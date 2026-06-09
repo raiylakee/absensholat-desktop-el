@@ -72,7 +72,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
 
   const filteredRecords = useMemo(() => {
     return presensiRecords.filter(record => {
-      const matchSholat = selectedSholatFilters.length === 0 || selectedSholatFilters.includes(record.jenisSholat as any)
+      const matchSholat = selectedSholatFilters.length === 0 || selectedSholatFilters.includes(record.jenisSholat)
       const matchKelas = selectedPresensiKelasFilters.length === 0 || selectedPresensiKelasFilters.includes(record.kelas)
       const matchForcedClass = !forcedClass || record.kelas === forcedClass
       const matchSearch = !presensiSearchQuery || 

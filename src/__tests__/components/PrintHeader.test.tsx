@@ -5,7 +5,7 @@ import { PrintHeader } from "@/components/print-header"
 describe("PrintHeader", () => {
   it("renders school name", () => {
     render(<PrintHeader title="Laporan Absensi" />)
-    expect(screen.getByText("SMKN 2 Bandung")).toBeInTheDocument()
+    expect(screen.getByText("SMKN 2 Singosari")).toBeInTheDocument()
   })
 
   it("renders the report title", () => {

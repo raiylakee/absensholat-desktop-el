@@ -108,14 +108,6 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
 
   const currentPrayer = closestData?.current
   const nextPrayer = closestData?.next
-  const activePrayer = currentPrayer || nextPrayer
-  const isCurrentlyActive = !!currentPrayer
-
-  const prayerTitle = activePrayer?.waktu_sholat?.jenis_sholat?.nama_jenis || "Tidak ada jadwal"
-  const prayerTime = activePrayer
-    ? `${activePrayer.waktu_sholat.waktu_mulai} - ${activePrayer.waktu_sholat.waktu_selesai} WIB`
-    : "-"
-  const prayerLabel = isCurrentlyActive ? "Sedang berlangsung" : "Berikutnya"
 
   const isDhuhaActive = currentPrayer?.waktu_sholat?.jenis_sholat?.nama_jenis?.toLowerCase() === "dhuha"
   const dhuhaMajors = isDhuhaActive ? (currentPrayer?.jurusans || []) : []
@@ -165,24 +157,52 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">Jadwal Sholat Terdekat</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between rounded-xl bg-primary/5 border border-primary/10 p-4 transition-all hover:bg-primary/10">
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="font-bold text-primary">{prayerTitle}</p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isCurrentlyActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"}`}>
-                    {prayerLabel}
-                  </span>
+          <CardContent className="space-y-3">
+            {currentPrayer ? (
+              <div className="flex items-center justify-between rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-4 transition-all hover:bg-emerald-100 dark:hover:bg-emerald-900/30">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-emerald-700 dark:text-emerald-400">{currentPrayer.waktu_sholat?.jenis_sholat?.nama_jenis || "-"}</p>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                      Sedang berlangsung
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{currentPrayer.waktu_sholat?.waktu_mulai} - {currentPrayer.waktu_sholat?.waktu_selesai} WIB</p>
                 </div>
-                <p className="text-sm text-muted-foreground">{prayerTime}</p>
+                {onNavigate && showQrButton && (
+                  <Button variant="default" size="icon-sm" onClick={() => onNavigate("QR Code")} className="rounded-full shadow-lg shadow-primary/20">
+                    <QrCode className="size-4" />
+                    <span className="sr-only">Tampilkan QR Code</span>
+                  </Button>
+                )}
               </div>
-              {activePrayer && onNavigate && showQrButton && (
-                <Button variant="default" size="icon-sm" onClick={() => onNavigate("QR Code")} className="rounded-full shadow-lg shadow-primary/20">
-                  <QrCode className="size-4" />
-                  <span className="sr-only">Tampilkan QR Code</span>
-                </Button>
-              )}
-            </div>
+            ) : (
+              <div className="flex items-center justify-between rounded-xl bg-primary/5 border border-primary/10 p-4 transition-all hover:bg-primary/10">
+                <div>
+                  <p className="font-bold text-primary">Tidak ada jadwal aktif</p>
+                  <p className="text-sm text-muted-foreground">-</p>
+                </div>
+              </div>
+            )}
+            {nextPrayer ? (
+              <div className="flex items-center justify-between rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4 transition-all hover:bg-amber-100 dark:hover:bg-amber-900/30">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-amber-700 dark:text-amber-400">{nextPrayer.waktu_sholat?.jenis_sholat?.nama_jenis || "-"}</p>
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                      Berikutnya
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{nextPrayer.waktu_sholat?.waktu_mulai} - {nextPrayer.waktu_sholat?.waktu_selesai} WIB</p>
+                </div>
+              </div>
+            ) : (
+              !currentPrayer && (
+                <div className="text-center py-2">
+                  <p className="text-sm text-muted-foreground">Tidak ada jadwal sholat untuk hari ini</p>
+                </div>
+              )
+            )}
           </CardContent>
         </Card>
 

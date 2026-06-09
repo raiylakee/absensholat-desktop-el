@@ -571,7 +571,7 @@ export function ManageSiswaSection() {
             <Settings className="size-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{classOptionsForFilter.length}</div>
+            <div className="text-2xl font-bold">{dynamicClassOptions.length}</div>
           </CardContent>
         </Card>
         <Card>
