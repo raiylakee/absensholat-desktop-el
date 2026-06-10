@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   // Prayer Schedules
   getPrayerSchedules: () => ipcRenderer.invoke("get-prayer-schedules"),
+  getPrayerSchedulesToday: () => ipcRenderer.invoke("get-prayer-schedules-today"),
   createPrayerSchedule: (args) => ipcRenderer.invoke("create-prayer-schedule", args),
   updatePrayerSchedule: (args) => ipcRenderer.invoke("update-prayer-schedule", args),
   deletePrayerSchedule: (args) => ipcRenderer.invoke("delete-prayer-schedule", args),
@@ -142,6 +143,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
   showSaveDialog: (args) => ipcRenderer.invoke("show-save-dialog", args),
   writeFile: (args) => ipcRenderer.invoke("write-file", args),
   readFile: (args) => ipcRenderer.invoke("read-file", args),
+
+  // App Logo
+  getLogoData: () => ipcRenderer.invoke("get-logo-data"),
+  saveCustomLogo: (args) => ipcRenderer.invoke("save-custom-logo", args),
+  resetLogo: () => ipcRenderer.invoke("reset-logo"),
 
   // Auto Updater
   checkForUpdates: () => ipcRenderer.invoke("check-for-updates"),

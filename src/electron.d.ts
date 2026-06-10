@@ -20,6 +20,7 @@ interface ElectronAPI {
 
   // Prayer
   getPrayerSchedules: () => Promise<any>;
+  getPrayerSchedulesToday: () => Promise<any>;
   createPrayerSchedule: (args: any) => Promise<any>;
   updatePrayerSchedule: (args: any) => Promise<any>;
   deletePrayerSchedule: (args: any) => Promise<any>;
@@ -141,6 +142,11 @@ interface ElectronAPI {
   showSaveDialog: (args?: any) => Promise<string | null>;
   writeFile: (args: any) => Promise<void>;
   readFile: (args: any) => Promise<string>;
+
+  // App Logo
+  getLogoData: () => Promise<{ data: string | null; type: "default" | "custom" }>;
+  saveCustomLogo: (args: { filePath?: string }) => Promise<{ success: boolean; data?: string; message?: string }>;
+  resetLogo: () => Promise<{ data: string | null }>;
 
   // Auto Updater
   checkForUpdates: () => Promise<any>;

@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Calendar, Download, FileText, AlertCircle, ClipboardList, History, Printer } from "lucide-react"
+import { Calendar, Download, FileText, AlertCircle, ClipboardList, History, Printer, QrCode } from "lucide-react"
 import { PrayerNotification } from "./PrayerNotification"
 import { extractData, normalizeAttendance } from "@/lib/api-utils"
 import { formatDateID } from "@/lib/date-utils"
@@ -85,31 +85,23 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
       })
 
     // Prayer schedules — best-effort, silently ignore permission errors
-    Promise.all([
-      window.electronAPI.getPrayerSchedules(),
-      window.electronAPI.getPrayerTimes(),
-      window.electronAPI.getPrayerTypes(),
-    ])
-      .then(([schedulesRes, timesRes, typesRes]) => {
+    window.electronAPI.getPrayerSchedulesToday()
+      .then((res) => {
         if (!isMounted.current) return
-        const rawSchedules = extractData<any[]>(schedulesRes) ?? []
-        const prayerTimes: any[] = extractData<any[]>(timesRes) ?? []
-        const prayerTypes: any[] = extractData<any[]>(typesRes) ?? []
-        const typeMap = new Map(prayerTypes.map((t: any) => [t.id_jenis, t]))
-        const timeMap = new Map(prayerTimes.map((t: any) => [t.id_waktu, { ...t, jenis_sholat: typeMap.get(t.id_jenis) }]))
-        const enriched = rawSchedules.map((s: any) => {
-          const time = timeMap.get(s.id_waktu)
+        const raw = extractData<any[]>(res) ?? []
+        const enriched = raw.map((s: any) => {
+          const ws = s.waktu_sholat
           return {
             ...s,
-            jenis_sholat: time?.jenis_sholat?.nama_jenis ?? null,
-            waktu_mulai: time?.waktu_mulai?.substring(0, 5) ?? null,
-            waktu_selesai: time?.waktu_selesai?.substring(0, 5) ?? null,
+            jenis_sholat: ws?.jenis_sholat?.nama_jenis ?? null,
+            waktu_mulai: ws?.waktu_mulai?.substring(0, 5) ?? null,
+            waktu_selesai: ws?.waktu_selesai?.substring(0, 5) ?? null,
           }
         })
         setSchedules(enriched)
       })
       .catch(() => {
-        // Schedule endpoints may be admin-only — silently ignore
+        // Schedule endpoint may fail — silently ignore
       })
   }
 
@@ -119,17 +111,26 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
     return () => { isMounted.current = false }
   }, [])
 
-  const todayName = getIndonesianDay()
-  const todaySchedules = schedules.filter((s: any) => s.hari === todayName)
-
-  // Deduplicate by jenis_sholat so each prayer type appears once
-  const uniqueTodaySchedules = todaySchedules.reduce((acc: any[], s: any) => {
+  const uniqueTodaySchedules = schedules.reduce((acc: any[], s: any) => {
     const key = s.jenis_sholat || s.id_jenis
     if (key && !acc.find((x: any) => (x.jenis_sholat || x.id_jenis) === key)) {
       acc.push(s)
     }
     return acc
   }, [])
+
+  // Detect which prayer is currently active (Jakarta time)
+  const activePrayerKey = useMemo(() => {
+    const jakartaNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }))
+    const currentMinutes = jakartaNow.getHours() * 60 + jakartaNow.getMinutes()
+    const active = uniqueTodaySchedules.find((s: any) => {
+      if (!s.waktu_mulai || !s.waktu_selesai) return false
+      const [startH, startM] = s.waktu_mulai.split(":").map(Number)
+      const [endH, endM] = s.waktu_selesai.split(":").map(Number)
+      return currentMinutes >= startH * 60 + startM && currentMinutes <= endH * 60 + endM
+    })
+    return (active?.jenis_sholat || active?.id_jenis) ?? null
+  }, [uniqueTodaySchedules])
 
   const totalKehadiran = statsData?.total_hadir ?? statsData?.total_absensi ?? 0
   const totalAlpha = statsData?.total_alpha ?? 0
@@ -236,14 +237,37 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {uniqueTodaySchedules.length > 0 ? (
-            uniqueTodaySchedules.map((s: any, index: number) => (
-              <div key={index} className="flex items-center justify-between p-3 rounded-xl bg-muted/30">
-                <span className="font-medium">{s.jenis_sholat}</span>
-                <span className="text-sm font-semibold">
-                  {s.waktu_mulai} - {s.waktu_selesai} WIB
-                </span>
-              </div>
-            ))
+            uniqueTodaySchedules.map((s: any, index: number) => {
+              const key = s.jenis_sholat || s.id_jenis
+              const isActive = activePrayerKey !== null && activePrayerKey === key
+              return (
+                <div
+                  key={index}
+                  className={`flex items-center justify-between p-3 rounded-xl ${
+                    isActive
+                      ? "bg-blue-600 text-white shadow-md"
+                      : "bg-muted/30"
+                  }`}
+                >
+                  <span className="font-medium">{s.jenis_sholat}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold">
+                      {s.waktu_mulai} - {s.waktu_selesai} WIB
+                    </span>
+                    {isActive && (
+                      <Button
+                        size="sm"
+                        onClick={() => setActiveItem("Pindai QR")}
+                        className="h-8 gap-1.5 bg-white text-blue-600 hover:bg-blue-50"
+                      >
+                        <QrCode className="size-3.5" />
+                        Pindai
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )
+            })
           ) : (
             <p className="text-sm text-muted-foreground text-center py-4">Tidak ada jadwal hari ini</p>
           )}

@@ -33,7 +33,7 @@ export function SiswaScanQR({ user }: { user?: UserProfileData }) {
     // Detect halangan token OR if we're on the halangan tab
     const isHalangan = token.includes("halangan|") || scanTab === "halangan"
 
-    setState("success")
+    setState("verifying")
     setPrayerName(null)
     setPrayerDate(null)
     setErrorMessage(null)

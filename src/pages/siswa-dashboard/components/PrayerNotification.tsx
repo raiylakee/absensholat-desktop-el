@@ -17,35 +17,25 @@ export function PrayerNotification({ onAction }: PrayerNotificationProps) {
   const [activePrayer, setActivePrayer] = useState<string | null>(null)
 
   useEffect(() => {
-    Promise.all([
-      window.electronAPI.getPrayerSchedules(),
-      window.electronAPI.getPrayerTimes(),
-      window.electronAPI.getPrayerTypes(),
-    ])
-      .then(([schedulesRes, timesRes, typesRes]) => {
-        const rawSchedules = extractData<any[]>(schedulesRes) ?? []
-        const prayerTimes: any[] = extractData<any[]>(timesRes) ?? []
-        const prayerTypes: any[] = extractData<any[]>(typesRes) ?? []
-        const typeMap = new Map(prayerTypes.map((t: any) => [t.id_jenis, t]))
-        const timeMap = new Map(prayerTimes.map((t: any) => [t.id_waktu, { ...t, jenis_sholat: typeMap.get(t.id_jenis) }]))
-
-        const enriched = rawSchedules.map((s: any) => {
-          const time = timeMap.get(s.id_waktu)
+    window.electronAPI.getPrayerSchedulesToday()
+      .then((res) => {
+        const raw = extractData<any[]>(res) ?? []
+        const enriched = raw.map((s: any) => {
+          const ws = s.waktu_sholat
           return {
             ...s,
-            jenis_sholat: time?.jenis_sholat?.nama_jenis ?? null,
-            waktu_mulai: time?.waktu_mulai?.substring(0, 5) ?? null,
-            waktu_selesai: time?.waktu_selesai?.substring(0, 5) ?? null,
+            jenis_sholat: ws?.jenis_sholat?.nama_jenis ?? null,
+            waktu_mulai: ws?.waktu_mulai?.substring(0, 5) ?? null,
+            waktu_selesai: ws?.waktu_selesai?.substring(0, 5) ?? null,
           }
         })
 
-        // Check if any prayer is active now
-        const now = new Date()
-        const currentMinutes = now.getHours() * 60 + now.getMinutes()
-        const todayDay = getIndonesianDay()
+        // Check if any prayer is active now using Jakarta time
+        const jakartaNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }))
+        const currentMinutes = jakartaNow.getHours() * 60 + jakartaNow.getMinutes()
 
         const active = enriched.find((s: any) => {
-          if (s.hari !== todayDay || !s.waktu_mulai || !s.waktu_selesai) return false
+          if (!s.waktu_mulai || !s.waktu_selesai) return false
           const [startH, startM] = s.waktu_mulai.split(":").map(Number)
           const [endH, endM] = s.waktu_selesai.split(":").map(Number)
           return currentMinutes >= startH * 60 + startM && currentMinutes <= endH * 60 + endM
@@ -73,7 +63,7 @@ export function PrayerNotification({ onAction }: PrayerNotificationProps) {
               Waktunya Sholat {activePrayer}
             </h3>
             <p className="text-sm font-medium text-white/80">
-              Silakan lakukan presensi sekarang untuk mencatat kehadiran Anda.
+              silakan lakukan presensi sekarang untuk mencatat kehadiran anda.
             </p>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { Minus, Square, X } from "lucide-react";
 import { NotificationIcon } from "@/components/notification-icon";
-import logoSholat02 from "@/assets/applogo/Logo Sholat-02.png"
+import { useLogo } from "@/lib/logo-context";
 import { useLogoAnimation } from "@/lib/logo-animation-context";
 
 export function WindowControls() {
@@ -34,6 +34,7 @@ interface TitlebarProps {
 
 export function Titlebar({ hideNotifications }: TitlebarProps = {}) {
   const { splashComplete } = useLogoAnimation()
+  const { logoSrc } = useLogo()
 
   return (
     <div
@@ -62,7 +63,7 @@ export function Titlebar({ hideNotifications }: TitlebarProps = {}) {
       `}</style>
       <div className="flex items-center pl-3 flex-1 h-full cursor-default gap-2">
         <img 
-          src={logoSholat02}
+          src={logoSrc}
           alt="Logo Sholat"
           className={`w-5 h-5 object-contain pointer-events-none titlebar-logo ${!splashComplete ? "instant" : ""}`}
         />

@@ -240,6 +240,10 @@ function register(ipcMain) {
     apiRequest("GET", "/api/v2/prayer-schedules")
   ));
 
+  ipcMain.handle("get-prayer-schedules-today", handler(async () =>
+    apiRequest("GET", "/api/v2/prayer-schedules/today")
+  ));
+
   ipcMain.handle("create-prayer-schedule", handler(async ({ body }) =>
     apiRequest("POST", "/api/v2/prayer-schedules", { body })
   ));
@@ -673,6 +677,46 @@ function register(ipcMain) {
   ipcMain.handle("read-file", handler(async ({ filePath, encoding }) =>
     fs.readFile(filePath, encoding || "utf8")
   ));
+
+  // === App Logo (local custom logo support) ===
+  const logoPath = path.join(require("electron").app.getPath("userData"), "custom-logo.png");
+  const defaultLogoPath = path.join(__dirname, "..", "logo.png");
+
+  ipcMain.handle("get-logo-data", async () => {
+    try {
+      const buf = await fs.readFile(logoPath);
+      return { data: buf.toString("base64"), type: "custom" };
+    } catch {
+      try {
+        const buf = await fs.readFile(defaultLogoPath);
+        return { data: buf.toString("base64"), type: "default" };
+      } catch {
+        return { data: null, type: "default" };
+      }
+    }
+  });
+
+  ipcMain.handle("save-custom-logo", async (_event, args) => {
+    const argFilePath = args?.filePath;
+    const sourcePath = argFilePath || (await dialog.showOpenDialog({
+      filters: [{ name: "Images", extensions: ["png", "jpg", "jpeg", "svg"] }],
+      properties: ["openFile"],
+    })).filePaths?.[0];
+    if (!sourcePath) return { success: false, message: "Tidak ada file dipilih" };
+    await fs.copyFile(sourcePath, logoPath);
+    const buf = await fs.readFile(logoPath);
+    return { success: true, data: buf.toString("base64") };
+  });
+
+  ipcMain.handle("reset-logo", async () => {
+    try { await fs.unlink(logoPath); } catch {}
+    try {
+      const buf = await fs.readFile(defaultLogoPath);
+      return { data: buf.toString("base64") };
+    } catch {
+      return { data: null };
+    }
+  });
 
   // === Auto Updater ===
   ipcMain.handle("check-for-updates", handler(async () => {

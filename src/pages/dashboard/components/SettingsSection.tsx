@@ -10,7 +10,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { AlertTriangle } from "lucide-react"
+import { AlertTriangle, Upload, RotateCcw } from "lucide-react"
+import { useLogo } from "@/lib/logo-context"
+import { notify } from "@/lib/notify"
 
 export function SettingsSection() {
   const [autoLogin, setAutoLogin] = useState(() => {
@@ -21,6 +23,8 @@ export function SettingsSection() {
     const saved = localStorage.getItem("theme") as "Light" | "Dark" | "System"
     return saved || "System"
   })
+  const [logoLoading, setLogoLoading] = useState(false)
+  const { logoSrc, logoType, saveCustomLogo, resetLogo } = useLogo()
 
   useEffect(() => {
     const root = window.document.documentElement
@@ -52,6 +56,30 @@ export function SettingsSection() {
     setShowAutoLoginConfirm(false)
   }
 
+  const handleUploadLogo = async () => {
+    setLogoLoading(true)
+    try {
+      await saveCustomLogo()
+      notify.success("Logo berhasil diperbarui")
+    } catch {
+      notify.error("Gagal mengunggah logo")
+    } finally {
+      setLogoLoading(false)
+    }
+  }
+
+  const handleResetLogo = async () => {
+    setLogoLoading(true)
+    try {
+      await resetLogo()
+      notify.success("Logo dikembalikan ke default")
+    } catch {
+      notify.error("Gagal mengembalikan logo")
+    } finally {
+      setLogoLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-[60vh] flex-1">
       <Card className="w-full border">
@@ -65,6 +93,30 @@ export function SettingsSection() {
               <Switch checked={autoLogin} onCheckedChange={handleAutoLoginChange} />
             </div>
             <p className="text-sm text-muted-foreground">masuk otomatis ke dashboard saat aplikasi dibuka.</p>
+          </div>
+
+          <div className="space-y-3 border-b pb-4">
+            <span className="font-medium">Logo Aplikasi</span>
+            <div className="flex items-center gap-4">
+              <div className="flex aspect-square size-16 items-center justify-center rounded-xl overflow-hidden border bg-muted shrink-0">
+                <img src={logoSrc} alt="Logo" className="size-10 object-contain" />
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" size="sm" onClick={handleUploadLogo} disabled={logoLoading}>
+                    <Upload className="mr-1.5 size-3.5" />
+                    Unggah Logo
+                  </Button>
+                  {logoType === "custom" && (
+                    <Button variant="ghost" size="sm" onClick={handleResetLogo} disabled={logoLoading}>
+                      <RotateCcw className="mr-1.5 size-3.5" />
+                      Kembalikan Default
+                    </Button>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">format PNG, JPG, atau SVG. hanya tersimpan di perangkat ini.</p>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-3">

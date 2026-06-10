@@ -32,7 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-import logoSholat02 from "@/assets/applogo/Logo Sholat-02.png";
+import { useLogo } from "@/lib/logo-context";
 import { logoutSession, type UserProfileData } from "@/lib/auth-session";
 
 const mainMenuItems = [
@@ -108,7 +108,8 @@ interface AppSidebarProps {
 
 export function AppSidebar({ activeItem, setActiveItem, user }: AppSidebarProps) {
   const navigate = useNavigate();
-  const currentUserName = user?.name ?? "Admin User";
+  const { logoSrc } = useLogo();
+  const currentUserName = user?.role === "admin" ? "Admin" : (user?.name ?? "Admin User");
   const currentUserEmail = user?.email || user?.username || "admin@example.com";
   const avatarInitials = currentUserName.trim().split(/\s+/).filter(Boolean).length > 1
     ? `${currentUserName.trim().split(/\s+/)[0][0]}${currentUserName.trim().split(/\s+/)[1][0]}`.toUpperCase()
@@ -140,11 +141,13 @@ export function AppSidebar({ activeItem, setActiveItem, user }: AppSidebarProps)
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="pointer-events-none!">
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden shrink-0 bg-primary/10">
-                <img src={logoSholat02} alt="Presensi Sholat" className="size-5 object-contain" />
+                <img src={logoSrc} alt="Presensi Sholat" className="size-5 object-contain" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none overflow-hidden">
                 <span className="font-semibold text-sidebar-foreground truncate">Presensi Sholat</span>
-                <span className="text-[10px] text-sidebar-foreground/70 truncate italic">Portal Administrator</span>
+                {user?.role === "admin" && (
+                  <span className="text-[10px] text-sidebar-foreground/70 truncate italic">Portal Administrator</span>
+                )}
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -191,7 +194,9 @@ export function AppSidebar({ activeItem, setActiveItem, user }: AppSidebarProps)
                     </div>
                     <div className="flex flex-col gap-0.5 leading-none">
                       <span className="font-medium text-sidebar-foreground">{currentUserName}</span>
-                      <span className="text-xs text-sidebar-foreground/70">{currentUserEmail}</span>
+                      {user?.role !== "admin" && (
+                        <span className="text-xs text-sidebar-foreground/70">{currentUserEmail}</span>
+                      )}
                     </div>
                     <ChevronUp className="ml-auto size-4" />
                   </SidebarMenuButton>

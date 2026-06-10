@@ -27,7 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
-import logoSholat02 from "@/assets/applogo/Logo Sholat-02.png";
+import { useLogo } from "@/lib/logo-context";
 import { logoutSession, type UserProfileData } from "@/lib/auth-session";
 
 const studentMenuItems = [
@@ -71,6 +71,7 @@ interface SiswaSidebarProps {
 
 export function SiswaSidebar({ activeItem, setActiveItem, user }: SiswaSidebarProps) {
   const navigate = useNavigate();
+  const { logoSrc } = useLogo();
   const currentUserName = user?.name ?? "Ahmad Fadli";
   const currentUserClass = user?.className || user?.nis || "-";
   const avatarInitials = currentUserName.trim().split(/\s+/).filter(Boolean).length > 1
@@ -103,7 +104,7 @@ export function SiswaSidebar({ activeItem, setActiveItem, user }: SiswaSidebarPr
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="pointer-events-none!">
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden shrink-0 bg-primary/10">
-                <img src={logoSholat02} alt="Presensi Sholat" className="size-5 object-contain" />
+                <img src={logoSrc} alt="Presensi Sholat" className="size-5 object-contain" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none overflow-hidden">
                 <span className="font-semibold text-sidebar-foreground truncate">Presensi Sholat</span>

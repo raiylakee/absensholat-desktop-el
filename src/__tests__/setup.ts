@@ -16,7 +16,7 @@ vi.mock("react-router-dom", async (importOriginal) => {
   return { ...actual, useNavigate: () => vi.fn() };
 });
 
-vi.mock("@/assets/applogo/Logo Sholat-02.png", () => ({ default: "logo.png" }));
+vi.mock("@/assets/logo.png", () => ({ default: "data:image/png;base64,mock" }));
 
 const mockElectronAPI = {
   login: vi.fn(),
@@ -107,6 +107,11 @@ const mockElectronAPI = {
   windowClose: vi.fn(),
   windowStartDrag: vi.fn(),
   showSystemNotification: vi.fn(),
+  // App Logo
+  getLogoData: vi.fn().mockResolvedValue({ data: null, type: "default" }),
+  saveCustomLogo: vi.fn().mockResolvedValue({ success: true, data: "bW9jaw==" }),
+  resetLogo: vi.fn().mockResolvedValue({ data: "bW9jaw==" }),
+
   checkForUpdates: vi.fn(),
   quitAndInstall: vi.fn(),
   onUpdateStatus: vi.fn(() => () => {}),

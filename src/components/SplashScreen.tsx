@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import logoSholat02 from "@/assets/applogo/Logo Sholat-02.png"
+import { useEffect, useState } from "react"
+import { useLogo } from "@/lib/logo-context"
 import { useLogoAnimation } from "@/lib/logo-animation-context"
 
 interface SplashScreenProps {
@@ -10,6 +11,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
   const [progress, setProgress] = useState(0)
   const [isComplete, setIsComplete] = useState(false)
   const { setShowSplashLogo, setSplashComplete } = useLogoAnimation()
+  const { logoSrc } = useLogo()
 
   useEffect(() => {
     // Simulate loading progress
@@ -192,7 +194,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       <div className="splash-content">
         {/* Logo */}
         <div className={`splash-logo ${isComplete ? "flying" : ""}`}>
-          <img src={logoSholat02} alt="Logo Sholat" />
+          <img src={logoSrc} alt="Logo Sholat" />
         </div>
 
         {/* App name and tagline */}

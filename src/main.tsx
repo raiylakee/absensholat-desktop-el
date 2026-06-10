@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { LogoAnimationProvider } from "./lib/logo-animation-context";
+import { LogoProvider } from "./lib/logo-context";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import "./index.css";
 
@@ -30,9 +31,11 @@ import "./index.css";
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <LogoAnimationProvider>
-        <App />
-      </LogoAnimationProvider>
+      <LogoProvider>
+          <LogoAnimationProvider>
+            <App />
+          </LogoAnimationProvider>
+        </LogoProvider>
     </ErrorBoundary>
   </React.StrictMode>,
 );

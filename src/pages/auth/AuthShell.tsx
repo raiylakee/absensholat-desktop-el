@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import { motion } from "framer-motion"
 import { Titlebar } from "@/components/titlebar"
-import logoSholat02 from "@/assets/applogo/Logo Sholat-02.png"
+import { useLogo } from "@/lib/logo-context"
 import inorasi from "@/assets/inorasi.png"
 import ino2 from "@/assets/INO_2.png"
 import rasi2 from "@/assets/RASI_2.png"
@@ -11,6 +11,7 @@ type AuthShellProps = {
 }
 
 export function AuthShell({ children }: AuthShellProps) {
+  const { logoSrc } = useLogo()
   return (
     <div
       className="flex h-screen flex-col overflow-hidden bg-background relative"
@@ -70,7 +71,7 @@ export function AuthShell({ children }: AuthShellProps) {
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
               >
                 <img
-                  src={logoSholat02}
+                  src={logoSrc}
                   alt="Logo Sholat"
                   className="w-12 h-12 object-contain"
                 />
