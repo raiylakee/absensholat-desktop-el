@@ -4,14 +4,19 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
-import { AlertCircle, CheckCircle2, RefreshCw, Camera, CameraOff, Keyboard } from "lucide-react"
+import { AlertCircle, CheckCircle2, RefreshCw, Camera, CameraOff, Keyboard, ShieldAlert } from "lucide-react"
 import { Html5Qrcode } from "html5-qrcode"
 import { handleApiError } from "@/lib/api-utils"
+import { formatDateID } from "@/lib/date-utils"
+import type { UserProfileData } from "@/lib/auth-session"
 
 type ScanMode = "camera" | "manual"
+type ScanTab = "presensi" | "halangan"
 type VerifyState = "idle" | "scanning" | "verifying" | "success" | "error"
 
-export function SiswaScanQR() {
+export function SiswaScanQR({ user }: { user?: UserProfileData }) {
+  const isFemale = user?.gender === "P"
+  const [scanTab, setScanTab] = useState<ScanTab>("presensi")
   const [mode, setMode] = useState<ScanMode>("camera")
   const [state, setState] = useState<VerifyState>("idle")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -25,18 +30,24 @@ export function SiswaScanQR() {
   const scannerContainerId = "qr-scanner-container"
 
   const verifyToken = useCallback(async (token: string) => {
-    // Optimistic: show success immediately
+    // Detect halangan token OR if we're on the halangan tab
+    const isHalangan = token.includes("halangan|") || scanTab === "halangan"
+
     setState("success")
     setPrayerName(null)
     setPrayerDate(null)
     setErrorMessage(null)
     try {
-      const response: any = await window.electronAPI.verifyQr({ body: { token } })
-      // Confirmed: update with real data
-      setPrayerName(response?.data?.jenis_sholat ?? null)
-      setPrayerDate(response?.data?.tanggal ?? null)
+      if (isHalangan) {
+        const response: any = await window.electronAPI.verifyHalanganQr({ body: { token } })
+        setPrayerName("Halangan")
+        setPrayerDate(response?.data?.tanggal ?? null)
+      } else {
+        const response: any = await window.electronAPI.verifyQr({ body: { token } })
+        setPrayerName(response?.data?.jenis_sholat ?? null)
+        setPrayerDate(response?.data?.tanggal ?? null)
+      }
     } catch (err: any) {
-      // Rollback to error state
       setState("error")
       const msg = handleApiError(err)
       if (msg.includes("Perangkat tidak sesuai") || msg.includes("DEVICE_MISMATCH")) {
@@ -45,7 +56,7 @@ export function SiswaScanQR() {
         setErrorMessage(msg)
       }
     }
-  }, [])
+  }, [scanTab])
 
   const startCamera = useCallback(async () => {
     if (scannerRef.current) return
@@ -143,36 +154,77 @@ export function SiswaScanQR() {
     setMode(newMode)
   }
 
+  const switchTab = (newTab: ScanTab) => {
+    stopCamera()
+    setState("idle")
+    setErrorMessage(null)
+    setPrayerName(null)
+    setPrayerDate(null)
+    setManualInput("")
+    setIsCameraError(false)
+    setMode("camera")
+    setScanTab(newTab)
+  }
+
+  const isHalanganTab = scanTab === "halangan"
+  const title = isHalanganTab ? "Scan QR Halangan" : "Scan QR Presensi"
+  const subtitle = isHalanganTab
+    ? "Arahkan kamera ke QR Code halangan"
+    : "Arahkan kamera ke QR Code atau masukkan kode presensi secara manual"
+
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6">
       <div className="text-center space-y-2">
-        <h1 className="text-2xl font-bold tracking-tight">Scan QR Presensi</h1>
-        <p className="text-muted-foreground">
-          Arahkan kamera ke QR Code atau masukkan kode presensi secara manual
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        <p className="text-muted-foreground">{subtitle}</p>
       </div>
 
-      {/* Mode toggle */}
-      <div className="flex gap-2 p-1 rounded-lg bg-muted/50 border">
-        <Button
-          variant={mode === "camera" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => switchMode("camera")}
-          className="gap-2"
-        >
-          <Camera className="size-4" />
-          Kamera
-        </Button>
-        <Button
-          variant={mode === "manual" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => switchMode("manual")}
-          className="gap-2"
-        >
-          <Keyboard className="size-4" />
-          Manual
-        </Button>
-      </div>
+      {/* Halangan tab switcher — only for female students */}
+      {isFemale && (
+        <div className="flex gap-2 p-1 rounded-lg bg-muted/50 border">
+          <Button
+            variant={scanTab === "presensi" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => switchTab("presensi")}
+            className="gap-2"
+          >
+            Presensi
+          </Button>
+          <Button
+            variant={scanTab === "halangan" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => switchTab("halangan")}
+            className="gap-2"
+          >
+            <ShieldAlert className="size-4" />
+            Halangan
+          </Button>
+        </div>
+      )}
+
+      {/* Camera/manual mode toggle — only on presensi tab */}
+      {!isHalanganTab && (
+        <div className="flex gap-2 p-1 rounded-lg bg-muted/50 border">
+          <Button
+            variant={mode === "camera" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => switchMode("camera")}
+            className="gap-2"
+          >
+            <Camera className="size-4" />
+            Kamera
+          </Button>
+          <Button
+            variant={mode === "manual" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => switchMode("manual")}
+            className="gap-2"
+          >
+            <Keyboard className="size-4" />
+            Manual
+          </Button>
+        </div>
+      )}
 
       <Card className="w-full max-w-md border border-muted bg-card">
         <CardContent className="pt-6 flex flex-col items-center justify-center min-h-[350px] gap-6">
@@ -185,7 +237,7 @@ export function SiswaScanQR() {
               <div className="space-y-1">
                 <p className="font-bold text-xl">Presensi Berhasil!</p>
                 {prayerName && <p className="text-sm font-medium">Sholat: {prayerName}</p>}
-                {prayerDate && <p className="text-sm text-muted-foreground">Tanggal: {prayerDate}</p>}
+                {prayerDate && <p className="text-sm text-muted-foreground">tanggal: {formatDateID(prayerDate)}</p>}
               </div>
               <Button variant="outline" className="mt-4" onClick={handleReset}>
                 <RefreshCw className="mr-2 size-4" />
@@ -226,7 +278,7 @@ export function SiswaScanQR() {
           {state === "verifying" && (
             <div className="flex flex-col items-center gap-4 text-center">
               <Spinner size="lg" />
-              <p className="text-sm text-muted-foreground">Memverifikasi presensi...</p>
+              <p className="text-sm text-muted-foreground">memverifikasi presensi...</p>
             </div>
           )}
 
@@ -240,18 +292,20 @@ export function SiswaScanQR() {
               {!cameraActive && state === "scanning" && (
                 <div className="flex flex-col items-center gap-2">
                   <Spinner size="sm" />
-                  <p className="text-xs text-muted-foreground">Mengaktifkan kamera...</p>
+                  <p className="text-xs text-muted-foreground">mengaktifkan kamera...</p>
                 </div>
               )}
               {cameraActive && (
                 <p className="text-xs text-muted-foreground text-center">
-                  Arahkan kamera ke QR Code presensi
+                  {isHalanganTab ? "Arahkan kamera ke QR Code halangan" : "Arahkan kamera ke QR Code presensi"}
                 </p>
               )}
-              <Button variant="ghost" size="sm" onClick={() => switchMode("manual")} className="gap-2 text-muted-foreground">
-                <CameraOff className="size-3" />
-                Matikan Kamera
-              </Button>
+              {!isHalanganTab && (
+                <Button variant="ghost" size="sm" onClick={() => switchMode("manual")} className="gap-2 text-muted-foreground">
+                  <CameraOff className="size-3" />
+                  Matikan Kamera
+                </Button>
+              )}
             </div>
           )}
 

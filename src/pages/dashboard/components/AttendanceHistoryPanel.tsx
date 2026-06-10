@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { Badge } from "@/components/ui/badge"
+import { formatDateID } from "@/lib/date-utils"
 import {
   Tooltip,
   TooltipContent,
@@ -121,13 +122,13 @@ export function AttendanceHistoryPanel({
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case "hadir":
-        return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Hadir</Badge>
+        return <Badge className="bg-emerald-600 text-white hover:bg-emerald-700">Hadir</Badge>
       case "izin":
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Izin</Badge>
+        return <Badge className="bg-amber-600 text-white hover:bg-amber-700">Izin</Badge>
       case "sakit":
-        return <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">Sakit</Badge>
+        return <Badge className="bg-blue-600 text-white hover:bg-blue-700">Sakit</Badge>
       case "alpha":
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Alpha</Badge>
+        return <Badge className="bg-red-600 text-white hover:bg-red-700">Alpa</Badge>
       default:
         return <Badge variant="secondary">{status}</Badge>
     }
@@ -199,7 +200,7 @@ export function AttendanceHistoryPanel({
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-12">
               <Spinner size="lg" />
-              <p className="mt-3 text-sm text-muted-foreground">Memuat riwayat kehadiran...</p>
+              <p className="mt-3 text-sm text-muted-foreground">memuat riwayat kehadiran...</p>
             </div>
           )}
 
@@ -222,9 +223,9 @@ export function AttendanceHistoryPanel({
 
           {!isLoading && !error && records.length > 0 && (
             <div className="rounded-md border bg-background overflow-hidden">
-              <div className="overflow-x-auto">
+              <div className="overflow-auto max-h-[calc(100vh-18rem)]">
                 <table className="w-full text-sm">
-                  <thead className="bg-muted/50 border-b">
+                  <thead className="bg-card border-b sticky top-0 z-10">
                     <tr>
                       <th className="px-3 py-2.5 text-left font-medium">Tanggal</th>
                       <th className="px-3 py-2.5 text-left font-medium">Hari</th>
@@ -238,7 +239,7 @@ export function AttendanceHistoryPanel({
                         key={`${record.tanggal}-${record.jenis_sholat}-${index}`}
                         className="border-b last:border-0 hover:bg-muted/30"
                       >
-                        <td className="px-3 py-2.5">{record.tanggal}</td>
+                        <td className="px-3 py-2.5">{formatDateID(record.tanggal)}</td>
                         <td className="px-3 py-2.5 text-muted-foreground">{record.hari}</td>
                         <td className="px-3 py-2.5">{record.jenis_sholat}</td>
                         <td className="px-3 py-2.5">{getStatusBadge(record.status)}</td>

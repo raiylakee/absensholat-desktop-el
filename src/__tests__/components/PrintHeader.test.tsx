@@ -4,7 +4,7 @@ import { PrintHeader } from "@/components/print-header"
 
 describe("PrintHeader", () => {
   it("renders school name", () => {
-    render(<PrintHeader title="Laporan Absensi" />)
+    render(<PrintHeader title="Laporan Presensi" />)
     expect(screen.getByText("SMKN 2 Singosari")).toBeInTheDocument()
   })
 
@@ -53,16 +53,16 @@ describe("PrintHeader", () => {
     expect(screen.queryByText("NIS:")).not.toBeInTheDocument()
   })
 
-  it("renders print date in DD MMMM YYYY format using Indonesian locale", () => {
+  it("renders print date in DD-MM-YYYY format", () => {
     const date = new Date(2025, 0, 15) // 15 January 2025
     render(<PrintHeader title="Laporan" printDate={date} />)
-    expect(screen.getByText("15 Januari 2025")).toBeInTheDocument()
+    expect(screen.getByText("15-01-2025")).toBeInTheDocument()
   })
 
-  it("renders print date for a different month in Indonesian", () => {
+  it("renders print date for a different month in DD-MM-YYYY format", () => {
     const date = new Date(2025, 5, 3) // 3 June 2025
     render(<PrintHeader title="Laporan" printDate={date} />)
-    expect(screen.getByText("03 Juni 2025")).toBeInTheDocument()
+    expect(screen.getByText("03-06-2025")).toBeInTheDocument()
   })
 
   it("has hidden class and print:block class for print-only visibility", () => {

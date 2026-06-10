@@ -72,11 +72,11 @@ const FAQ_SISWA: FAQItem[] = [
   },
   {
     question: "Apa yang harus saya lakukan jika lupa kata sandi?",
-    answer: "Klik 'Lupa kata sandi?' di halaman masuk. Masukkan NIS dan email Anda untuk menerima kode OTP, lalu ikuti langkah-langkah untuk mengatur ulang kata sandi."
+    answer: "Klik 'Lupa kata sandi?' di halaman masuk. Masukkan NIS dan surel Anda untuk menerima kode OTP, lalu ikuti langkah-langkah untuk mengatur ulang kata sandi."
   },
   {
     question: "Bagaimana cara mengganti email atau NIS?",
-    answer: "Perubahan data pokok seperti NIS dan Email hanya dapat dilakukan oleh Admin Sekolah. Silakan hubungi wali kelas atau bagian TU untuk meminta perubahan data."
+    answer: "Perubahan data pokok seperti NIS dan Surel hanya dapat dilakukan oleh Admin Sekolah. Silakan hubungi wali kelas atau bagian TU untuk meminta perubahan data."
   },
   {
     question: "Siapa yang harus saya hubungi untuk bantuan teknis?",

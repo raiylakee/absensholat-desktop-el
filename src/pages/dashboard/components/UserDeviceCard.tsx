@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
 import { handleApiError } from "@/lib/api-utils"
+import { formatDateTimeID } from "@/lib/date-utils"
 
 type DeviceState = "loading" | "not-registered" | "registered" | "mismatch"
 
@@ -178,7 +179,7 @@ export function UserDeviceCard() {
               {deviceInfo.last_auth_at && (
                 <div className="flex items-center justify-between border-b pb-2">
                   <span className="text-muted-foreground">Terakhir Auth</span>
-                  <span className="font-medium">{new Date(deviceInfo.last_auth_at).toLocaleString("id-ID")}</span>
+                  <span className="font-medium">{formatDateTimeID(deviceInfo.last_auth_at)}</span>
                 </div>
               )}
             </div>

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
+import { formatDateID } from "@/lib/date-utils"
 import { cn } from "@/lib/utils"
 import { PRAYER_TYPE_OPTIONS, MAJOR_OPTIONS } from "@/pages/dashboard/constants"
 import { Label } from "@/components/ui/label"
@@ -67,22 +68,24 @@ const attendanceChartConfig = {
   hadir: { label: "Hadir", color: "#10b981" },
   izin: { label: "Izin", color: "#f59e0b" },
   sakit: { label: "Sakit", color: "#3b82f6" },
-  alpha: { label: "Alpha", color: "#ef4444" },
+  alpha: { label: "Alpa", color: "#ef4444" },
 } satisfies ChartConfig
 
 const STATUS_COLORS: Record<string, string> = {
-  aktif: "#3b82f6",
+  active: "#3b82f6",
   naik_kelas: "#10b981",
   tinggal_kelas: "#f59e0b",
   keluar: "#ef4444",
+  graduated: "#8b5cf6",
   alumni: "#8b5cf6",
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  aktif: "Aktif",
+  active: "Aktif",
   naik_kelas: "Naik Kelas",
   tinggal_kelas: "Tinggal Kelas",
   keluar: "Keluar",
+  graduated: "Lulus",
   alumni: "Alumni",
 }
 
@@ -165,7 +168,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
     { name: "Hadir", value: statsData.total_kehadiran_hari_ini || 0, color: "#10b981" },
     { name: "Izin", value: statsData.total_izin_hari_ini || 0, color: "#f59e0b" },
     { name: "Sakit", value: statsData.total_sakit_hari_ini || 0, color: "#3b82f6" },
-    { name: "Alpha", value: statsData.total_alpha_hari_ini || 0, color: "#ef4444" },
+    { name: "Alpa", value: statsData.total_alpha_hari_ini || 0, color: "#ef4444" },
   ].filter(d => d.value > 0) : []
 
   const totalToday = todayDonutData.reduce((s, d) => s + d.value, 0)
@@ -248,6 +251,12 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
     )
   }, [allClassOptions, selectedJurusanFilters])
 
+  const allClassLabels = useMemo(() => {
+    return Array.from(
+      new Set(allClassOptions.map((c: any) => c.label))
+    ).sort()
+  }, [allClassOptions])
+
   // Client-side filter for search, sholat type, and forcedClass
   const filteredRecords = useMemo(() => {
     const q = searchQuery.toLowerCase()
@@ -261,10 +270,10 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
   }, [records, searchQuery, selectedSholatFilters, forcedClass])
 
   const getStatusBadgeClassName = (status: string) => {
-    if (status === "Hadir") return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
-    if (status === "Izin") return "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
-    if (status === "Sakit") return "bg-blue-100 text-blue-700 hover:bg-blue-100"
-    return "bg-red-100 text-red-700 hover:bg-red-100" // For Alpha if any
+    if (status === "Hadir") return "bg-emerald-600 text-white hover:bg-emerald-700"
+    if (status === "Izin") return "bg-amber-600 text-white hover:bg-amber-700"
+    if (status === "Sakit") return "bg-blue-600 text-white hover:bg-blue-700"
+    return "bg-red-600 text-white hover:bg-red-700" // For Alpa if any
   }
 
   const handleDownloadReport = async () => {
@@ -338,15 +347,20 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
           exportEndDate = format(now, "yyyy-MM-dd")
         }
 
-        // Pass active jurusan/kelas filters (Property 8)
+        // Determine which classes to export
+        const selectedDownloadClasses = downloadClasses.filter(c => c !== "All")
+
+        // Pass active jurusan filter
         const exportJurusan =
           selectedJurusanFilters.length > 0 ? selectedJurusanFilters[0] : undefined
+
+        // Jika "Semua Kelas" atau multiple specific classes → undefined (ambil semua data)
+        // Jika tepat 1 kelas spesifik → kirim ke API
+        const isAllOrMulti = downloadClasses.includes("All") || selectedDownloadClasses.length !== 1
         const exportKelas =
           forcedClass ||
           (selectedKelasFilters.length > 0 ? selectedKelasFilters[0] : undefined) ||
-          (downloadClasses.includes("All") || downloadClasses.length === 0
-            ? undefined
-            : downloadClasses[0])
+          (isAllOrMulti ? undefined : selectedDownloadClasses[0])
 
         const result: any = await window.electronAPI.exportReport({
           endpoint: config.endpoint,
@@ -373,8 +387,8 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
       if (selectedJurusanFilters.length > 0) filters["Konsentrasi Keahlian"] = selectedJurusanFilters.join(", ")
     }
     if (selectedSholatFilters.length > 0) filters["Sholat"] = selectedSholatFilters.join(", ")
-    if (startDate) filters["Dari"] = format(startDate, "dd/MM/yyyy")
-    if (endDate) filters["Sampai"] = format(endDate, "dd/MM/yyyy")
+    if (startDate) filters["Dari"] = formatDateID(startDate)
+    if (endDate) filters["Sampai"] = formatDateID(endDate)
     return filters
   }, [forcedClass, selectedKelasFilters, selectedJurusanFilters, selectedSholatFilters, startDate, endDate])
 
@@ -385,8 +399,8 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
       <Card className="border">
         <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col">
-            <CardTitle>Data Absensi</CardTitle>
-            <p className="text-xs text-muted-foreground">Unduh laporan berdasarkan filter di bawah</p>
+            <CardTitle>Data Presensi</CardTitle>
+            <p className="text-xs text-muted-foreground">unduh laporan berdasarkan filter di bawah</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Button variant="default" onClick={() => setIsDownloadDialogOpen(true)}>
@@ -430,7 +444,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                         )}
                       >
                         <CalendarIcon className="mr-2 h-3 w-3" />
-                        {startDate ? format(startDate, "PP") : <span>Pilih tanggal</span>}
+                        {startDate ? formatDateID(startDate) : <span>Pilih tanggal</span>}
                       </Button>
                     }
                   />
@@ -458,7 +472,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                         )}
                       >
                         <CalendarIcon className="mr-2 h-3 w-3" />
-                        {endDate ? format(endDate, "PP") : <span>Pilih tanggal</span>}
+                        {endDate ? formatDateID(endDate) : <span>Pilih tanggal</span>}
                       </Button>
                     }
                   />
@@ -546,10 +560,11 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <PrintHeader title="Laporan Absensi" filters={activeFilters} />
-          <div className="overflow-x-auto rounded-lg border">
+          <PrintHeader title="Laporan Presensi" filters={activeFilters} />
+          <div className="rounded-lg border overflow-hidden">
+            <div className="overflow-auto max-h-[calc(100vh-18rem)]">
             <table className="w-full min-w-[920px] text-sm">
-              <thead className="bg-muted/40">
+              <thead className="bg-card sticky top-0 z-10">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">No</th>
                   <th className="px-4 py-3 text-left font-medium">Tanggal</th>
@@ -574,7 +589,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                   filteredRecords.map((record, index) => (
                     <tr key={`${record.nis}-${index}`} className="border-t">
                       <td className="px-4 py-3">{(currentPage - 1) * 50 + index + 1}</td>
-                      <td className="px-4 py-3">{record.tanggal}</td>
+                      <td className="px-4 py-3">{formatDateID(record.tanggal)}</td>
                       <td className="px-4 py-3 font-medium">{record.nis}</td>
                       <td className="px-4 py-3">{record.nama}</td>
                       <td className="px-4 py-3">{record.kelas}</td>
@@ -593,6 +608,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
 
           <div className="mt-4 flex items-center justify-between">
@@ -755,7 +771,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
       <Dialog open={isDownloadDialogOpen} onOpenChange={setIsDownloadDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Unduh Laporan Absensi</DialogTitle>
+            <DialogTitle>Unduh Laporan Presensi</DialogTitle>
             <DialogDescription>
               Konfigurasi pengaturan laporan sebelum mengunduh.
             </DialogDescription>
@@ -805,7 +821,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {customStartDate ? format(customStartDate, "PP") : <span>Pilih tanggal mulai</span>}
+                            {customStartDate ? formatDateID(customStartDate) : <span>Pilih tanggal mulai</span>}
                           </Button>
                         }
                       />
@@ -837,7 +853,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                             )}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {customEndDate ? format(customEndDate, "PP") : <span>Pilih tanggal akhir</span>}
+                            {customEndDate ? formatDateID(customEndDate) : <span>Pilih tanggal akhir</span>}
                           </Button>
                         }
                       />
@@ -866,25 +882,36 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                 <div className="flex items-center space-x-2">
                   <Checkbox 
                     id="class-all" 
-                    checked={downloadClasses.includes("All")}
+                    checked={downloadClasses.includes("All") || allClassLabels.every(k => downloadClasses.includes(k))}
                     onCheckedChange={(checked) => {
-                      if (checked) setDownloadClasses(["All"])
-                      else setDownloadClasses([])
+                      if (checked) {
+                        setDownloadClasses(["All", ...allClassLabels])
+                      } else {
+                        setDownloadClasses([])
+                      }
                     }}
                   />
                   <Label htmlFor="class-all" className="font-medium">Semua Kelas</Label>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  {classOptions.map(kelas => (
+                  {allClassLabels.map(kelas => (
                     <div key={`download-class-${kelas}`} className="flex items-center space-x-2">
                       <Checkbox 
                         id={`dl-class-${kelas}`}
-                        checked={downloadClasses.includes(kelas)}
+                        checked={downloadClasses.includes("All") || downloadClasses.includes(kelas)}
                         onCheckedChange={(checked) => {
                           setDownloadClasses(prev => {
                             const withoutAll = prev.filter(c => c !== "All")
-                            if (checked) return [...withoutAll, kelas]
-                            return withoutAll.filter(c => c !== kelas)
+                            let next: string[]
+                            if (checked) {
+                              next = [...withoutAll, kelas]
+                              if (allClassLabels.every(k => next.includes(k))) {
+                                next = ["All", ...next]
+                              }
+                            } else {
+                              next = withoutAll.filter(c => c !== kelas)
+                            }
+                            return next
                           })
                         }}
                       />

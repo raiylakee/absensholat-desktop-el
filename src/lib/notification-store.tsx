@@ -7,6 +7,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
+import { formatDateID } from "./date-utils";
 import { setNotificationAdder } from "./notify";
 import { extractData } from "@/lib/api-utils";
 
@@ -18,7 +19,7 @@ export interface NotificationEntry {
   timestamp: number;
   read: boolean;
   source: "toast" | "dialog" | "api";
-  severity?: "success" | "error" | "info";
+  severity?: "success" | "error" | "info" | "warning";
   outcome?: "confirmed" | "cancelled";
 }
 
@@ -89,7 +90,7 @@ export async function fetchNotificationsFromAPI(): Promise<NotificationEntry[]> 
         const date =
           item.tanggal ||
           item.date ||
-          new Date().toLocaleDateString("id-ID");
+          formatDateID(new Date());
         message = `${studentName} - ${status} (${date})`;
         if (item.tanggal) {
           timestamp = new Date(item.tanggal).getTime();

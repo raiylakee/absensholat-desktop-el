@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { GENDER_OPTIONS } from "@/pages/dashboard/constants"
 import type { Student } from "@/pages/dashboard/types"
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
@@ -31,9 +30,6 @@ export function ManageSiswaSection() {
   const [isSaving, setIsSaving] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedJurusanFilters, setSelectedJurusanFilters] = useState<string[]>([])
-  const [selectedKelasFilters, setSelectedKelasFilters] = useState<string[]>([])
-  const [selectedGenderFilters, setSelectedGenderFilters] = useState<Student["jenisKelamin"][]>([])
-  const [selectedAgamaFilter, setSelectedAgamaFilter] = useState<string>("")
   
   const [selectedNis, setSelectedNis] = useState<string[]>([])
 
@@ -86,30 +82,13 @@ export function ManageSiswaSection() {
   const fetchStudents = async () => {
     setIsLoading(true)
     try {
-      let filterTingkatan: number | undefined = undefined
       let filterJurusan: string | undefined = selectedJurusanFilters.length > 0 ? selectedJurusanFilters[0] : undefined
-      let filterPart: string | undefined = undefined
-
-      if (selectedKelasFilters.length > 0) {
-        const classObj = dynamicClassOptions.find(c => c.label === selectedKelasFilters[0])
-        if (classObj) {
-          filterTingkatan = classObj.tingkatan
-          filterPart = classObj.part
-          if (!filterJurusan) {
-            filterJurusan = classObj.jurusan
-          }
-        }
-      }
 
       const response: any = await window.electronAPI.getStudents({
         page: currentPage,
         page_size: pageSize,
         search: searchQuery || undefined,
         jurusan: filterJurusan,
-        tingkatan: filterTingkatan,
-        part: filterPart,
-        jk: selectedGenderFilters.length > 0 ? genderToApi(selectedGenderFilters[0]) : undefined,
-        agama: selectedAgamaFilter || undefined,
       })
       if (!isMounted.current) return
       const data = extractData(response);
@@ -286,33 +265,15 @@ export function ManageSiswaSection() {
       }
     }, 300)
     return () => clearTimeout(handler)
-  }, [searchQuery, selectedJurusanFilters, selectedKelasFilters, selectedGenderFilters, selectedAgamaFilter])
+  }, [searchQuery, selectedJurusanFilters])
 
-  const classOptionsForFilter = useMemo(() => {
-    if (selectedJurusanFilters.length === 0) return []
-    const selectedJurusan = selectedJurusanFilters[0]
-    return Array.from(
-      new Set(
-        dynamicClassOptions
-          .filter((c: any) => c.jurusan === selectedJurusan)
-          .map((c: any) => c.label)
-      )
-    )
-  }, [dynamicClassOptions, selectedJurusanFilters])
-
-  const filteredStudents = useMemo(() => {
-    if (selectedKelasFilters.length === 0) return students
-    return students.filter(s => selectedKelasFilters.includes(s.kelas))
-  }, [selectedKelasFilters, students])
+  const filteredStudents = students
 
   const activeFilters = useMemo(() => {
     const filters: Record<string, string> = {}
     if (selectedJurusanFilters.length > 0) filters["Konsentrasi Keahlian"] = selectedJurusanFilters.join(", ")
-    if (selectedKelasFilters.length > 0) filters["Kelas"] = selectedKelasFilters.join(", ")
-    if (selectedGenderFilters.length > 0) filters["Jenis Kelamin"] = selectedGenderFilters.join(", ")
-    if (selectedAgamaFilter) filters["Agama"] = selectedAgamaFilter
     return filters
-  }, [selectedJurusanFilters, selectedKelasFilters, selectedGenderFilters, selectedAgamaFilter])
+  }, [selectedJurusanFilters])
 
   const openAddStudentDialog = () => {
     const activeYear = dynamicYearOptions.find(y => y.is_active) || dynamicYearOptions[0]
@@ -332,8 +293,15 @@ export function ManageSiswaSection() {
 
   const openEditStudentDialog = (student: Student) => {
     // Find IDs from metadata if not present in the student object
-    const idJurusan = (student as any).id_jurusan || dynamicMajorOptions.find(m => m.nama_jurusan === student.jurusan)?.id_jurusan
-    const idKelas = (student as any).id_kelas || dynamicClassOptions.find(k => k.label === student.kelas)?.id_kelas
+    // Use != null to handle both null and undefined (API sends null for empty fields)
+    const idJurusan = (student as any).id_jurusan != null
+      ? (student as any).id_jurusan
+      : dynamicMajorOptions.find(m => m.nama_jurusan === student.jurusan)?.id_jurusan
+    const idKelas = (student as any).id_kelas != null
+      ? (student as any).id_kelas
+      : (student.kelas && student.kelas !== "-"
+          ? dynamicClassOptions.find(k => k.label === student.kelas)?.id_kelas
+          : undefined)
     const idYear = (student as any).id_tahun_masuk || dynamicYearOptions.find(y => y.is_active)?.id_tahun_masuk || dynamicYearOptions[0]?.id_tahun_masuk
 
     setStudentDraft({
@@ -393,9 +361,18 @@ export function ManageSiswaSection() {
         notify("Data siswa berhasil diperbarui", "success")
       }
       
-      console.log("🔄 Fetching students after save...")
+      // Fetch fresh data for the edited/created student to update local state immediately
+      try {
+        const freshRes: any = await window.electronAPI.getStudentByNis({ nis: draft.nis })
+        const freshData = extractData(freshRes)
+        if (freshData) {
+          const normalized = normalizeStudent(freshData)
+          setStudents(prev => prev.map(s => s.nis === draft.nis ? normalized : s))
+        }
+      } catch {
+        // Fallback: full list refresh
+      }
       await fetchStudents()
-      // Always close dialog after successful save
       setAddingStudent(false)
       setEditingStudent(null)
     } catch (error) {
@@ -589,7 +566,7 @@ export function ManageSiswaSection() {
         <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Kelola Siswa</CardTitle>
-            <CardDescription className="mt-1">Manajemen komprehensif: mutasi, kenaikan, dan kelulusan.</CardDescription>
+            <CardDescription className="mt-1">manajemen komprehensif: mutasi, kenaikan, dan kelulusan.</CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Input
@@ -618,56 +595,12 @@ export function ManageSiswaSection() {
                       onSelect={(event) => event.preventDefault()}
                       onCheckedChange={(checked) => {
                         setSelectedJurusanFilters(checked ? [label] : [])
-                        setSelectedKelasFilters([]) // Clear class selection when major changes
                       }}
                     >
                       {label}
                     </DropdownMenuCheckboxItem>
                   )
                 })}
-                <p className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Kelas</p>
-                {selectedJurusanFilters.length === 0 ? (
-                  <p className="px-6 py-2 text-xs italic text-muted-foreground">Pilih konsentrasi keahlian terlebih dahulu</p>
-                ) : (
-                  classOptionsForFilter.map((kelas) => (
-                    <DropdownMenuCheckboxItem
-                      key={`filter-class-${kelas}`}
-                      checked={selectedKelasFilters.includes(kelas)}
-                      onSelect={(event) => event.preventDefault()}
-                      onCheckedChange={(checked) =>
-                        setSelectedKelasFilters(checked ? [kelas] : [])
-                      }
-                    >
-                      {kelas}
-                    </DropdownMenuCheckboxItem>
-                  ))
-                )}
-                <p className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Jenis Kelamin</p>
-                {GENDER_OPTIONS.map((gender) => (
-                  <DropdownMenuCheckboxItem
-                    key={`filter-gender-${gender}`}
-                    checked={selectedGenderFilters.includes(gender)}
-                    onSelect={(event) => event.preventDefault()}
-                    onCheckedChange={(checked) =>
-                      setSelectedGenderFilters(checked ? [gender] : [])
-                    }
-                  >
-                    {gender}
-                  </DropdownMenuCheckboxItem>
-                ))}
-                <p className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Agama</p>
-                {["Islam", "Kristen", "Katolik", "Hindu", "Buddha", "Konghucu"].map((agama) => (
-                  <DropdownMenuCheckboxItem
-                    key={`filter-agama-${agama}`}
-                    checked={selectedAgamaFilter === agama}
-                    onSelect={(event) => event.preventDefault()}
-                    onCheckedChange={(checked) =>
-                      setSelectedAgamaFilter(checked ? agama : "")
-                    }
-                  >
-                    {agama}
-                  </DropdownMenuCheckboxItem>
-                ))}
               </DropdownMenuContent>
             </DropdownMenu>
             <Button onClick={openAddStudentDialog}>
@@ -775,6 +708,7 @@ export function ManageSiswaSection() {
 
           <div className="rounded-lg border overflow-hidden">
             <PrintHeader title="Daftar Siswa" filters={activeFilters} />
+            <div className="overflow-auto max-h-[calc(100vh-18rem)]">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/40 hover:bg-muted/40">
@@ -825,9 +759,9 @@ export function ManageSiswaSection() {
                       </TableCell>
                       <TableCell>
                         {["KELUAR", "ALUMNI", "KEK", "PKL"].includes(student.status_akademik ?? "") ? (
-                          <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Tidak Aktif</Badge>
+                          <Badge className="bg-red-600 text-white hover:bg-red-700">Tidak Aktif</Badge>
                         ) : (
-                          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">Siswa Aktif</Badge>
+                          <Badge className="bg-blue-600 text-white hover:bg-blue-700">Siswa Aktif</Badge>
                         )}
                       </TableCell>
                     </TableRow>
@@ -835,6 +769,7 @@ export function ManageSiswaSection() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </div>
 
           <div className="mt-4 flex items-center justify-between">
@@ -897,7 +832,7 @@ export function ManageSiswaSection() {
             {bulkActionType === "mutasi" && (
               <div className="grid gap-4 sm:grid-cols-2 rounded-lg border p-4 bg-muted/20">
                 <div className="space-y-2">
-                  <Label>Konsentrasi Keahlian Tujuan</Label>
+                  <Label className="min-h-[2.5rem] flex items-start">Konsentrasi Keahlian Tujuan</Label>
                   <Combobox
                     options={dynamicMajorOptions.map((m: any) => {
                       const label = typeof m === 'string' ? m : m.nama_jurusan
@@ -910,7 +845,7 @@ export function ManageSiswaSection() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Kelas Tujuan</Label>
+                  <Label className="min-h-[2.5rem] flex items-start">Kelas Tujuan</Label>
                   <Combobox
                     options={(dynamicClassMap[bulkMutasiDraft.jurusan] || []).map(k => ({ value: k, label: k }))}
                     value={bulkMutasiDraft.kelas}
@@ -1051,7 +986,7 @@ export function ManageSiswaSection() {
                 <Label>Konsentrasi Keahlian</Label>
                 <Combobox
                   options={dynamicMajorOptions.map((m: any) => ({ value: String(m.id_jurusan), label: m.nama_jurusan }))}
-                  value={studentDraft.id_jurusan !== undefined ? String(studentDraft.id_jurusan) : ""}
+                  value={studentDraft.id_jurusan != null ? String(studentDraft.id_jurusan) : ""}
                   onValueChange={(v) => {
                     const major = dynamicMajorOptions.find((m: any) => String(m.id_jurusan) === v)
                     if (major) {
@@ -1074,7 +1009,7 @@ export function ManageSiswaSection() {
                   options={dynamicClassOptions
                     .filter((k: any) => !studentDraft.id_jurusan || k.id_jurusan === studentDraft.id_jurusan || k.jurusan === studentDraft.jurusan)
                     .map((k: any) => ({ value: String(k.id_kelas), label: k.label }))}
-                  value={studentDraft.id_kelas !== undefined ? String(studentDraft.id_kelas) : ""}
+                  value={studentDraft.id_kelas != null ? String(studentDraft.id_kelas) : ""}
                   onValueChange={(v) => {
                     const kelas = dynamicClassOptions.find((k: any) => String(k.id_kelas) === v)
                     if (kelas) {
@@ -1087,7 +1022,6 @@ export function ManageSiswaSection() {
                   }}
                   placeholder="Pilih Kelas"
                   searchPlaceholder="Cari kelas..."
-                  disabled={!studentDraft.id_jurusan}
                 />
               </div>
             </div>
@@ -1350,7 +1284,7 @@ export function ManageSiswaSection() {
               {/* Table */}
               <div className="overflow-auto border rounded max-h-[45vh]">
                 <table className="w-full text-xs">
-                  <thead className="bg-muted sticky top-0">
+                  <thead className="bg-card sticky top-0 z-10">
                     <tr>
                       <th className="p-2 w-8"></th>
                       <th className="p-2 text-left">NIS</th>

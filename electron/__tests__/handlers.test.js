@@ -41,6 +41,7 @@ try {
     get: vi.fn(() => null),
     set: vi.fn(),
     invalidate: vi.fn(),
+    clear: vi.fn(),
   };
   mockCache.default = mockCache;
   req.cache[cachePath] = {
@@ -126,7 +127,7 @@ vi.mock("os", () => ({ homedir: () => "/tmp" }));
 
 // Mock cache
 vi.mock("../cache.js", () => ({
-  default: { init: vi.fn(), get: vi.fn(() => null), set: vi.fn(), invalidate: vi.fn() },
+  default: { init: vi.fn(), get: vi.fn(() => null), set: vi.fn(), invalidate: vi.fn(), clear: vi.fn() },
 }));
 
 let handlers = {};

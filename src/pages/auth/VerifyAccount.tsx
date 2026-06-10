@@ -4,7 +4,7 @@ import { AuthShell } from "@/pages/auth/AuthShell"
 import { handleApiError } from "@/lib/api-utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { PasswordInput } from "@/components/ui/password-input"
+import { PasswordInput, PASSWORD_REQUIREMENTS } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { ShieldCheck } from "lucide-react"
@@ -55,7 +55,7 @@ export default function VerifyAccount() {
           </div>
           <CardTitle className="text-xl">Verifikasi Akun</CardTitle>
           <CardDescription>
-            Ini adalah masuk pertama Anda. Silakan konfirmasi akun dan atur kata sandi baru (opsional).
+            ini adalah masuk pertama anda. silakan konfirmasi akun dan atur kata sandi baru (opsional).
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -72,6 +72,7 @@ export default function VerifyAccount() {
                 placeholder="Kosongkan jika tidak ingin mengubah"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
+                helperText={PASSWORD_REQUIREMENTS}
               />
             </div>
             {newPassword && (

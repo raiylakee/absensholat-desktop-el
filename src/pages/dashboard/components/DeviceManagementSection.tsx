@@ -6,6 +6,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { MonitorSmartphone, Trash2, Check, X } from "lucide-react"
 import { notify } from "@/lib/notify"
 import { extractData, handleApiError } from "@/lib/api-utils"
+import { formatDateTimeID } from "@/lib/date-utils"
 
 interface Device {
   id: number
@@ -110,7 +111,7 @@ export function DeviceManagementSection() {
         <Card>
           <CardHeader>
             <CardTitle>Manajemen Perangkat</CardTitle>
-            <CardDescription>Daftar semua perangkat yang terdaftar di sistem</CardDescription>
+            <CardDescription>daftar semua perangkat yang terdaftar di sistem</CardDescription>
           </CardHeader>
           <CardContent>
             {devices.length === 0 ? (
@@ -126,7 +127,7 @@ export function DeviceManagementSection() {
                         <Badge variant="outline" className="text-[10px]">{d.role}</Badge>
                       </div>
                       <p className="text-xs text-muted-foreground">{d.device_name || d.device_model || d.hardware_id}</p>
-                      <p className="text-xs text-muted-foreground">Terakhir: {d.last_auth_at ? new Date(d.last_auth_at).toLocaleString("id-ID") : "-"}</p>
+                      <p className="text-xs text-muted-foreground">terakhir: {d.last_auth_at ? formatDateTimeID(d.last_auth_at) : "-"}</p>
                     </div>
                     <Button variant="destructive" size="sm" onClick={() => handleUnbind(d.id)}>
                       <Trash2 className="size-4 mr-1" /> Lepas
@@ -143,7 +144,7 @@ export function DeviceManagementSection() {
         <Card>
           <CardHeader>
             <CardTitle>Pengajuan Ganti Perangkat</CardTitle>
-            <CardDescription>Permintaan pergantian perangkat dari pengguna</CardDescription>
+            <CardDescription>permintaan pergantian perangkat dari pengguna</CardDescription>
           </CardHeader>
           <CardContent>
             {requests.length === 0 ? (

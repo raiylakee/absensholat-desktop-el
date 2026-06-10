@@ -1,5 +1,4 @@
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
+import { formatDateID } from "@/lib/date-utils"
 
 const SCHOOL_NAME = "SMKN 2 Singosari"
 
@@ -15,7 +14,7 @@ export interface PrintHeaderProps {
 export function PrintHeader(props: PrintHeaderProps) {
   const { title, subtitle, filters, studentName, nis, printDate } = props
   const date = printDate ?? new Date()
-  const formattedDate = format(date, "dd MMMM yyyy", { locale: id })
+  const formattedDate = formatDateID(date)
 
   const hasFilters = filters && Object.keys(filters).length > 0
 

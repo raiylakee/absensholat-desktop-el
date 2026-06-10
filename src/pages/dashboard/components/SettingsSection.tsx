@@ -64,7 +64,7 @@ export function SettingsSection() {
               <span className="font-medium">Login Otomatis</span>
               <Switch checked={autoLogin} onCheckedChange={handleAutoLoginChange} />
             </div>
-            <p className="text-sm text-muted-foreground">Masuk otomatis ke dashboard saat aplikasi dibuka.</p>
+            <p className="text-sm text-muted-foreground">masuk otomatis ke dashboard saat aplikasi dibuka.</p>
           </div>
 
           <div className="space-y-3">

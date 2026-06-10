@@ -100,17 +100,17 @@ describe("ProfileSection", () => {
     });
   });
 
-  it("'Ubah Email' opens email dialog", async () => {
+  it("'Ubah Surel' opens email dialog", async () => {
     render(<ProfileSection user={guruUser} />);
-    await user.click(screen.getByText("Ubah Email"));
-    expect(await screen.findByText("Kode OTP akan dikirim ke email baru untuk verifikasi.")).toBeInTheDocument();
+    await user.click(screen.getByText("Ubah Surel"));
+    expect(await screen.findByText("Kode OTP akan dikirim ke surel baru untuk verifikasi.")).toBeInTheDocument();
   });
 
   it("requestChangeEmail called with newEmail, OTP dialog opens", async () => {
     window.electronAPI.requestChangeEmail = vi.fn().mockResolvedValue({});
     render(<ProfileSection user={guruUser} />);
-    await user.click(screen.getByText("Ubah Email"));
-    await screen.findByText("Kode OTP akan dikirim ke email baru untuk verifikasi.");
+    await user.click(screen.getByText("Ubah Surel"));
+    await screen.findByText("Kode OTP akan dikirim ke surel baru untuk verifikasi.");
     await user.type(screen.getByPlaceholderText("email.baru@gmail.com"), "new@test.com");
     await user.click(screen.getByRole("button", { name: "Kirim OTP" }));
     await waitFor(() => {
@@ -123,8 +123,8 @@ describe("ProfileSection", () => {
     window.electronAPI.requestChangeEmail = vi.fn().mockResolvedValue({});
     window.electronAPI.verifyChangeEmail = vi.fn().mockResolvedValue({});
     render(<ProfileSection user={guruUser} />);
-    await user.click(screen.getByText("Ubah Email"));
-    await screen.findByText("Kode OTP akan dikirim ke email baru untuk verifikasi.");
+    await user.click(screen.getByText("Ubah Surel"));
+    await screen.findByText("Kode OTP akan dikirim ke surel baru untuk verifikasi.");
     await user.type(screen.getByPlaceholderText("email.baru@gmail.com"), "new@test.com");
     await user.click(screen.getByRole("button", { name: "Kirim OTP" }));
     await screen.findByText(/Masukkan kode OTP/);

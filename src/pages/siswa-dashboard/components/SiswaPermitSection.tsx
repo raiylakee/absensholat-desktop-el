@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, DragEvent } from "react"
+import { useState, useEffect, useRef, useMemo, DragEvent } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -9,10 +9,11 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Spinner } from "@/components/ui/spinner"
 import { format } from "date-fns"
-import { Calendar as CalendarIcon, Stethoscope, Briefcase, Paperclip, X, Upload } from "lucide-react"
+import { Calendar as CalendarIcon, Stethoscope, Briefcase, Paperclip, X, Upload, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { notify } from "@/lib/notify"
 import { extractData, handleApiError } from "@/lib/api-utils"
+import { formatDateID } from "@/lib/date-utils"
 
 interface PengajuanIzin {
   id_pengajuan: number
@@ -137,13 +138,22 @@ export function SiswaPermitSection() {
   }
 
   const getStatusBadge = (status: string) => {
-    if (status === "disetujui") return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">Disetujui</Badge>
-    if (status === "ditolak") return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Ditolak</Badge>
-    return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">Menunggu</Badge>
+    if (status === "disetujui") return <Badge className="bg-emerald-600 text-white hover:bg-emerald-700">Disetujui</Badge>
+    if (status === "ditolak") return <Badge className="bg-red-600 text-white hover:bg-red-700">Ditolak</Badge>
+    return <Badge className="bg-amber-600 text-white hover:bg-amber-700">Menunggu</Badge>
   }
 
+  const activePermit = useMemo(() => {
+    const today = format(new Date(), "yyyy-MM-dd")
+    return requests.find(
+      (r) =>
+        (r.status === "pending" || r.status === "disetujui") &&
+        r.tanggal_akhir >= today
+    )
+  }, [requests])
+
   const formatDate = (d: string) => {
-    try { return format(new Date(d), "dd MMM yyyy") } catch { return d }
+    try { return formatDateID(d) } catch { return d }
   }
 
   return (
@@ -151,116 +161,137 @@ export function SiswaPermitSection() {
       <Card className="border shadow-sm">
         <CardHeader>
           <CardTitle>Pengajuan Izin / Sakit</CardTitle>
-          <CardDescription>Lengkapi formulir di bawah ini untuk mengajukan permohonan ketidakhadiran</CardDescription>
+          <CardDescription>lengkapi formulir di bawah ini untuk mengajukan permohonan ketidakhadiran</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="space-y-3">
-            <Label>Jenis Izin</Label>
-            <RadioGroup value={permitType} onValueChange={setPermitType} className="grid grid-cols-2 gap-4">
-              <div>
-                <RadioGroupItem value="sakit" id="sakit" className="peer sr-only" />
-                <Label htmlFor="sakit" className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent peer-data-[checked]:border-primary peer-data-[checked]:bg-primary/5">
-                  <Stethoscope className="mb-3 size-6 text-primary" />
-                  <span className="font-semibold">Sakit</span>
-                </Label>
+          {activePermit ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex size-16 items-center justify-center rounded-full bg-amber-100 mb-4">
+                <AlertCircle className="size-8 text-amber-600" />
               </div>
-              <div>
-                <RadioGroupItem value="izin" id="izin" className="peer sr-only" />
-                <Label htmlFor="izin" className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent peer-data-[checked]:border-primary peer-data-[checked]:bg-primary/5">
-                  <Briefcase className="mb-3 size-6 text-primary" />
-                  <span className="font-semibold">Izin</span>
-                </Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Tanggal Mulai</Label>
-              <Popover>
-                <PopoverTrigger render={
-                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal h-10 px-3", !dateFrom && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 size-4" />
-                    {dateFrom ? format(dateFrom, "PPP") : <span>Pilih tanggal</span>}
-                  </Button>
-                } />
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus />
-                </PopoverContent>
-              </Popover>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Pengajuan Izin Tidak Tersedia</h3>
+              <p className="text-sm text-muted-foreground max-w-md">
+                Anda sedang memiliki pengajuan <strong className="capitalize">{activePermit.jenis_izin}</strong> yang{" "}
+                {activePermit.status === "disetujui" ? "telah disetujui" : "masih menunggu verifikasi"}{" "}
+                untuk periode{" "}
+                <strong>{formatDate(activePermit.tanggal_awal)} — {formatDate(activePermit.tanggal_akhir)}</strong>.
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Hanya satu pengajuan izin yang dapat aktif dalam satu waktu. Silakan ajukan kembali setelah periode ini berakhir pada{" "}
+                <strong>{formatDate(activePermit.tanggal_akhir)}</strong>.
+              </p>
             </div>
-            <div className="space-y-2">
-              <Label>Tanggal Selesai</Label>
-              <Popover>
-                <PopoverTrigger render={
-                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal h-10 px-3", !dateTo && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 size-4" />
-                    {dateTo ? format(dateTo, "PPP") : <span>Pilih tanggal</span>}
-                  </Button>
-                } />
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="reason">Alasan (min. 10 karakter)</Label>
-            <Textarea
-              id="reason"
-              placeholder="Tuliskan alasan detail ketidakhadiran Anda..."
-              className="min-h-[120px] resize-none"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Bukti (opsional)</Label>
-            {fileName ? (
-              <div className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
-                <Paperclip className="size-4 text-muted-foreground shrink-0" />
-                <span className="flex-1 truncate">{fileName}</span>
-                <button
-                  type="button"
-                  onClick={() => { setFilePath(null); setFileName(null) }}
-                  className="text-muted-foreground hover:text-foreground"
-                  aria-label="Hapus file"
-                >
-                  <X className="size-4" />
-                </button>
+          ) : (
+            <>
+              <div className="space-y-3">
+                <Label>Jenis Izin</Label>
+                <RadioGroup value={permitType} onValueChange={setPermitType} className="grid grid-cols-2 gap-4">
+                  <div>
+                    <RadioGroupItem value="sakit" id="sakit" className="peer sr-only" />
+                    <Label htmlFor="sakit" className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent peer-data-[checked]:border-primary peer-data-[checked]:bg-primary/5">
+                      <Stethoscope className="mb-3 size-6 text-primary" />
+                      <span className="font-semibold">Sakit</span>
+                    </Label>
+                  </div>
+                  <div>
+                    <RadioGroupItem value="izin" id="izin" className="peer sr-only" />
+                    <Label htmlFor="izin" className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-4 hover:bg-accent peer-data-[checked]:border-primary peer-data-[checked]:bg-primary/5">
+                      <Briefcase className="mb-3 size-6 text-primary" />
+                      <span className="font-semibold">Izin</span>
+                    </Label>
+                  </div>
+                </RadioGroup>
               </div>
-            ) : (
-              <div
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 transition-colors cursor-pointer",
-                  isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Tanggal Mulai</Label>
+                  <Popover>
+                    <PopoverTrigger render={
+                      <Button variant="outline" className={cn("w-full justify-start text-left font-normal h-10 px-3", !dateFrom && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-2 size-4" />
+                        {dateFrom ? formatDateID(dateFrom) : <span>Pilih tanggal</span>}
+                      </Button>
+                    } />
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus disabled={{ before: new Date() }} />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tanggal Selesai</Label>
+                  <Popover>
+                    <PopoverTrigger render={
+                      <Button variant="outline" className={cn("w-full justify-start text-left font-normal h-10 px-3", !dateTo && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-2 size-4" />
+                        {dateTo ? formatDateID(dateTo) : <span>Pilih tanggal</span>}
+                      </Button>
+                    } />
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus disabled={{ before: dateFrom || new Date() }} />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reason">Alasan (min. 10 karakter)</Label>
+                <Textarea
+                  id="reason"
+                  placeholder="Tuliskan alasan detail ketidakhadiran Anda..."
+                  className="min-h-[120px] resize-none"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Bukti (opsional)</Label>
+                {fileName ? (
+                  <div className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                    <Paperclip className="size-4 text-muted-foreground shrink-0" />
+                    <span className="flex-1 truncate">{fileName}</span>
+                    <button
+                      type="button"
+                      onClick={() => { setFilePath(null); setFileName(null) }}
+                      className="text-muted-foreground hover:text-foreground"
+                      aria-label="Hapus file"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-6 transition-colors cursor-pointer",
+                      isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"
+                    )}
+                    onClick={handlePickFile}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handlePickFile() }}
+                  >
+                    <Upload className={cn("size-8", isDragging ? "text-primary" : "text-muted-foreground")} />
+                    <p className="text-sm text-muted-foreground text-center">
+                      {isDragging ? "Lepaskan file di sini" : "Seret file ke sini atau klik untuk memilih"}
+                    </p>
+                  </div>
                 )}
-                onClick={handlePickFile}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") handlePickFile() }}
-              >
-                <Upload className={cn("size-8", isDragging ? "text-primary" : "text-muted-foreground")} />
-                <p className="text-sm text-muted-foreground text-center">
-                  {isDragging ? "Lepaskan file di sini" : "Seret file ke sini atau klik untuk memilih"}
-                </p>
+                <p className="text-xs text-muted-foreground">format: jpg, png, atau pdf. maks 5 mb.</p>
               </div>
-            )}
-            <p className="text-xs text-muted-foreground">Format: JPG, PNG, atau PDF. Maks 5 MB.</p>
-          </div>
 
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" onClick={() => { setReason(""); setDateFrom(undefined); setDateTo(undefined); setFilePath(null); setFileName(null) }}>Batal</Button>
-            <Button className="px-8" onClick={handleSubmit} disabled={isSubmitting}>
-              {isSubmitting ? <Spinner size="sm" className="mr-2" /> : null}
-              Kirim Pengajuan
-            </Button>
-          </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <Button variant="outline" onClick={() => { setReason(""); setDateFrom(undefined); setDateTo(undefined); setFilePath(null); setFileName(null) }}>Batal</Button>
+                <Button className="px-8" onClick={handleSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? <Spinner size="sm" className="mr-2" /> : null}
+                  Kirim Pengajuan
+                </Button>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

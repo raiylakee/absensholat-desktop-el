@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 import type { NotificationEntry } from "./notification-store";
 
-type NotifySeverity = "success" | "error" | "info";
+type NotifySeverity = "success" | "error" | "info" | "warning";
 
 type AddNotificationFn = (
   entry: Omit<NotificationEntry, "id" | "timestamp" | "read">

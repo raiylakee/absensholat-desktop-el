@@ -260,6 +260,16 @@
 }
 
 /* ============================================================
+   Sticky Table Headers
+   ============================================================ */
+thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--card);
+}
+
+/* ============================================================
    Print Layout — @media print
    ============================================================ */
 
@@ -343,6 +353,20 @@
   .print\:hidden,
   [data-print-hidden] {
     display: none !important;
+  }
+
+  /* Reset scroll containers for print — unclip tables */
+  [class*="max-h-"],
+  .max-h-\[calc\(100vh-18rem\)\] {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .flex-1.overflow-y-auto {
+    overflow: visible !important;
+  }
+  [class*="overflow-auto"],
+  [class*="overflow-hidden"] {
+    overflow: visible !important;
   }
 
   /* Card/container adjustments */

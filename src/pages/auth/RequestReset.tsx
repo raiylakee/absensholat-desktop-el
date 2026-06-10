@@ -33,9 +33,9 @@ export default function RequestReset() {
     event.preventDefault()
 
     const nextErrors: { email?: string; nis?: string } = {}
-    if (!email.trim()) nextErrors.email = "Email wajib diisi."
+    if (!email.trim()) nextErrors.email = "Surel wajib diisi."
     if (!nis.trim()) nextErrors.nis = "NIS wajib diisi."
-    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) nextErrors.email = "Silakan masukkan alamat email yang valid."
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) nextErrors.email = "Silakan masukkan alamat surel yang valid."
 
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) {
@@ -86,12 +86,12 @@ export default function RequestReset() {
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="space-y-1">
           <CardTitle className="text-xl">Atur Ulang Kata Sandi</CardTitle>
-          <CardDescription>Masukkan email dan NIS Anda untuk mendapatkan kode OTP.</CardDescription>
+          <CardDescription>masukkan surel dan nis anda untuk mendapatkan kode otp.</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Surel</Label>
               <Input
                 id="email"
                 name="email"

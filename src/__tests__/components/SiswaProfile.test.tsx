@@ -69,8 +69,8 @@ describe("SiswaProfile", () => {
     window.electronAPI.requestChangeEmail = vi.fn().mockResolvedValue({});
     window.electronAPI.verifyChangeEmail = vi.fn().mockResolvedValue({});
     render(<SiswaProfile user={mockUser} />);
-    await user.click(screen.getByText("Ubah Email"));
-    await screen.findByText("Kode OTP akan dikirim ke email baru untuk verifikasi.");
+    await user.click(screen.getByText("Ubah Surel"));
+    await screen.findByText("Kode OTP akan dikirim ke surel baru untuk verifikasi.");
     await user.type(screen.getByPlaceholderText("email.baru@gmail.com"), "new@s.id");
     await user.click(screen.getByRole("button", { name: "Kirim OTP" }));
     await waitFor(() => {

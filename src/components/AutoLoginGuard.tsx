@@ -96,7 +96,7 @@ export function AutoLoginGuard({ children }: AutoLoginGuardProps) {
       <div className="flex items-center justify-center h-screen w-screen bg-background">
         <div className="flex flex-col items-center gap-3">
           <Spinner size="lg" />
-          <p className="text-sm text-muted-foreground">Memuat sesi...</p>
+          <p className="text-sm text-muted-foreground">memuat sesi...</p>
         </div>
       </div>
     )

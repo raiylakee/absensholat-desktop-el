@@ -84,7 +84,7 @@ export default function VerifyOtp() {
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="space-y-1">
           <CardTitle className="text-xl">Verifikasi OTP</CardTitle>
-          <CardDescription>Masukkan NIS dan kode OTP Anda untuk melanjutkan atur ulang kata sandi.</CardDescription>
+          <CardDescription>masukkan nis dan kode otp anda untuk melanjutkan atur ulang kata sandi.</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>

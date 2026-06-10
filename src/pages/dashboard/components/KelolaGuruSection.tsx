@@ -3,7 +3,7 @@ import { Search, Plus, Pencil, Trash2, UserCheck, UserMinus, Download, Loader2, 
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { PasswordInput } from "@/components/ui/password-input"
+import { PasswordInput, PASSWORD_REQUIREMENTS } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
 import { extractData, handleApiError } from "@/lib/api-utils"
+import { formatDateID } from "@/lib/date-utils"
 import { useDownloadAction } from "@/hooks/use-download-action"
 import { arrayToXlsxBase64 } from "@/lib/export-xlsx"
 
@@ -75,6 +76,7 @@ export function KelolaGuruSection() {
   const [formEmail, setFormEmail] = useState("")
   const [formPassword, setFormPassword] = useState("")
   const [formNip, setFormNip] = useState("")
+  const [formJk, setFormJk] = useState("")
   const [formKelas, setFormKelas] = useState("")
   const [isSaving, setIsSaving] = useState(false)
 
@@ -262,7 +264,7 @@ export function KelolaGuruSection() {
         format: "xlsx",
       },
       fetchData: async () => {
-        const headers = ["Nama", "Email", "NIP", "Wali Kelas"]
+        const headers = ["Nama", "Surel", "NIP", "Wali Kelas"]
         const rows = guruList.map((guru) => [
           guru.nama,
           guru.email,
@@ -282,7 +284,7 @@ export function KelolaGuruSection() {
         <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Kelola Guru</CardTitle>
-            <CardDescription className="mt-1">Manajemen data guru dan penugasan wali kelas.</CardDescription>
+            <CardDescription className="mt-1">manajemen data guru dan penugasan wali kelas.</CardDescription>
           </div>
           <div className="flex gap-2">
             <Button
@@ -486,7 +488,7 @@ export function KelolaGuruSection() {
 
                     <div className="flex items-center justify-between pt-1 border-t">
                       <span className="text-xs text-muted-foreground">
-                        Sejak {item.berlaku_mulai ? new Date(item.berlaku_mulai).toLocaleDateString("id-ID") : "-"}
+                        Sejak {item.berlaku_mulai ? formatDateID(item.berlaku_mulai) : "-"}
                       </span>
                       <Button
                         variant="outline"
@@ -510,7 +512,7 @@ export function KelolaGuruSection() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Tambah Guru</DialogTitle>
-            <DialogDescription>Isi data guru baru.</DialogDescription>
+            <DialogDescription>isi data guru baru.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -518,16 +520,28 @@ export function KelolaGuruSection() {
               <Input value={formNama} onChange={(e) => setFormNama(e.target.value)} placeholder="Nama lengkap" />
             </div>
             <div className="grid gap-2">
-              <Label>Email <span className="text-destructive">*</span></Label>
+              <Label>Surel <span className="text-destructive">*</span></Label>
               <Input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} placeholder="email@sekolah.sch.id" />
             </div>
             <div className="grid gap-2">
-              <Label>Password <span className="text-destructive">*</span></Label>
-              <PasswordInput value={formPassword} onChange={(e) => setFormPassword(e.target.value)} />
+              <Label>Kata Sandi <span className="text-destructive">*</span></Label>
+              <PasswordInput value={formPassword} onChange={(e) => setFormPassword(e.target.value)} helperText={PASSWORD_REQUIREMENTS} />
             </div>
             <div className="grid gap-2">
               <Label>NIP <span className="text-destructive">*</span></Label>
               <Input value={formNip} onChange={(e) => setFormNip(e.target.value)} placeholder="Nomor Induk Pegawai" />
+            </div>
+            <div className="grid gap-2">
+              <Label>Jenis Kelamin <span className="text-destructive">*</span></Label>
+              <Select value={formJk} onValueChange={(v) => setFormJk(v ?? "")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih jenis kelamin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="L">Laki-laki</SelectItem>
+                  <SelectItem value="P">Perempuan</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>
@@ -550,12 +564,24 @@ export function KelolaGuruSection() {
               <Input value={formNama} onChange={(e) => setFormNama(e.target.value)} />
             </div>
             <div className="grid gap-2">
-              <Label>Email <span className="text-destructive">*</span></Label>
+              <Label>Surel <span className="text-destructive">*</span></Label>
               <Input type="email" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} />
             </div>
             <div className="grid gap-2">
               <Label>NIP <span className="text-destructive">*</span></Label>
               <Input value={formNip} onChange={(e) => setFormNip(e.target.value)} placeholder="Nomor Induk Pegawai" />
+            </div>
+            <div className="grid gap-2">
+              <Label>Jenis Kelamin</Label>
+              <Select value={formJk} onValueChange={(v) => setFormJk(v ?? "")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih jenis kelamin" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="L">Laki-laki</SelectItem>
+                  <SelectItem value="P">Perempuan</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

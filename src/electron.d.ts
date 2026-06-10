@@ -36,9 +36,18 @@ interface ElectronAPI {
   createDhuhaGroup: (args: any) => Promise<any>;
   updateDhuhaGroup: (args: any) => Promise<any>;
   upsertDhuhaGroupsWeekly: (args: any) => Promise<any>;
+  getDhuhaTurnsToday: () => Promise<any>;
+  getDhuhaToday: () => Promise<any>;
+  getDhuhaKeahlian: () => Promise<any>;
+  createDhuhaKeahlian: (args: any) => Promise<any>;
+  updateDhuhaKeahlian: (args: any) => Promise<any>;
+  getDhuhaDetail: () => Promise<any>;
+  updateDhuhaDetail: (args: any) => Promise<any>;
+  updateDhuhaTime: (args: any) => Promise<any>;
 
   // Students
   getStudents: (args: any) => Promise<any>;
+  getStudentByNis: (args: any) => Promise<any>;
   createStudent: (args: any) => Promise<any>;
   updateStudent: (args: any) => Promise<any>;
   deleteStudent: (args: any) => Promise<any>;
@@ -50,7 +59,17 @@ interface ElectronAPI {
   bulkStudentControl: (args: any) => Promise<any>;
   bulkUpdateStudentFields: (args: any) => Promise<any>;
   annualRollover: (args: any) => Promise<any>;
+  sequentialProgression: (args: any) => Promise<any>;
+  getStudentControlOverview: () => Promise<any>;
+  getStudentTransitions: (args: any) => Promise<any>;
   notifyWaliKelas: (args: any) => Promise<any>;
+
+  // Promotion
+  getPromotionConfig: () => Promise<any>;
+  createPromotionConfig: (args: any) => Promise<any>;
+  updatePromotionConfig: (args: any) => Promise<any>;
+  simulatePromotion: (args: any) => Promise<any>;
+  executePromotion: (args: any) => Promise<any>;
 
   // Attendance
   getAttendanceHistory: (args: any) => Promise<any>;
@@ -60,6 +79,13 @@ interface ElectronAPI {
   generateAttendanceCode: () => Promise<any>;
   verifyAttendanceCode: (args: any) => Promise<any>;
   exportReport: (args: any) => Promise<any>;
+
+  // Halangan QR
+  generateHalanganQr: () => Promise<any>;
+  verifyHalanganQr: (args: any) => Promise<any>;
+  getPendingHalangan: () => Promise<any>;
+  approveHalangan: (args: any) => Promise<any>;
+  rejectHalangan: (args: any) => Promise<any>;
 
   // Permits
   getPengajuanIzin: () => Promise<any>;

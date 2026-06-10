@@ -5,14 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
 import { extractData } from "@/lib/api-utils"
 
-import logoRpl from "@/assets/logo-rpl 3.png"
-import logoTei from "@/assets/logo-tei 2.png"
-import logoDkv from "@/assets/logo-dkv 2.png"
-import logoTkj from "@/assets/logo-tkj 2.png"
-import logoAn from "@/assets/logo-an 2.png"
-import logoBc from "@/assets/logo-bc 2.png"
-import logoMt from "@/assets/logo-mt 2.png"
-import logoTav from "@/assets/logo-tav 2.png"
+import logoRpl from "@/assets/logo-rpl-3.png"
+import logoTei from "@/assets/logo-tei-2.png"
+import logoDkv from "@/assets/logo-dkv-2.png"
+import logoTkj from "@/assets/logo-tkj-2.png"
+import logoAn from "@/assets/logo-an-2.png"
+import logoBc from "@/assets/logo-bc-2.png"
+import logoMt from "@/assets/logo-mt-2.png"
+import logoTav from "@/assets/logo-tav-2.png"
 
 interface JenisSholat {
   id_jenis: number
@@ -103,13 +103,13 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
     { title: "Total Siswa", value: statsData?.total_siswa?.toString() || "0", icon: Users, color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-900/20", sub: "Semua siswa terdaftar" },
     { title: "Total Hadir Hari Ini", value: statsData?.total_kehadiran_hari_ini?.toString() || "0", icon: BookMarked, color: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/20", sub: todayLabel },
     { title: "Total Izin / Sakit", value: ((statsData?.total_izin_hari_ini || 0) + (statsData?.total_sakit_hari_ini || 0)).toString(), icon: Wrench, color: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-900/20", sub: todayLabel },
-    { title: "Total Alpha", value: statsData?.total_alpha_hari_ini?.toString() || "0", icon: CircuitBoard, color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/20", sub: todayLabel },
+    { title: "Total Alpa", value: statsData?.total_alpha_hari_ini?.toString() || "0", icon: CircuitBoard, color: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/20", sub: todayLabel },
   ]
 
   const currentPrayer = closestData?.current
   const nextPrayer = closestData?.next
 
-  const isDhuhaActive = currentPrayer?.waktu_sholat?.jenis_sholat?.nama_jenis?.toLowerCase() === "dhuha"
+  const isDhuhaActive = currentPrayer?.waktu_sholat?.jenis_sholat?.nama_jenis?.toLowerCase() === "dhuha" || currentPrayer?.waktu_sholat?.jenis_sholat?.nama_jenis?.toLowerCase() === "duha"
   const dhuhaMajors = isDhuhaActive ? (currentPrayer?.jurusans || []) : []
 
   if (isLoading) {
@@ -163,7 +163,7 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-bold text-emerald-700 dark:text-emerald-400">{currentPrayer.waktu_sholat?.jenis_sholat?.nama_jenis || "-"}</p>
-                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-600 text-white">
                       Sedang berlangsung
                     </span>
                   </div>
@@ -199,7 +199,7 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
             ) : (
               !currentPrayer && (
                 <div className="text-center py-2">
-                  <p className="text-sm text-muted-foreground">Tidak ada jadwal sholat untuk hari ini</p>
+                  <p className="text-sm text-muted-foreground">tidak ada jadwal sholat untuk hari ini</p>
                 </div>
               )
             )}
@@ -208,7 +208,7 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
 
         <Card className="border shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Jadwal Dhuha per Konsentrasi Keahlian</CardTitle>
+            <CardTitle className="text-lg">Jadwal Salat Dhuha Tiap Konsentrasi Keahlian</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 grid-cols-1 sm:grid-cols-2">
             {isDhuhaActive && dhuhaMajors.length > 0 ? (
@@ -232,7 +232,7 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
                     {isDhuhaActive ? "Tidak ada Konsentrasi Keahlian" : "Bukan waktu Dhuha"}
                   </h3>
                   <p className="text-[10px] font-medium opacity-90 mt-1 leading-none">
-                    {isDhuhaActive ? "Tidak ada Konsentrasi Keahlian terjadwal" : "Jadwal Dhuha per Konsentrasi Keahlian akan muncul saat waktu Dhuha berlangsung"}
+                    {isDhuhaActive ? "Tidak ada Konsentrasi Keahlian terjadwal" : "Jadwal Salat Dhuha Tiap Konsentrasi Keahlian akan muncul saat waktu Dhuha berlangsung"}
                   </p>
                 </div>
               </div>

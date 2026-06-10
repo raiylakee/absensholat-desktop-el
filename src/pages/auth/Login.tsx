@@ -68,7 +68,7 @@ export default function Login() {
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="space-y-1">
           <CardTitle className="text-xl">Masuk</CardTitle>
-          <CardDescription>Masuk menggunakan pengguna dan kata sandi Anda.</CardDescription>
+          <CardDescription>masuk menggunakan pengguna dan kata sandi anda.</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -90,7 +90,7 @@ export default function Login() {
               <Input
                 id="identifier"
                 name="identifier"
-                placeholder="Email atau NIS"
+                placeholder="Surel atau NIS"
                 value={identifier}
                 onChange={(event) => setIdentifier(event.target.value)}
                 className="bg-muted/30"

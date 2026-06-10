@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { PasswordInput } from "@/components/ui/password-input"
+import { PasswordInput, PASSWORD_REQUIREMENTS } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { KeyRound, Mail } from "lucide-react"
 import { notify } from "@/lib/notify"
@@ -71,7 +71,7 @@ export function ProfileSection({ user }: { user?: UserProfile }) {
   }
 
   const handleRequestEmailChange = async () => {
-    if (!newEmail) { notify("Email baru wajib diisi", "error"); return }
+    if (!newEmail) { notify("Surel baru wajib diisi", "error"); return }
     setEmailLoading(true)
     try {
       await window.electronAPI.requestChangeEmail({ newEmail })
@@ -133,7 +133,7 @@ export function ProfileSection({ user }: { user?: UserProfile }) {
                 </div>
               )}
               <div className="flex items-center justify-between border-b pb-2">
-                <span className="text-muted-foreground">Email</span>
+                <span className="text-muted-foreground">Surel</span>
                 <span className="font-medium">{currentUser.email}</span>
               </div>
               <div className="grid gap-2 pt-2 sm:grid-cols-2">
@@ -141,7 +141,7 @@ export function ProfileSection({ user }: { user?: UserProfile }) {
                   <KeyRound className="mr-2 size-4" /> Ubah Kata Sandi
                 </Button>
                 <Button variant="outline" onClick={() => setEmailDialogOpen(true)}>
-                  <Mail className="mr-2 size-4" /> Ubah Email
+                  <Mail className="mr-2 size-4" /> Ubah Surel
                 </Button>
               </div>
             </div>
@@ -164,7 +164,7 @@ export function ProfileSection({ user }: { user?: UserProfile }) {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="newPassword">Kata Sandi Baru</Label>
-              <PasswordInput id="newPassword" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              <PasswordInput id="newPassword" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} helperText={PASSWORD_REQUIREMENTS} />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="confirmPassword">Konfirmasi Kata Sandi Baru</Label>
@@ -181,12 +181,12 @@ export function ProfileSection({ user }: { user?: UserProfile }) {
       <Dialog open={emailDialogOpen} onOpenChange={(o) => { setEmailDialogOpen(o); if (!o) { setNewEmail(""); setEmailPassword("") } }}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Ubah Alamat Email</DialogTitle>
-            <DialogDescription>Kode OTP akan dikirim ke email baru untuk verifikasi.</DialogDescription>
+            <DialogTitle>Ubah Alamat Surel</DialogTitle>
+            <DialogDescription>Kode OTP akan dikirim ke surel baru untuk verifikasi.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label>Alamat Email Baru</Label>
+              <Label>Alamat Surel Baru</Label>
               <Input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="email.baru@gmail.com" />
             </div>
           </div>

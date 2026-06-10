@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
 import { extractData, handleApiError } from "@/lib/api-utils"
+import { formatDateTimeID } from "@/lib/date-utils"
 
 interface Device {
   id: number
@@ -123,7 +124,7 @@ export function SiswaDevicesSection() {
             <MonitorSmartphone className="size-5" />
             Perangkat Siswa
           </CardTitle>
-          <CardDescription>Kelola perangkat yang terdaftar untuk siswa. Lepas perangkat jika siswa perlu ganti HP.</CardDescription>
+          <CardDescription>kelola perangkat yang terdaftar untuk siswa. lepas perangkat jika siswa perlu ganti hp.</CardDescription>
         </CardHeader>
       </Card>
 
@@ -156,12 +157,12 @@ export function SiswaDevicesSection() {
             </div>
           ) : (
             <div className="rounded-md border bg-background overflow-hidden">
-              <div className="overflow-x-auto">
+              <div className="overflow-auto max-h-[calc(100vh-18rem)]">
                 <table className="w-full text-sm">
-                  <thead className="bg-muted/50 border-b">
+                  <thead className="bg-card border-b sticky top-0 z-10">
                     <tr>
                       <th className="px-4 py-3 text-left font-medium">Nama Siswa</th>
-                      <th className="px-4 py-3 text-left font-medium">Email</th>
+                      <th className="px-4 py-3 text-left font-medium">Surel</th>
                       <th className="px-4 py-3 text-left font-medium">Perangkat</th>
                       <th className="px-4 py-3 text-left font-medium">Terakhir Aktif</th>
                       <th className="px-4 py-3 text-left font-medium">Status</th>
@@ -177,7 +178,7 @@ export function SiswaDevicesSection() {
                           <span className="text-xs">{d.device_name || d.device_model || d.hardware_id.slice(0, 12) + "..."}</span>
                         </td>
                         <td className="px-4 py-3 text-xs text-muted-foreground">
-                          {d.last_auth_at ? new Date(d.last_auth_at).toLocaleString("id-ID") : "-"}
+                          {d.last_auth_at ? formatDateTimeID(d.last_auth_at) : "-"}
                         </td>
                         <td className="px-4 py-3">
                           <Badge variant={d.is_verified ? "default" : "secondary"} className="text-[10px]">
@@ -193,8 +194,8 @@ export function SiswaDevicesSection() {
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
-            </div>
           )}
         </div>
       )}
@@ -214,7 +215,7 @@ export function SiswaDevicesSection() {
                   <p className="text-xs text-muted-foreground font-mono">
                     {r.old_hardware_id?.slice(0, 12)}... → {r.new_hardware_id?.slice(0, 12)}...
                   </p>
-                  <p className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString("id-ID")}</p>
+                  <p className="text-xs text-muted-foreground">{formatDateTimeID(r.created_at)}</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <Button size="sm" onClick={() => handleApprove(r.id)}>

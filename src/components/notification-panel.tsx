@@ -102,7 +102,7 @@ function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
       <Bell className="size-8 text-muted-foreground/50 mb-2" />
-      <p className="text-sm text-muted-foreground">Tidak ada notifikasi</p>
+      <p className="text-sm text-muted-foreground">tidak ada notifikasi</p>
       <p className="text-xs text-muted-foreground/70 mt-0.5">
         Semua sudah terbaca
       </p>

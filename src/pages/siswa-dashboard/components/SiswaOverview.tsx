@@ -7,6 +7,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Calendar, Download, FileText, AlertCircle, ClipboardList, History, Printer } from "lucide-react"
 import { PrayerNotification } from "./PrayerNotification"
 import { extractData, normalizeAttendance } from "@/lib/api-utils"
+import { formatDateID } from "@/lib/date-utils"
+import { DAY_NAMES } from "@/lib/day-names"
 import type { UserProfileData } from "@/lib/auth-session"
 import { useDownloadAction } from "@/hooks/use-download-action"
 import { usePrintAction } from "@/hooks/use-print-action"
@@ -19,8 +21,7 @@ interface SiswaOverviewProps {
 }
 
 function getIndonesianDay(): string {
-  const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
-  return days[new Date().getDay()]
+  return DAY_NAMES[new Date().getDay()]
 }
 
 export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
@@ -51,7 +52,7 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
         const normalized = historyData.map(normalizeAttendance)
         const headers = ['Tanggal', 'Jenis Sholat', 'Waktu', 'Status']
         const rows = normalized.map((r) => [
-          r.tanggal,
+          formatDateID(r.tanggal),
           r.jenisSholat ?? '',
           r.waktu ?? '',
           r.status ?? '',
@@ -136,14 +137,14 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
 
   const stats = [
     {
-      label: "Total Absensi",
+      label: "Total Presensi",
       value: String(totalKehadiran),
       icon: ClipboardList,
       color: "text-blue-600 dark:text-blue-400",
       bg: "bg-blue-50 dark:bg-blue-900/20",
     },
     {
-      label: "Total Alpha",
+      label: "Total Alpa",
       value: String(totalAlpha),
       icon: AlertCircle,
       color: "text-red-600 dark:text-red-400",
@@ -158,15 +159,24 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
     },
   ]
 
-  const normalizedHistory = historyData.map(normalizeAttendance)
+  const normalizedHistory = historyData.map((item) => {
+    const normalized = normalizeAttendance(item)
+    if (!normalized.waktu && normalized.tanggal && normalized.jenisSholat) {
+      const date = new Date(normalized.tanggal)
+      const dayName = DAY_NAMES[date.getDay()]
+      const match = schedules.find(
+        (s: any) => s.jenis_sholat === normalized.jenisSholat && s.hari === dayName
+      )
+      if (match?.waktu_mulai) {
+        normalized.waktu = match.waktu_mulai
+      }
+    }
+    return normalized
+  })
 
   const formatTanggal = (tanggal: string) => {
     try {
-      return new Date(tanggal).toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
+      return formatDateID(tanggal)
     } catch {
       return tanggal
     }
@@ -222,7 +232,7 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
             <Calendar className="size-5 text-primary" />
             Jadwal Sholat Hari Ini
           </CardTitle>
-          <CardDescription>Waktu pelaksanaan sholat di sekolah</CardDescription>
+          <CardDescription>waktu pelaksanaan sholat di sekolah</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {uniqueTodaySchedules.length > 0 ? (
@@ -246,9 +256,9 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <History className="size-5 text-primary" />
-                Riwayat Absensi
+                Riwayat Presensi
               </CardTitle>
-              <CardDescription>Catatan kehadiran Anda selama 30 hari terakhir</CardDescription>
+              <CardDescription>catatan kehadiran anda selama 30 hari terakhir</CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <TooltipProvider>
@@ -304,7 +314,7 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
         </CardHeader>
         <CardContent className="p-0">
           <PrintHeader
-            title="Riwayat Absensi Saya"
+            title="Riwayat Presensi Saya"
             studentName={user?.name}
             nis={user?.nis}
           />
@@ -321,12 +331,12 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
             </div>
           ) : normalizedHistory.length === 0 ? (
             <div className="flex items-center justify-center py-10">
-              <p className="text-sm text-muted-foreground">Tidak ada riwayat absensi</p>
+              <p className="text-sm text-muted-foreground">tidak ada riwayat absensi</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-[calc(100vh-18rem)] rounded-lg border">
               <table className="w-full text-sm">
-                <thead className="bg-muted/30">
+                <thead className="bg-card sticky top-0 z-10">
                   <tr className="text-left font-medium text-muted-foreground">
                     <th className="px-6 py-4">Tanggal</th>
                     <th className="px-6 py-4">Sholat</th>

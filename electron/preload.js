@@ -37,9 +37,18 @@ contextBridge.exposeInMainWorld("electronAPI", {
   createDhuhaGroup: (args) => ipcRenderer.invoke("create-dhuha-group", args),
   updateDhuhaGroup: (args) => ipcRenderer.invoke("update-dhuha-group", args),
   upsertDhuhaGroupsWeekly: (args) => ipcRenderer.invoke("upsert-dhuha-groups-weekly", args),
+  getDhuhaTurnsToday: () => ipcRenderer.invoke("get-dhuha-turns-today"),
+  getDhuhaToday: () => ipcRenderer.invoke("get-dhuha-today"),
+  getDhuhaKeahlian: () => ipcRenderer.invoke("get-dhuha-keahlian"),
+  createDhuhaKeahlian: (args) => ipcRenderer.invoke("create-dhuha-keahlian", args),
+  updateDhuhaKeahlian: (args) => ipcRenderer.invoke("update-dhuha-keahlian", args),
+  getDhuhaDetail: () => ipcRenderer.invoke("get-dhuha-detail"),
+  updateDhuhaDetail: (args) => ipcRenderer.invoke("update-dhuha-detail", args),
+  updateDhuhaTime: (args) => ipcRenderer.invoke("update-dhuha-time", args),
 
   // Students
   getStudents: (args) => ipcRenderer.invoke("get-students", args),
+  getStudentByNis: (args) => ipcRenderer.invoke("get-student-by-nis", args),
   createStudent: (args) => ipcRenderer.invoke("create-student", args),
   updateStudent: (args) => ipcRenderer.invoke("update-student", args),
   deleteStudent: (args) => ipcRenderer.invoke("delete-student", args),
@@ -51,7 +60,17 @@ contextBridge.exposeInMainWorld("electronAPI", {
   bulkStudentControl: (args) => ipcRenderer.invoke("bulk-student-control", args),
   bulkUpdateStudentFields: (args) => ipcRenderer.invoke("bulk-update-student-fields", args),
   annualRollover: (args) => ipcRenderer.invoke("annual-rollover", args),
+  sequentialProgression: (args) => ipcRenderer.invoke("sequential-progression", args),
+  getStudentControlOverview: () => ipcRenderer.invoke("get-student-control-overview"),
+  getStudentTransitions: (args) => ipcRenderer.invoke("get-student-transitions", args),
   notifyWaliKelas: (args) => ipcRenderer.invoke("notify-wali-kelas", args),
+
+  // Promotion
+  getPromotionConfig: () => ipcRenderer.invoke("get-promotion-config"),
+  createPromotionConfig: (args) => ipcRenderer.invoke("create-promotion-config", args),
+  updatePromotionConfig: (args) => ipcRenderer.invoke("update-promotion-config", args),
+  simulatePromotion: (args) => ipcRenderer.invoke("simulate-promotion", args),
+  executePromotion: (args) => ipcRenderer.invoke("execute-promotion", args),
 
   // Attendance
   getAttendanceHistory: (args) => ipcRenderer.invoke("get-attendance-history", args),
@@ -60,6 +79,13 @@ contextBridge.exposeInMainWorld("electronAPI", {
   verifyQr: (args) => ipcRenderer.invoke("verify-qr", args),
   generateAttendanceCode: () => ipcRenderer.invoke("generate-attendance-code"),
   verifyAttendanceCode: (args) => ipcRenderer.invoke("verify-attendance-code", args),
+
+  // Halangan QR
+  generateHalanganQr: () => ipcRenderer.invoke("generate-halangan-qr"),
+  verifyHalanganQr: (args) => ipcRenderer.invoke("verify-halangan-qr", args),
+  getPendingHalangan: () => ipcRenderer.invoke("get-pending-halangan"),
+  approveHalangan: (args) => ipcRenderer.invoke("approve-halangan", args),
+  rejectHalangan: (args) => ipcRenderer.invoke("reject-halangan", args),
   exportReport: (args) => ipcRenderer.invoke("export-report", args),
 
   // Permits

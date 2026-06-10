@@ -204,7 +204,7 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
         <CardHeader>
           <CardTitle>Siswa Belum Terdaftar</CardTitle>
           <CardDescription>
-            Daftar siswa yang belum memiliki akun terdaftar di sistem.
+            daftar siswa yang belum memiliki akun terdaftar di sistem.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -292,9 +292,9 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
                 </div>
               )}
               <div className="rounded-md border bg-background overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="overflow-auto max-h-[calc(100vh-18rem)]">
                   <table className="w-full text-sm">
-                    <thead className="bg-muted/50 border-b">
+                    <thead className="bg-card border-b sticky top-0 z-10">
                       <tr>
                         <th className="px-4 py-3 text-left w-12">
                           <Checkbox
@@ -338,8 +338,8 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
                       ))}
                     </tbody>
                   </table>
+                  </div>
                 </div>
-              </div>
 
               {/* Pagination Controls */}
               {paginationMeta && paginationMeta.total_pages > 1 && (

@@ -3,14 +3,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Bell, QrCode, ArrowRight } from "lucide-react"
 import { extractData } from "@/lib/api-utils"
+import { DAY_NAMES } from "@/lib/day-names"
 
 interface PrayerNotificationProps {
   onAction: () => void
 }
 
 const getIndonesianDay = () => {
-  const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"]
-  return days[new Date().getDay()]
+  return DAY_NAMES[new Date().getDay()]
 }
 
 export function PrayerNotification({ onAction }: PrayerNotificationProps) {
@@ -73,7 +73,7 @@ export function PrayerNotification({ onAction }: PrayerNotificationProps) {
               Waktunya Sholat {activePrayer}
             </h3>
             <p className="text-sm font-medium text-white/80">
-              Silahkan lakukan presensi sekarang untuk mencatat kehadiran Anda.
+              Silakan lakukan presensi sekarang untuk mencatat kehadiran Anda.
             </p>
           </div>
         </div>

@@ -4,7 +4,7 @@ const path = require("path");
 // TTL tiers (ms)
 const HOT_TTL = 60_000;       // 60s - profile, closest prayer, notifications
 const WARM_TTL = 300_000;     // 5min - jurusan, kelas, lookup, academic-years
-const COLD_TTL = 1_800_000;   // 30min - students list, analytics
+const COLD_TTL = 60_000;       // 60s - students list, analytics
 
 const HOT_PATTERNS = ["/auth/profile", "/prayer-schedules/closest", "/prayer-times", "/notifications", "/prayer-types", "/analytics/"];
 const WARM_PATTERNS = ["/jurusan", "/kelas", "/lookup/", "/academic-years"];
@@ -76,6 +76,17 @@ class HybridCache {
           if (decoded.includes(pattern)) {
             try { fs.unlinkSync(path.join(this.diskDir, file)); } catch {}
           }
+        }
+      } catch {}
+    }
+  }
+
+  clear() {
+    this.memory.clear();
+    if (this.diskDir) {
+      try {
+        for (const file of fs.readdirSync(this.diskDir)) {
+          try { fs.unlinkSync(path.join(this.diskDir, file)); } catch {}
         }
       } catch {}
     }

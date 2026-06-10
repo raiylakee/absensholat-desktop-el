@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Eye, ExternalLink, Paperclip, Search, CalendarIcon } from "lucide-react"
+import { formatDateID } from "@/lib/date-utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -62,11 +63,9 @@ const STATUS_FILTERS = [
 ] as const
 
 function statusBadgeClass(status: PengajuanIzinItem["status"]) {
-  if (status === "disetujui")
-    return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400"
-  if (status === "ditolak")
-    return "bg-red-100 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400"
-  return "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400"
+  if (status === "disetujui") return "bg-emerald-600 text-white"
+  if (status === "ditolak") return "bg-red-600 text-white"
+  return "bg-amber-600 text-white"
 }
 
 function formatKelas(siswa: PengajuanIzinItem["siswa"]): string {
@@ -185,7 +184,7 @@ export function PengajuanIzinSection() {
           <div>
             <CardTitle>Pengajuan Izin</CardTitle>
             <CardDescription>
-              Verifikasi pengajuan izin/sakit yang dikirim siswa.
+              verifikasi pengajuan izin/sakit yang dikirim siswa.
             </CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -202,22 +201,22 @@ export function PengajuanIzinSection() {
               <PopoverTrigger render={
                 <Button variant="outline" className={cn("w-[130px] justify-start font-normal", !startDate && "text-muted-foreground")}>
                   <CalendarIcon className="mr-2 size-4" />
-                  {startDate ? format(startDate, "dd/MM/yy") : "Dari"}
+                  {startDate ? formatDateID(startDate) : "Dari"}
                 </Button>
               } />
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
+                <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus disabled={{ before: new Date() }} />
               </PopoverContent>
             </Popover>
             <Popover>
               <PopoverTrigger render={
                 <Button variant="outline" className={cn("w-[130px] justify-start font-normal", !endDate && "text-muted-foreground")}>
                   <CalendarIcon className="mr-2 size-4" />
-                  {endDate ? format(endDate, "dd/MM/yy") : "Sampai"}
+                  {endDate ? formatDateID(endDate) : "Sampai"}
                 </Button>
               } />
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
+                <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus disabled={{ before: startDate || new Date() }} />
               </PopoverContent>
             </Popover>
             <div className="min-w-[140px]">
@@ -239,15 +238,16 @@ export function PengajuanIzinSection() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto rounded-lg border">
+          <div className="rounded-lg border overflow-hidden">
+            <div className="overflow-auto max-h-[calc(100vh-18rem)]">
             <table className="w-full min-w-[820px] text-sm">
-              <thead className="bg-muted/40">
+              <thead className="bg-card sticky top-0 z-10">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">NIS</th>
                   <th className="px-4 py-3 text-left font-medium">Nama</th>
                   <th className="px-4 py-3 text-left font-medium">Kelas</th>
                   <th className="px-4 py-3 text-left font-medium">Jenis</th>
-                  <th className="px-4 py-3 text-left font-medium">Periode</th>
+                  <th className="px-4 py-3 text-left font-medium">Tgl-Bulan-Tahun</th>
                   <th className="px-4 py-3 text-left font-medium">Status</th>
                   <th className="px-4 py-3 text-left font-medium">Aksi</th>
                 </tr>
@@ -273,12 +273,12 @@ export function PengajuanIzinSection() {
                       <td className="px-4 py-3">{formatKelas(item.siswa)}</td>
                       <td className="px-4 py-3 capitalize">{item.jenis_izin}</td>
                       <td className="px-4 py-3">
-                        {item.tanggal_awal?.slice(0, 10)} — {item.tanggal_akhir?.slice(0, 10)}
+                        {formatDateID(item.tanggal_awal)} — {formatDateID(item.tanggal_akhir)}
                       </td>
                       <td className="px-4 py-3">
                         <Badge className={statusBadgeClass(item.status)}>
                           {item.status === "pending"
-                            ? "Pending"
+                            ? "Menunggu"
                             : item.status === "disetujui"
                             ? "Disetujui"
                             : "Ditolak"}
@@ -295,6 +295,7 @@ export function PengajuanIzinSection() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -316,24 +317,24 @@ export function PengajuanIzinSection() {
             <div className="space-y-3 text-sm">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <p className="text-xs text-muted-foreground">Jenis</p>
+                  <p className="text-xs text-muted-foreground">jenis</p>
                   <p className="font-medium capitalize">{detail.jenis_izin}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Periode</p>
+                  <p className="text-xs text-muted-foreground">periode</p>
                   <p className="font-medium">
-                    {detail.tanggal_awal?.slice(0, 10)} — {detail.tanggal_akhir?.slice(0, 10)}
+                    {formatDateID(detail.tanggal_awal)} — {formatDateID(detail.tanggal_akhir)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Kelas</p>
+                  <p className="text-xs text-muted-foreground">kelas</p>
                   <p className="font-medium">{formatKelas(detail.siswa)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Status</p>
+                  <p className="text-xs text-muted-foreground">status</p>
                   <Badge className={statusBadgeClass(detail.status)}>
                     {detail.status === "pending"
-                      ? "Pending"
+                      ? "Menunggu"
                       : detail.status === "disetujui"
                       ? "Disetujui"
                       : "Ditolak"}
@@ -341,18 +342,18 @@ export function PengajuanIzinSection() {
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Keterangan</p>
+                <p className="text-xs text-muted-foreground">keterangan</p>
                 <p className="whitespace-pre-wrap">{detail.keterangan}</p>
               </div>
               {detail.catatan_verifikasi ? (
                 <div>
-                  <p className="text-xs text-muted-foreground">Catatan Verifikasi</p>
+                  <p className="text-xs text-muted-foreground">catatan verifikasi</p>
                   <p className="whitespace-pre-wrap">{detail.catatan_verifikasi}</p>
                 </div>
               ) : null}
               {detail.staff_approver && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Diverifikasi oleh</p>
+                  <p className="text-xs text-muted-foreground">diverifikasi oleh</p>
                   <p className="font-medium">
                     {detail.staff_approver.nama}
                     {detail.approver_role && (
@@ -365,7 +366,7 @@ export function PengajuanIzinSection() {
               )}
               {detail.bukti_foto_url ? (
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Bukti</p>
+                  <p className="text-xs text-muted-foreground">bukti</p>
                   {detail.bukti_foto_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                     <img
                       src={detail.bukti_foto_url}

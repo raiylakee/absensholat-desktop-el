@@ -11,14 +11,14 @@ import { notify } from "@/lib/notify"
 import { extractData } from "@/lib/api-utils"
 import { AttendanceHistoryPanel } from "./AttendanceHistoryPanel"
 
-import logoRpl from "@/assets/logo-rpl 3.png"
-import logoTei from "@/assets/logo-tei 2.png"
-import logoDkv from "@/assets/logo-dkv 2.png"
-import logoTkj from "@/assets/logo-tkj 2.png"
-import logoAn from "@/assets/logo-an 2.png"
-import logoBc from "@/assets/logo-bc 2.png"
-import logoMt from "@/assets/logo-mt 2.png"
-import logoTav from "@/assets/logo-tav 2.png"
+import logoRpl from "@/assets/logo-rpl-3.png"
+import logoTei from "@/assets/logo-tei-2.png"
+import logoDkv from "@/assets/logo-dkv-2.png"
+import logoTkj from "@/assets/logo-tkj-2.png"
+import logoAn from "@/assets/logo-an-2.png"
+import logoBc from "@/assets/logo-bc-2.png"
+import logoMt from "@/assets/logo-mt-2.png"
+import logoTav from "@/assets/logo-tav-2.png"
 
 const logoMap: Record<string, string> = {
   RPL: logoRpl, TKJ: logoTkj, DKV: logoDkv, TEI: logoTei,
@@ -203,7 +203,7 @@ export function KelolaKelasSection() {
         <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Kelola Kelas</CardTitle>
-            <CardDescription className="mt-1">Manajemen wali kelas dan daftar siswa per kelas.</CardDescription>
+            <CardDescription className="mt-1">manajemen wali kelas dan daftar siswa per kelas.</CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative w-[220px]">
@@ -310,7 +310,7 @@ export function KelolaKelasSection() {
                               <label className="text-sm font-medium leading-none">
                                 Wali Kelas
                               </label>
-                              <p className="text-xs text-muted-foreground">Pilih guru yang bertanggung jawab atas kelas ini.</p>
+                              <p className="text-xs text-muted-foreground">pilih guru yang bertanggung jawab atas kelas ini.</p>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="w-[250px]">
@@ -356,9 +356,9 @@ export function KelolaKelasSection() {
                             </div>
                             
                             <div className="rounded-md border bg-background overflow-hidden">
-                              <div className="overflow-x-auto">
+                              <div className="overflow-auto max-h-[calc(100vh-18rem)]">
                                 <table className="w-full text-sm">
-                                  <thead className="bg-muted/50 border-b">
+                                  <thead className="bg-card border-b sticky top-0 z-10">
                                     <tr>
                                       <th className="px-4 py-3 text-left font-medium w-16">No</th>
                                       <th className="px-4 py-3 text-left font-medium w-32">NIS</th>
@@ -404,8 +404,8 @@ export function KelolaKelasSection() {
                                     )}
                                   </tbody>
                                 </table>
+                                </div>
                               </div>
-                            </div>
                           </div>
                         </div>
                       )}

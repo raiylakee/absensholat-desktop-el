@@ -17,6 +17,7 @@ import { PrintHeader } from "@/components/print-header"
 import { BuktiFotoPreview } from "@/components/bukti-foto-preview"
 import { useDownloadAction } from "@/hooks/use-download-action"
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
+import { formatDateID } from "@/lib/date-utils"
 import { cn } from "@/lib/utils"
 
 interface IzinDetail {
@@ -204,11 +205,11 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
   }
 
   const getStatusBadgeClassName = (status: string) => {
-    if (status === "Hadir") return "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400"
-    if (status === "Izin") return "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400"
-    if (status === "Sakit") return "bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400"
-    if (status === "Alpha") return "bg-red-100 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400"
-    return "bg-gray-100 text-gray-700 hover:bg-gray-100 dark:bg-gray-900/30 dark:text-gray-400"
+    if (status === "Hadir") return "bg-emerald-600 text-white hover:bg-emerald-700"
+    if (status === "Izin") return "bg-amber-600 text-white hover:bg-amber-700"
+    if (status === "Sakit") return "bg-blue-600 text-white hover:bg-blue-700"
+    if (status === "Alpa") return "bg-red-600 text-white hover:bg-red-700"
+    return "bg-gray-500 text-white hover:bg-gray-600"
   }
 
   const handleDownloadBukti = async () => {
@@ -269,12 +270,16 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
         <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle>Lihat Presensi</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center rounded-lg border bg-muted p-1 text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-1">
                 <Button
-                  variant={dateRangeType === "all" ? "secondary" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className="h-8 rounded-md px-3 text-xs font-medium"
+                  className={cn(
+                    "h-8 rounded-md px-3 text-xs font-medium",
+                    dateRangeType === "all"
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  )}
                   onClick={() => {
                     setDateRangeType("all")
                     setCustomStartDate(null)
@@ -285,9 +290,14 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                   Semua
                 </Button>
                 <Button
-                  variant={dateRangeType === "today" ? "secondary" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className="h-8 rounded-md px-3 text-xs font-medium"
+                  className={cn(
+                    "h-8 rounded-md px-3 text-xs font-medium",
+                    dateRangeType === "today"
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  )}
                   onClick={() => {
                     setDateRangeType("today")
                     setCustomStartDate(null)
@@ -298,9 +308,14 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                   Hari Ini
                 </Button>
                 <Button
-                  variant={dateRangeType === "week" ? "secondary" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className="h-8 rounded-md px-3 text-xs font-medium"
+                  className={cn(
+                    "h-8 rounded-md px-3 text-xs font-medium",
+                    dateRangeType === "week"
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  )}
                   onClick={() => {
                     setDateRangeType("week")
                     setCustomStartDate(null)
@@ -311,9 +326,14 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                   Minggu Ini
                 </Button>
                 <Button
-                  variant={dateRangeType === "month" ? "secondary" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className="h-8 rounded-md px-3 text-xs font-medium"
+                  className={cn(
+                    "h-8 rounded-md px-3 text-xs font-medium",
+                    dateRangeType === "month"
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  )}
                   onClick={() => {
                     setDateRangeType("month")
                     setCustomStartDate(null)
@@ -324,9 +344,14 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                   Bulan Ini
                 </Button>
                 <Button
-                  variant={dateRangeType === "custom" ? "secondary" : "ghost"}
+                  variant="ghost"
                   size="sm"
-                  className="h-8 rounded-md px-3 text-xs font-medium"
+                  className={cn(
+                    "h-8 rounded-md px-3 text-xs font-medium",
+                    dateRangeType === "custom"
+                      ? "bg-blue-600 text-white hover:bg-blue-700"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  )}
                   onClick={() => {
                     setDateRangeType("custom")
                     setCurrentPage(1)
@@ -349,7 +374,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                           )}
                         >
                           <CalendarIcon className="mr-1.5 size-3.5" />
-                          {customStartDate ? format(customStartDate, "dd/MM/yyyy") : "Dari tanggal"}
+                          {customStartDate ? formatDateID(customStartDate) : "Dari tanggal"}
                         </Button>
                       }
                     />
@@ -378,7 +403,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                           )}
                         >
                           <CalendarIcon className="mr-1.5 size-3.5" />
-                          {customEndDate ? format(customEndDate, "dd/MM/yyyy") : "Sampai tanggal"}
+                          {customEndDate ? formatDateID(customEndDate) : "Sampai tanggal"}
                         </Button>
                       }
                     />
@@ -478,12 +503,12 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-          </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto rounded-lg border">
+          <div className="rounded-lg border overflow-hidden">
+            <div className="overflow-auto max-h-[calc(100vh-18rem)]">
             <table className="w-full min-w-[920px] text-sm">
-              <thead className="bg-muted/40">
+              <thead className="bg-card sticky top-0 z-10">
                 <tr>
                   <th className="px-4 py-3 text-left font-medium">No</th>
                   <th className="px-4 py-3 text-left font-medium">NIS</th>
@@ -516,7 +541,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                       <td className="px-4 py-3">{record.nama}</td>
                       <td className="px-4 py-3">{record.kelas}</td>
                       <td className="px-4 py-3">{record.jenisSholat}</td>
-                      <td className="px-4 py-3">{record.tanggal || "-"}</td>
+                      <td className="px-4 py-3">{record.tanggal ? formatDateID(record.tanggal) : "-"}</td>
                       <td className="px-4 py-3">
                         <Badge className={getStatusBadgeClassName(record.status)}>{record.status}</Badge>
                       </td>
@@ -535,6 +560,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
 
           <div className="mt-4 flex items-center justify-between print:hidden">
@@ -584,29 +610,29 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
               />
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <p className="text-xs text-muted-foreground">Jenis</p>
+                  <p className="text-xs text-muted-foreground">jenis</p>
                   <p className="font-medium capitalize">{izinDetail.jenis_izin}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Periode</p>
+                  <p className="text-xs text-muted-foreground">periode</p>
                   <p className="font-medium">
-                    {izinDetail.tanggal_awal?.slice(0, 10)} — {izinDetail.tanggal_akhir?.slice(0, 10)}
+                    {formatDateID(izinDetail.tanggal_awal)} — {formatDateID(izinDetail.tanggal_akhir)}
                   </p>
                 </div>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground">Keterangan</p>
+                <p className="text-xs text-muted-foreground">keterangan</p>
                 <p className="whitespace-pre-wrap break-words">{izinDetail.keterangan}</p>
               </div>
               {izinDetail.status === "ditolak" && izinDetail.catatan_verifikasi && (
                 <div>
-                  <p className="text-xs text-muted-foreground">Alasan Penolakan</p>
+                  <p className="text-xs text-muted-foreground">alasan penolakan</p>
                   <p className="whitespace-pre-wrap break-words text-red-600">{izinDetail.catatan_verifikasi}</p>
                 </div>
               )}
               {izinDetail.bukti_foto_url ? (
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">Bukti</p>
+                  <p className="text-xs text-muted-foreground">bukti</p>
                   <BuktiFotoPreview
                     url={izinDetail.bukti_foto_url}
                     onDownload={handleDownloadBukti}
@@ -621,7 +647,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
               )}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Data pengajuan izin tidak ditemukan.</p>
+            <p className="text-sm text-muted-foreground">data pengajuan izin tidak ditemukan.</p>
           )}
           </div>
           <DialogFooter className="print:hidden">

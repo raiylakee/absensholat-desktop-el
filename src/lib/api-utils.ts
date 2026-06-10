@@ -93,6 +93,7 @@ export function normalizeStudent(item: any) {
     kelas,
     jenisKelamin,
     agama: item.agama || "Islam",
+    part: item.part,
     id_jurusan: item.id_jurusan,
     id_kelas: item.id_kelas,
     id_tahun_masuk: item.id_tahun_masuk,

@@ -25,6 +25,7 @@ export type Student = {
   jenisKelamin: "Laki-laki" | "Perempuan"
   agama?: string
   status_akademik?: string
+  part?: string
 }
 
 export type PresensiRecord = {
@@ -33,7 +34,7 @@ export type PresensiRecord = {
   jurusan: string
   kelas: string
   jenisSholat: string
-  status: "Hadir" | "Izin" | "Sakit" | "Alpha"
+  status: "Hadir" | "Izin" | "Sakit" | "Alpa"
   tanggal?: string
   waktu?: string
   izinDetail?: {

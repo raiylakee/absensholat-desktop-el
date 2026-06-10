@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { KelolaGuruSection } from "@/pages/dashboard/components/KelolaGuruSection";
 
@@ -153,22 +153,23 @@ describe("KelolaGuruSection", () => {
     });
   });
 
-  it("'Tambah Guru' opens create dialog with Nama/Email/Password/NIP fields", async () => {
+  it("'Tambah Guru' opens create dialog with Nama/Email/Password/NIP/Jenis Kelamin fields", async () => {
     setupGuruList();
     render(<KelolaGuruSection />);
     await screen.findByText("Tambah Guru");
     await user.click(screen.getByText("Tambah Guru"));
     await waitFor(() => {
-      expect(screen.getByText("Isi data guru baru.")).toBeInTheDocument();
+      expect(screen.getByText("isi data guru baru.")).toBeInTheDocument();
     });
     expect(screen.getByPlaceholderText("Nama lengkap")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("email@sekolah.sch.id")).toBeInTheDocument();
     // Password field has no placeholder but is type=password
-    const dialog = screen.getByText("Isi data guru baru.").closest("[role='dialog']") as HTMLElement;
+    const dialog = screen.getByText("isi data guru baru.").closest("[role='dialog']") as HTMLElement;
     expect(within(dialog).getByText(/Nama/)).toBeInTheDocument();
-    expect(within(dialog).getByText(/Email/)).toBeInTheDocument();
-    expect(within(dialog).getByText(/Password/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Surel/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Kata Sandi/)).toBeInTheDocument();
     expect(within(dialog).getByText(/NIP/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/Jenis Kelamin/)).toBeInTheDocument();
   });
 
   it("create dialog Batal closes dialog", async () => {
@@ -176,10 +177,10 @@ describe("KelolaGuruSection", () => {
     render(<KelolaGuruSection />);
     await screen.findByText("Tambah Guru");
     await user.click(screen.getByText("Tambah Guru"));
-    await screen.findByText("Isi data guru baru.");
+    await screen.findByText("isi data guru baru.");
     await user.click(screen.getByRole("button", { name: "Batal" }));
     await waitFor(() => {
-      expect(screen.queryByText("Isi data guru baru.")).not.toBeInTheDocument();
+      expect(screen.queryByText("isi data guru baru.")).not.toBeInTheDocument();
     });
   });
 
@@ -189,7 +190,7 @@ describe("KelolaGuruSection", () => {
     render(<KelolaGuruSection />);
     await screen.findByText("Tambah Guru");
     await user.click(screen.getByText("Tambah Guru"));
-    await screen.findByText("Isi data guru baru.");
+    await screen.findByText("isi data guru baru.");
     await user.click(screen.getByRole("button", { name: "Simpan" }));
     expect(toast.error).toHaveBeenCalled();
     expect(window.electronAPI.createGuru).not.toHaveBeenCalled();
@@ -201,15 +202,19 @@ describe("KelolaGuruSection", () => {
     render(<KelolaGuruSection />);
     await screen.findByText("Tambah Guru");
     await user.click(screen.getByText("Tambah Guru"));
-    await screen.findByText("Isi data guru baru.");
+    await screen.findByText("isi data guru baru.");
     await user.type(screen.getByPlaceholderText("Nama lengkap"), "Budi");
     await user.type(screen.getByPlaceholderText("email@sekolah.sch.id"), "budi@smk.id");
     await user.type(document.querySelector("[role=\"dialog\"] input[type=\"password\"]")!, "Pass123");
     await user.type(screen.getByPlaceholderText("Nomor Induk Pegawai"), "199001");
+    const jkSelect = document.querySelectorAll("[role=\"dialog\"] [data-testid=\"select-mock\"]");
+    const targetSelect = jkSelect[jkSelect.length - 1] as HTMLSelectElement;
+    targetSelect.value = "L";
+    targetSelect.dispatchEvent(new Event("change", { bubbles: true }));
     await user.click(screen.getByRole("button", { name: "Simpan" }));
     await waitFor(() => {
       expect(window.electronAPI.createGuru).toHaveBeenCalledWith({
-        body: expect.objectContaining({ nama: "Budi", email: "budi@smk.id", password: "Pass123", nip: "199001" }),
+        body: expect.objectContaining({ nama: "Budi", email: "budi@smk.id", password: "Pass123", nip: "199001", jk: "L" }),
       });
     });
   });
@@ -221,17 +226,19 @@ describe("KelolaGuruSection", () => {
     render(<KelolaGuruSection />);
     await screen.findByText("Tambah Guru");
     await user.click(screen.getByText("Tambah Guru"));
-    await screen.findByText("Isi data guru baru.");
+    await screen.findByText("isi data guru baru.");
     await user.type(screen.getByPlaceholderText("Nama lengkap"), "Budi");
     await user.type(screen.getByPlaceholderText("email@sekolah.sch.id"), "budi@smk.id");
     await user.type(document.querySelector("[role=\"dialog\"] input[type=\"password\"]")!, "Pass123");
     await user.type(screen.getByPlaceholderText("Nomor Induk Pegawai"), "199001");
+    const jkSel = document.querySelectorAll("[role=\"dialog\"] [data-testid=\"select-mock\"]");
+    await user.selectOptions(jkSel[jkSel.length - 1], "L");
     await user.click(screen.getByRole("button", { name: "Simpan" }));
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalled();
     });
     await waitFor(() => {
-      expect(screen.queryByText("Isi data guru baru.")).not.toBeInTheDocument();
+      expect(screen.queryByText("isi data guru baru.")).not.toBeInTheDocument();
     });
   });
 
@@ -242,16 +249,18 @@ describe("KelolaGuruSection", () => {
     render(<KelolaGuruSection />);
     await screen.findByText("Tambah Guru");
     await user.click(screen.getByText("Tambah Guru"));
-    await screen.findByText("Isi data guru baru.");
+    await screen.findByText("isi data guru baru.");
     await user.type(screen.getByPlaceholderText("Nama lengkap"), "Budi");
     await user.type(screen.getByPlaceholderText("email@sekolah.sch.id"), "budi@smk.id");
     await user.type(document.querySelector("[role=\"dialog\"] input[type=\"password\"]")!, "Pass123");
     await user.type(screen.getByPlaceholderText("Nomor Induk Pegawai"), "199001");
+    const jkS = document.querySelectorAll("[role=\"dialog\"] [data-testid=\"select-mock\"]");
+    fireEvent.change(jkS[jkS.length - 1], { target: { value: "L" } });
     await user.click(screen.getByRole("button", { name: "Simpan" }));
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalled();
     });
-    expect(screen.getByText("Isi data guru baru.")).toBeInTheDocument();
+    expect(screen.getByText("isi data guru baru.")).toBeInTheDocument();
   });
 
   it("edit button opens dialog with pre-filled nama/email/nip", async () => {

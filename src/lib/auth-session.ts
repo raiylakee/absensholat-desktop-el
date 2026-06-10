@@ -142,7 +142,7 @@ export const fetchCurrentProfile = async (): Promise<UserProfileData> => {
     role,
     email,
     nip: firstString(data.nip),
-    gender: firstString(data.jk, data.jenis_kelamin, data.gender, siswa.jk, siswa.jenis_kelamin),
+    gender: firstString(data.jk, data.jenis_kelamin, data.gender, data.staff_jk, siswa.jk, siswa.jenis_kelamin),
     className: resolvedClassName,
     nis: firstString(data.nis, siswa.nis),
     major,

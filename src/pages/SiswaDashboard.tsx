@@ -23,7 +23,7 @@ export default function SiswaDashboard() {
       case "Beranda":
         return <SiswaOverview setActiveItem={setActiveItem} user={profile ?? undefined} />
       case "Pindai QR":
-        return <SiswaScanQR />
+        return <SiswaScanQR user={profile ?? undefined} />
       case "Izin":
         return <SiswaPermitSection />
       case "Profil":
@@ -39,10 +39,10 @@ export default function SiswaDashboard() {
     <TooltipProvider>
       <SidebarProvider className="h-screen overflow-hidden">
         <SiswaSidebar activeItem={activeItem} setActiveItem={setActiveItem} user={profile ?? undefined} />
-        <SidebarInset className="overflow-y-auto bg-background/85 scroll-smooth">
+        <SidebarInset className="flex flex-col overflow-hidden bg-background/85">
           <header
             style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
-            className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 pl-4 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+            className="flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 pl-4 backdrop-blur supports-[backdrop-filter]:bg-background/60"
           >
             <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
               <SidebarTrigger className="-ml-1 text-primary hover:text-primary/80" />
@@ -56,7 +56,7 @@ export default function SiswaDashboard() {
             </div>
           </header>
 
-          <div className="mx-auto w-full max-w-5xl p-6">
+          <div className="mx-auto w-full max-w-5xl p-6 flex-1 overflow-y-auto scroll-smooth min-h-0">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeItem}

@@ -6,6 +6,7 @@ export type ExportDataType =
   | 'riwayat-absensi-saya'
   | 'bukti-izin'
   | 'daftar-guru'
+  | 'qr-halangan'
 
 export type ExportFormat = 'xlsx' | 'csv' | 'pdf' | 'png'
 

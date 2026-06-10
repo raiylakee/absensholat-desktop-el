@@ -7,7 +7,7 @@ import { handleApiError } from "@/lib/api-utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { PasswordInput } from "@/components/ui/password-input"
+import { PasswordInput, PASSWORD_REQUIREMENTS } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 
@@ -25,7 +25,7 @@ export default function Register() {
     event.preventDefault()
 
     const nextErrors: { email?: string; nis?: string; password?: string } = {}
-    if (!email.trim()) nextErrors.email = "Email wajib diisi."
+    if (!email.trim()) nextErrors.email = "Surel wajib diisi."
     if (!nis.trim()) nextErrors.nis = "NIS wajib diisi."
     if (!password.trim()) nextErrors.password = "Kata sandi wajib diisi."
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) nextErrors.email = "Silakan masukkan alamat email yang valid."
@@ -77,12 +77,12 @@ export default function Register() {
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="space-y-1">
           <CardTitle className="text-xl">Daftar Akun Baru</CardTitle>
-          <CardDescription>Buat akun Anda dengan email, NIS, dan kata sandi.</CardDescription>
+          <CardDescription>buat akun anda dengan surel, nis, dan kata sandi.</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Surel</Label>
               <Input
                 id="email"
                 name="email"
@@ -118,6 +118,7 @@ export default function Register() {
                 onChange={(event) => setPassword(event.target.value)}
                 aria-invalid={Boolean(errors.password)}
                 className="bg-muted/30"
+                helperText={PASSWORD_REQUIREMENTS}
               />
               {errors.password && <p className="text-xs text-destructive font-medium ml-1">{errors.password}</p>}
             </div>

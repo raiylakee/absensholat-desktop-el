@@ -8,7 +8,7 @@ import { handleApiError } from "@/lib/api-utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { PasswordInput } from "@/components/ui/password-input"
+import { PasswordInput, PASSWORD_REQUIREMENTS } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 
@@ -89,7 +89,7 @@ export default function ResetPassword() {
       <Card className="border shadow-sm overflow-hidden">
         <CardHeader className="space-y-1">
           <CardTitle className="text-xl">Atur Ulang Kata Sandi</CardTitle>
-          <CardDescription>Tetapkan kata sandi baru Anda menggunakan NIS dan OTP.</CardDescription>
+          <CardDescription>tetapkan kata sandi baru anda menggunakan nis dan otp.</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={handleSubmit}>
@@ -103,6 +103,7 @@ export default function ResetPassword() {
                 onChange={(event) => setNewPassword(event.target.value)}
                 aria-invalid={Boolean(errors.new_password)}
                 className="bg-muted/30"
+                helperText={PASSWORD_REQUIREMENTS}
               />
               {errors.new_password && <p className="text-xs text-destructive font-medium ml-1">{errors.new_password}</p>}
             </div>

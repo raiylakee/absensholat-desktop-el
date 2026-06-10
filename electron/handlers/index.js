@@ -67,11 +67,11 @@ async function fetchWithRetry(url, opts) {
 
 // --- Cache invalidation patterns ---
 const INVALIDATION_MAP = {
+  "/auth": ["/auth/profile"],
   "/students": ["/students", "/analytics/"],
   "/attendance": ["/analytics/", "/attendance/"],
   "/prayer-schedules": ["/prayer-schedules", "/prayer-times"],
   "/prayer-times": ["/prayer-times", "/prayer-schedules"],
-  "/prayer-types": ["/prayer-types", "/prayer-times", "/prayer-schedules"],
   "/prayer-types": ["/prayer-types", "/prayer-times", "/prayer-schedules"],
 
   "/jurusan": ["/jurusan", "/dhuha-schedules"],
@@ -79,6 +79,7 @@ const INVALIDATION_MAP = {
   "/admin/management/kelas": ["/admin/management/kelas", "/kelas", "/admin/management/guru", "/admin/management/wali-kelas"],
   "/admin/management/guru": ["/admin/management/guru", "/admin/management/wali-kelas", "/admin/management/kelas", "/lookup/staff-guru"],
   "/admin/management/wali-kelas": ["/admin/management/wali-kelas", "/admin/management/guru", "/admin/management/kelas"],
+  "/admin/student-control": ["/students", "/admin/student-control"],
   "/admin/device-management": ["/admin/device-management"],
   "/profile/devices": ["/profile/devices"],
   "/device-auth": ["/device-auth"],
@@ -162,6 +163,7 @@ function register(ipcMain) {
     const data = await apiRequest("POST", "/api/v2/auth/sessions", { body });
     if (data?.data?.token) {
       authToken = data.data.token;
+      cache.clear();
       // Auto-register device after login; swallow 409 (already registered)
       try {
         await apiRequest("POST", "/api/v2/device-auth/register", {
@@ -190,6 +192,7 @@ function register(ipcMain) {
   ipcMain.handle("logout", handler(async () => {
     try { await apiRequest("DELETE", "/api/v2/auth/sessions/current"); } catch {}
     authToken = null;
+    cache.clear();
     return { message: "Logout berhasil" };
   }));
 
@@ -282,13 +285,45 @@ function register(ipcMain) {
     apiRequest("GET", "/api/v2/jurusan/dhuha-schedules")
   ));
 
-  ipcMain.handle("create-dhuha-group", handler(async () => {
-    throw new Error("Fitur ini belum tersedia");
-  }));
+  ipcMain.handle("create-dhuha-group", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/dhuha-groups", { body })
+  ));
 
-  ipcMain.handle("update-dhuha-group", handler(async () => {
-    throw new Error("Fitur ini belum tersedia");
-  }));
+  ipcMain.handle("update-dhuha-group", handler(async ({ id, body }) =>
+    apiRequest("PUT", `/api/v2/dhuha-groups/${id}`, { body })
+  ));
+
+  ipcMain.handle("get-dhuha-turns-today", handler(async () =>
+    apiRequest("GET", "/api/v2/prayer-schedules/dhuha/turns")
+  ));
+
+  ipcMain.handle("get-dhuha-today", handler(async () =>
+    apiRequest("GET", "/api/v2/prayer-schedules/dhuha/today")
+  ));
+
+  ipcMain.handle("get-dhuha-keahlian", handler(async () =>
+    apiRequest("GET", "/api/v2/prayer-schedules/dhuha/keahlian")
+  ));
+
+  ipcMain.handle("create-dhuha-keahlian", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/prayer-schedules/dhuha/keahlian", { body })
+  ));
+
+  ipcMain.handle("update-dhuha-keahlian", handler(async ({ id, body }) =>
+    apiRequest("PUT", `/api/v2/prayer-schedules/dhuha/keahlian/${id}`, { body })
+  ));
+
+  ipcMain.handle("get-dhuha-detail", handler(async () =>
+    apiRequest("GET", "/api/v2/prayer-schedules/dhuha/detail")
+  ));
+
+  ipcMain.handle("update-dhuha-detail", handler(async ({ body }) =>
+    apiRequest("PUT", "/api/v2/prayer-schedules/dhuha/detail", { body })
+  ));
+
+  ipcMain.handle("update-dhuha-time", handler(async ({ id, body }) =>
+    apiRequest("PUT", `/api/v2/prayer-schedules/dhuha/${id}`, { body })
+  ));
 
   ipcMain.handle("upsert-dhuha-groups-weekly", handler(async ({ body }) => {
     const rows = body.rows;
@@ -314,6 +349,10 @@ function register(ipcMain) {
 
   ipcMain.handle("update-student", handler(async ({ nis, body }) =>
     apiRequest("PUT", `/api/v2/students/${encodeURIComponent(nis)}`, { body })
+  ));
+
+  ipcMain.handle("get-student-by-nis", handler(async ({ nis }) =>
+    apiRequest("GET", `/api/v2/students/${encodeURIComponent(nis)}`)
   ));
 
   ipcMain.handle("delete-student", handler(async ({ nis }) =>
@@ -355,9 +394,42 @@ function register(ipcMain) {
     apiRequest("POST", "/api/v2/admin/student-control/annual-rollover", { body })
   ));
 
+  ipcMain.handle("sequential-progression", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/admin/student-control/sequential-progression", { body })
+  ));
+
+  ipcMain.handle("get-student-control-overview", handler(async () =>
+    apiRequest("GET", "/api/v2/admin/student-control/overview")
+  ));
+
+  ipcMain.handle("get-student-transitions", handler(async (args) =>
+    apiRequest("GET", "/api/v2/admin/student-control/transitions", { query: args })
+  ));
+
   ipcMain.handle("notify-wali-kelas", handler(async ({ nis_list }) => {
     return apiRequest("POST", "/api/v2/students/notify-wali-kelas", { body: { nis_list } });
   }));
+
+  // === Promotion ===
+  ipcMain.handle("get-promotion-config", handler(async () =>
+    apiRequest("GET", "/api/v2/admin/promotion/config")
+  ));
+
+  ipcMain.handle("create-promotion-config", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/admin/promotion/config", { body })
+  ));
+
+  ipcMain.handle("update-promotion-config", handler(async ({ id, body }) =>
+    apiRequest("PUT", `/api/v2/admin/promotion/config/${id}`, { body })
+  ));
+
+  ipcMain.handle("simulate-promotion", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/admin/promotion/simulate", { body })
+  ));
+
+  ipcMain.handle("execute-promotion", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/admin/promotion/execute", { body })
+  ));
 
   // === Attendance ===
   ipcMain.handle("get-attendance-history", handler(async (args) =>
@@ -382,6 +454,27 @@ function register(ipcMain) {
 
   ipcMain.handle("verify-attendance-code", handler(async ({ body }) =>
     apiRequest("POST", "/api/v2/attendance/code/verify", { body })
+  ));
+
+  // === Halangan QR ===
+  ipcMain.handle("generate-halangan-qr", handler(async () =>
+    apiRequest("GET", "/api/v2/attendance/halangan-qr/generate")
+  ));
+
+  ipcMain.handle("verify-halangan-qr", handler(async ({ body }) =>
+    apiRequest("POST", "/api/v2/attendance/halangan-qr/verify", { body })
+  ));
+
+  ipcMain.handle("get-pending-halangan", handler(async () =>
+    apiRequest("GET", "/api/v2/attendance/halangan-qr/pending")
+  ));
+
+  ipcMain.handle("approve-halangan", handler(async ({ id, body }) =>
+    apiRequest("POST", `/api/v2/attendance/halangan-qr/${id}/approve`, { body })
+  ));
+
+  ipcMain.handle("reject-halangan", handler(async ({ id, body }) =>
+    apiRequest("POST", `/api/v2/attendance/halangan-qr/${id}/reject`, { body })
   ));
 
   ipcMain.handle("export-report", handler(async ({ endpoint, startDate, endDate, kelas, jurusan }) => {
