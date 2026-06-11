@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react"
-import { Eye, Filter, Paperclip, Printer, CalendarIcon, X } from "lucide-react"
+import { Eye, Filter, Paperclip, CalendarIcon, X } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,8 +12,6 @@ import { Calendar } from "@/components/ui/calendar"
 import type { PresensiRecord } from "@/pages/dashboard/types"
 import { notify } from "@/lib/notify"
 import { extractData, normalizeAttendance } from "@/lib/api-utils"
-import { usePrintAction } from "@/hooks/use-print-action"
-import { PrintHeader } from "@/components/print-header"
 import { BuktiFotoPreview } from "@/components/bukti-foto-preview"
 import { useDownloadAction } from "@/hooks/use-download-action"
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns"
@@ -36,7 +34,6 @@ interface PresensiSectionProps {
 }
 
 export function PresensiSection({ forcedClass }: PresensiSectionProps) {
-  const { print } = usePrintAction()
   const { isDownloading, download } = useDownloadAction()
   const [presensiRecords, setPresensiRecords] = useState<PresensiRecord[]>([])
   const [prayerTypes, setPrayerTypes] = useState<string[]>([])
@@ -454,7 +451,7 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
                   }
                 />
                 <DropdownMenuContent className="w-64">
-                  <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Jenis Sholat</p>
+                  <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">Jenis Salat</p>
                   {prayerTypes.map((type) => (
                     <DropdownMenuCheckboxItem
                       key={`presensi-sholat-${type}`}
@@ -603,11 +600,6 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
             <div className="flex justify-center py-4"><Spinner /></div>
           ) : izinDetail ? (
             <div className="space-y-3 text-sm">
-              <PrintHeader
-                title="Detail Izin Presensi"
-                studentName={detailPresensi?.nama}
-                nis={detailPresensi?.nis}
-              />
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <p className="text-xs text-muted-foreground">jenis</p>
@@ -651,14 +643,6 @@ export function PresensiSection({ forcedClass }: PresensiSectionProps) {
           )}
           </div>
           <DialogFooter className="print:hidden">
-            <Button
-              variant="outline"
-              onClick={print}
-              disabled={!izinDetail}
-            >
-              <Printer className="mr-2 size-4" />
-              Cetak Detail
-            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

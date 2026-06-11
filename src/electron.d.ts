@@ -24,6 +24,7 @@ interface ElectronAPI {
   createPrayerSchedule: (args: any) => Promise<any>;
   updatePrayerSchedule: (args: any) => Promise<any>;
   deletePrayerSchedule: (args: any) => Promise<any>;
+  getPrayerSchedulePresensiCount: (args: any) => Promise<any>;
   getPrayerTimes: () => Promise<any>;
   getPrayerTypes: () => Promise<any>;
   createPrayerType: (args: any) => Promise<any>;

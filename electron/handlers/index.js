@@ -256,6 +256,10 @@ function register(ipcMain) {
     apiRequest("DELETE", `/api/v2/prayer-schedules/${id_jadwal}`)
   ));
 
+  ipcMain.handle("get-prayer-schedule-presensi-count", handler(async ({ id_jadwal }) =>
+    apiRequest("GET", `/api/v2/prayer-schedules/${id_jadwal}/presensi-count`)
+  ));
+
   ipcMain.handle("get-prayer-times", handler(async () =>
     apiRequest("GET", "/api/v2/prayer-times")
   ));

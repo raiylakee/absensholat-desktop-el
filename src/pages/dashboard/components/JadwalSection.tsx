@@ -71,6 +71,8 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
   const [newPrayerTanggal, setNewPrayerTanggal] = useState<Date | null>(null)
   const [isCreating, setIsCreating] = useState(false)
   const [deletePrayerTarget, setDeletePrayerTarget] = useState<PrayerCard | null>(null)
+  const [deletePresensiCount, setDeletePresensiCount] = useState<number | null>(null)
+  const [isLoadingDelete, setIsLoadingDelete] = useState(false)
 
   const [dynamicMajorOptions, setDynamicMajorOptions] = useState<string[]>(MAJOR_OPTIONS)
   const [prayerTypesList, setPrayerTypesList] = useState<{ id_jenis: number; nama_jenis: string }[]>([])
@@ -362,8 +364,8 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
   }
 
   const handleCreatePrayer = async () => {
-    if (!newPrayerName.trim()) { notify("Nama jenis sholat wajib diisi", "error"); return }
-    if (newPrayerName.trim() === "Dhuha") { notify("Dhuha adalah jenis sholat bawaan dan tidak dapat ditambahkan lagi", "error"); return }
+    if (!newPrayerName.trim()) { notify("Nama jenis salat wajib diisi", "error"); return }
+    if (newPrayerName.trim() === "Dhuha") { notify("Dhuha adalah jenis salat bawaan dan tidak dapat ditambahkan lagi", "error"); return }
     if (newPrayerMode === "hari" && newPrayerHari.size === 0) { notify("Pilih minimal satu hari", "error"); return }
     if (newPrayerMode === "tanggal" && !newPrayerTanggal) { notify("Tanggal khusus wajib dipilih", "error"); return }
 
@@ -380,7 +382,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
         const typeRes: any = await window.electronAPI.createPrayerType({ body: { nama_jenis: newPrayerName.trim(), butuh_giliran: false } })
         const typeData = typeRes?.data ?? typeRes
         idJenis = typeData?.id_jenis
-        if (!idJenis) throw new Error("Gagal membuat jenis sholat")
+        if (!idJenis) throw new Error("Gagal membuat jenis salat")
       }
 
       // Create prayer time for this type
@@ -389,7 +391,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
       })
       const timeData = timeRes?.data ?? timeRes
       const idWaktu = timeData?.id_waktu
-      if (!idWaktu) throw new Error("Gagal membuat waktu sholat")
+      if (!idWaktu) throw new Error("Gagal membuat waktu salat")
 
       if (newPrayerMode === "hari") {
         // Repeating weekly schedule — one entry per selected day
@@ -407,7 +409,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
       resetCreateForm()
       await fetchSchedules()
     } catch (err: any) {
-      notify(handleApiError(err) || "Gagal menambahkan jadwal sholat", "error")
+      notify(handleApiError(err) || "Gagal menambahkan jadwal salat", "error")
     } finally {
       setIsCreating(false)
     }
@@ -415,10 +417,23 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
 
   const handleDeletePrayer = async (prayer: PrayerCard) => {
     setDeletePrayerTarget(prayer)
+    setDeletePresensiCount(null)
+    const schedule = rawSchedules.find(
+      (s) => s.waktu_sholat?.jenis_sholat?.nama_jenis === prayer.nama
+    )
+    if (schedule?.id_jadwal) {
+      try {
+        const res: any = await window.electronAPI.getPrayerSchedulePresensiCount({ id_jadwal: schedule.id_jadwal })
+        setDeletePresensiCount(res?.presensi_count ?? 0)
+      } catch {
+        setDeletePresensiCount(null)
+      }
+    }
   }
 
   const confirmDeletePrayer = async () => {
     if (!deletePrayerTarget) return
+    setIsLoadingDelete(true)
     try {
       const relatedSchedules = rawSchedules.filter(
         (s) => s.waktu_sholat?.jenis_sholat?.nama_jenis === deletePrayerTarget.nama
@@ -443,6 +458,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
       notify(handleApiError(err) || "Gagal menghapus jadwal", "error")
     } finally {
       setDeletePrayerTarget(null)
+      setIsLoadingDelete(false)
     }
   }
 
@@ -524,7 +540,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Jadwal Sholat</h3>
+          <h3 className="text-lg font-semibold">Jadwal Salat</h3>
           {!readOnly && (
             <Button size="sm" onClick={() => setCreatePrayerOpen(true)}>
               <Plus className="mr-2 size-4" /> Tambah Jadwal
@@ -585,12 +601,12 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Ubah Jadwal {prayerDraft?.nama ?? ""}</DialogTitle>
-            <DialogDescription>Ubah data jadwal sholat untuk kartu ini.</DialogDescription>
+            <DialogDescription>Ubah data jadwal salat untuk kartu ini.</DialogDescription>
           </DialogHeader>
           {prayerDraft && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label>Nama Jenis Sholat</Label>
+                <Label>Nama Jenis Salat</Label>
                 <Input value={prayerDraft.nama} onChange={(e) => setPrayerDraft((curr: any) => curr ? { ...curr, nama: e.target.value } : null)} />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -749,13 +765,13 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
       <Dialog open={createPrayerOpen} onOpenChange={(open) => { setCreatePrayerOpen(open); if (!open) resetCreateForm() }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Tambah Jadwal Sholat</DialogTitle>
-            <DialogDescription>Tambahkan jenis sholat baru beserta waktu dan konsentrasi keahlian.</DialogDescription>
+            <DialogTitle>Tambah Jadwal Salat</DialogTitle>
+            <DialogDescription>Tambahkan jenis salat baru beserta waktu dan konsentrasi keahlian.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-2">
             {/* Nama */}
             <div className="grid gap-2">
-              <Label>Nama Jenis Sholat <span className="text-destructive">*</span></Label>
+              <Label>Nama Jenis Salat <span className="text-destructive">*</span></Label>
               <div className="flex gap-2">
                 <Select
                   value={prayerTypesList.find(t => t.nama_jenis === newPrayerName)?.nama_jenis ?? ""}
@@ -773,7 +789,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
                   }}
                 >
                   <SelectTrigger className="flex-[2]">
-                    <SelectValue placeholder="Pilih jenis sholat..." />
+                    <SelectValue placeholder="Pilih jenis salat..." />
                   </SelectTrigger>
                   <SelectContent>
                     {prayerTypesList.map((t) => (
@@ -788,7 +804,7 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
                   className="flex-1"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">pilih jenis yang sudah ada atau ketik nama baru untuk membuat jenis sholat baru</p>
+              <p className="text-xs text-muted-foreground">pilih jenis yang sudah ada atau ketik nama baru untuk membuat jenis salat baru</p>
             </div>
 
             {/* Waktu */}
@@ -933,14 +949,18 @@ export function JadwalSection({ readOnly = false }: JadwalSectionProps) {
       <Dialog open={deletePrayerTarget !== null} onOpenChange={(open) => !open && setDeletePrayerTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Hapus Jadwal Sholat</DialogTitle>
+            <DialogTitle>Hapus Jadwal Salat</DialogTitle>
             <DialogDescription>
-              Apakah Anda yakin ingin menghapus jadwal {deletePrayerTarget?.nama}? Tindakan ini tidak dapat dibatalkan.
+              {deletePresensiCount !== null && deletePresensiCount > 0
+                ? `Jadwal ${deletePrayerTarget?.nama} memiliki ${deletePresensiCount} data presensi yang akan ikut terhapus. Tindakan ini tidak dapat dibatalkan.`
+                : `Apakah Anda yakin ingin menghapus jadwal ${deletePrayerTarget?.nama}? Tindakan ini tidak dapat dibatalkan.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeletePrayerTarget(null)}>Batal</Button>
-            <Button variant="destructive" onClick={confirmDeletePrayer}>Hapus</Button>
+            <Button variant="destructive" onClick={confirmDeletePrayer} disabled={isLoadingDelete}>
+              {isLoadingDelete ? "Menghapus..." : "Hapus"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

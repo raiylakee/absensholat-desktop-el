@@ -60,7 +60,7 @@ export function PrayerNotification({ onAction }: PrayerNotificationProps) {
           </div>
           <div className="space-y-1">
             <h3 className="text-lg font-bold tracking-tight text-white">
-              Waktunya Sholat {activePrayer}
+              Waktunya Salat {activePrayer}
             </h3>
             <p className="text-sm font-medium text-white/80">
               silakan lakukan presensi sekarang untuk mencatat kehadiran anda.

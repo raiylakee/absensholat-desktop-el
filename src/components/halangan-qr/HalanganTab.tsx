@@ -3,12 +3,10 @@ import { QRCodeSVG } from "qrcode.react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
-import { Printer, Download, WifiOff, Users, Eye } from "lucide-react"
+import { Download, WifiOff, Users, Eye } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { usePrintAction } from "@/hooks/use-print-action"
 import { useDownloadAction } from "@/hooks/use-download-action"
 import { svgElementToPngBase64 } from "@/lib/svg-to-png"
-import { PrintHeader } from "@/components/print-header"
 import { HalanganDialog, type HalanganStudent } from "./HalanganDialog"
 import { formatDateID } from "@/lib/date-utils"
 
@@ -29,7 +27,6 @@ export function HalanganTab() {
   const [selectedStudent, setSelectedStudent] = useState<HalanganStudent | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const { print } = usePrintAction()
   const { isDownloading, download } = useDownloadAction()
   const qrRef = useRef<SVGSVGElement>(null)
   const isMounted = useRef(true)
@@ -173,9 +170,6 @@ export function HalanganTab() {
                   {!token && <TooltipContent><p>Menunggu QR tersedia</p></TooltipContent>}
                 </Tooltip>
               </TooltipProvider>
-              <Button variant="outline" size="sm" className="gap-2" onClick={print} disabled={!token}>
-                <Printer className="size-4" /> Cetak
-              </Button>
             </div>
           </div>
         </CardHeader>
@@ -189,7 +183,6 @@ export function HalanganTab() {
 
           {!isLoading && token && (
             <div className="flex flex-col items-center gap-4">
-              <PrintHeader title="QR Halangan" subtitle="Scan QR ini untuk pengajuan halangan (haid)" />
               <div className="rounded-xl border bg-white p-4 ring-2 ring-pink-200">
                 <QRCodeSVG value={token} size={200} ref={qrRef} />
               </div>

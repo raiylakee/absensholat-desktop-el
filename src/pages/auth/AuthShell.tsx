@@ -72,7 +72,7 @@ export function AuthShell({ children }: AuthShellProps) {
               >
                 <img
                   src={logoSrc}
-                  alt="Logo Sholat"
+                  alt="Logo Salat"
                   className="w-12 h-12 object-contain"
                 />
               </motion.div>

@@ -194,7 +194,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       <div className="splash-content">
         {/* Logo */}
         <div className={`splash-logo ${isComplete ? "flying" : ""}`}>
-          <img src={logoSrc} alt="Logo Sholat" />
+          <img src={logoSrc} alt="Logo Salat" />
         </div>
 
         {/* App name and tagline */}

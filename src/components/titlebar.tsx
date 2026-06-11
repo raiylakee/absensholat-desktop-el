@@ -64,7 +64,7 @@ export function Titlebar({ hideNotifications }: TitlebarProps = {}) {
       <div className="flex items-center pl-3 flex-1 h-full cursor-default gap-2">
         <img 
           src={logoSrc}
-          alt="Logo Sholat"
+          alt="Logo Salat"
           className={`w-5 h-5 object-contain pointer-events-none titlebar-logo ${!splashComplete ? "instant" : ""}`}
         />
         <span className="pointer-events-none text-sm font-semibold text-primary">Presensi Salat</span>

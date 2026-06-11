@@ -3,12 +3,10 @@ import { QRCodeSVG } from "qrcode.react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
-import { Keyboard, Printer, Download, WifiOff } from "lucide-react"
+import { Keyboard, Download, WifiOff } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { usePrintAction } from "@/hooks/use-print-action"
 import { useDownloadAction } from "@/hooks/use-download-action"
 import { svgElementToPngBase64 } from "@/lib/svg-to-png"
-import { PrintHeader } from "@/components/print-header"
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
@@ -24,7 +22,6 @@ export function PresensiTab() {
   const [prayerName, setPrayerName] = useState<string | null>(null)
   const [noSchedule, setNoSchedule] = useState(false)
 
-  const { print } = usePrintAction()
   const { isDownloading, download } = useDownloadAction()
   const qrRef = useRef<SVGSVGElement>(null)
 
@@ -74,7 +71,7 @@ export function PresensiTab() {
     } catch {
       if (!isMounted.current) return
       setAttendanceCode(null)
-      setCodeError("Tidak ada jadwal sholat aktif")
+      setCodeError("Tidak ada jadwal salat aktif")
     }
   }, [])
 
@@ -141,12 +138,9 @@ export function PresensiTab() {
                       Unduh
                     </Button>
                   </TooltipTrigger>
-                  {!token && <TooltipContent><p>Menunggu jadwal sholat aktif</p></TooltipContent>}
+                  {!token && <TooltipContent><p>Menunggu jadwal salat aktif</p></TooltipContent>}
                 </Tooltip>
               </TooltipProvider>
-              <Button variant="outline" size="sm" className="gap-2" onClick={print} disabled={!token}>
-                <Printer className="size-4" /> Cetak
-              </Button>
             </div>
           </div>
         </CardHeader>
@@ -159,7 +153,6 @@ export function PresensiTab() {
           )}
           {!isLoading && token && (
             <div className="flex flex-col items-center gap-4">
-              <PrintHeader title="Kode QR Presensi" subtitle="Scan Kode QR ini untuk mencatat kehadiran sholat" />
               <div className="rounded-xl border bg-white p-4">
                 <QRCodeSVG value={token} size={200} ref={qrRef} />
               </div>
@@ -173,8 +166,8 @@ export function PresensiTab() {
           {!isLoading && noSchedule && (
             <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
               <WifiOff className="size-12 opacity-30" />
-              <p className="text-sm">Tidak ada jadwal sholat aktif saat ini.</p>
-              <p className="text-xs">Kode QR akan otomatis muncul saat waktu sholat tiba.</p>
+              <p className="text-sm">Tidak ada jadwal salat aktif saat ini.</p>
+              <p className="text-xs">Kode QR akan otomatis muncul saat waktu salat tiba.</p>
             </div>
           )}
         </CardContent>
@@ -202,7 +195,7 @@ export function PresensiTab() {
               </p>
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">menunggu jadwal sholat aktif...</p>
+            <p className="text-sm text-muted-foreground">menunggu jadwal salat aktif...</p>
           )}
         </CardContent>
       </Card>

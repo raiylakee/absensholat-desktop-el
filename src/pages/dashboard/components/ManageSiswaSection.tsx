@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react"
-import { Eye, Filter, Pencil, Plus, Printer, Users, CheckSquare, Settings, Layers, ChevronLeft, ChevronRight, Save, Upload, Download } from "lucide-react"
+import { Eye, Filter, Pencil, Plus, Users, CheckSquare, Settings, Layers, ChevronLeft, ChevronRight, Save, Upload, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -16,14 +16,11 @@ import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
 import { extractData, extractPagination, normalizeStudent, genderToApi } from "@/lib/api-utils"
 import { Combobox } from "@/components/ui/combobox"
-import { usePrintAction } from "@/hooks/use-print-action"
 import { useDownloadAction } from "@/hooks/use-download-action"
 import { arrayToXlsxBase64 } from "@/lib/export-xlsx"
-import { PrintHeader } from "@/components/print-header"
 
 
 export function ManageSiswaSection() {
-  const { print } = usePrintAction()
   const { isDownloading, download } = useDownloadAction()
   const [students, setStudents] = useState<Student[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -257,12 +254,6 @@ export function ManageSiswaSection() {
   }, [searchQuery, selectedJurusanFilters])
 
   const filteredStudents = students
-
-  const activeFilters = useMemo(() => {
-    const filters: Record<string, string> = {}
-    if (selectedJurusanFilters.length > 0) filters["Konsentrasi Keahlian"] = selectedJurusanFilters.join(", ")
-    return filters
-  }, [selectedJurusanFilters])
 
   const openAddStudentDialog = () => {
     const activeYear = dynamicYearOptions.find(y => y.is_active) || dynamicYearOptions[0]
@@ -635,25 +626,6 @@ export function ManageSiswaSection() {
                 )}
               </Tooltip>
             </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger render={<span />}>
-                  <Button
-                    variant="outline"
-                    onClick={print}
-                    disabled={filteredStudents.length === 0}
-                  >
-                    <Printer className="mr-2 size-4" />
-                    Cetak
-                  </Button>
-                </TooltipTrigger>
-                {filteredStudents.length === 0 && (
-                  <TooltipContent>
-                    <p>Tidak ada data siswa untuk dicetak</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
           </div>
         </CardHeader>
         <CardContent>
@@ -684,7 +656,6 @@ export function ManageSiswaSection() {
           )}
 
           <div className="rounded-lg border overflow-hidden">
-            <PrintHeader title="Daftar Siswa" filters={activeFilters} />
             <div className="overflow-auto max-h-[calc(100vh-18rem)]">
             <Table>
               <TableHeader>

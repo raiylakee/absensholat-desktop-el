@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   createPrayerSchedule: (args) => ipcRenderer.invoke("create-prayer-schedule", args),
   updatePrayerSchedule: (args) => ipcRenderer.invoke("update-prayer-schedule", args),
   deletePrayerSchedule: (args) => ipcRenderer.invoke("delete-prayer-schedule", args),
+  getPrayerSchedulePresensiCount: (args) => ipcRenderer.invoke("get-prayer-schedule-presensi-count", args),
   getPrayerTimes: () => ipcRenderer.invoke("get-prayer-times"),
   getPrayerTypes: () => ipcRenderer.invoke("get-prayer-types"),
   createPrayerType: (args) => ipcRenderer.invoke("create-prayer-type", args),

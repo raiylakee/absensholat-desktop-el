@@ -16,11 +16,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Download, Printer } from "lucide-react"
+import { Download } from "lucide-react"
 import { useDownloadAction } from "@/hooks/use-download-action"
-import { usePrintAction } from "@/hooks/use-print-action"
 import { arrayToXlsxBase64 } from "@/lib/export-xlsx"
-import { PrintHeader } from "@/components/print-header"
 
 interface AbsensiStaffItem {
   id_absen: number
@@ -63,7 +61,6 @@ export function AttendanceHistoryPanel({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { isDownloading, download } = useDownloadAction()
-  const { print } = usePrintAction()
 
   const handleDownload = useCallback(() => {
     download({
@@ -74,7 +71,7 @@ export function AttendanceHistoryPanel({
         nis,
       },
       fetchData: async () => {
-        const headers = ['Tanggal', 'Hari', 'Jenis Sholat', 'Status']
+        const headers = ['Tanggal', 'Hari', 'Jenis Salat', 'Status']
         const rows = records.map((r) => [r.tanggal, r.hari, r.jenis_sholat, r.status])
         const data = arrayToXlsxBase64(headers, rows)
         return { data, encoding: 'base64' as const }
@@ -167,36 +164,11 @@ export function AttendanceHistoryPanel({
                   )}
                 </Tooltip>
               </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger render={<span />}>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={print}
-                      disabled={isLoading}
-                      aria-label="Cetak Riwayat"
-                    >
-                      <Printer className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {isLoading
-                      ? "Data sedang dimuat, harap tunggu"
-                      : "Cetak Riwayat"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             </div>
           </div>
         </SheetHeader>
 
         <div className="px-4 pb-4">
-          <PrintHeader
-            title="Riwayat Kehadiran"
-            studentName={studentName}
-            nis={nis}
-          />
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-12">
               <Spinner size="lg" />

@@ -4,16 +4,14 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Calendar, Download, FileText, AlertCircle, ClipboardList, History, Printer, QrCode } from "lucide-react"
+import { Calendar, Download, FileText, AlertCircle, ClipboardList, History, QrCode } from "lucide-react"
 import { PrayerNotification } from "./PrayerNotification"
 import { extractData, normalizeAttendance } from "@/lib/api-utils"
 import { formatDateID } from "@/lib/date-utils"
 import { DAY_NAMES } from "@/lib/day-names"
 import type { UserProfileData } from "@/lib/auth-session"
 import { useDownloadAction } from "@/hooks/use-download-action"
-import { usePrintAction } from "@/hooks/use-print-action"
 import { arrayToXlsxBase64 } from "@/lib/export-xlsx"
-import { PrintHeader } from "@/components/print-header"
 
 interface SiswaOverviewProps {
   setActiveItem: (item: string) => void
@@ -40,7 +38,6 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
   const isMounted = useRef(true)
 
   const { isDownloading, download } = useDownloadAction()
-  const { print } = usePrintAction()
 
   const fetchData = () => {
     setIsLoading(true)
@@ -162,7 +159,7 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
         format: 'xlsx',
       },
       fetchData: async () => {
-        const headers = ['Tanggal', 'Jenis Sholat', 'Waktu', 'Status']
+        const headers = ['Tanggal', 'Jenis Salat', 'Waktu', 'Status']
         const rows = normalizedHistory.map((r) => [
           formatDateID(r.tanggal),
           r.jenisSholat ?? '',
@@ -232,7 +229,7 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="size-5 text-primary" />
-            Jadwal Sholat Hari Ini
+            Jadwal Salat Hari Ini
           </CardTitle>
           <CardDescription>waktu pelaksanaan sholat di sekolah</CardDescription>
         </CardHeader>
@@ -312,37 +309,10 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
                   )}
                 </Tooltip>
               </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger render={<span />}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={print}
-                      disabled={isLoading || normalizedHistory.length === 0}
-                    >
-                      <Printer className="size-4 mr-2" />
-                      Cetak Riwayat
-                    </Button>
-                  </TooltipTrigger>
-                  {(isLoading || normalizedHistory.length === 0) && (
-                    <TooltipContent>
-                      {isLoading
-                        ? "Data sedang dimuat"
-                        : "Tidak ada data untuk dicetak"}
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <PrintHeader
-            title="Riwayat Presensi Saya"
-            studentName={user?.name}
-            nis={user?.nis}
-          />
           {isLoading ? (
             <div className="flex items-center justify-center py-10">
               <Spinner size="md" />

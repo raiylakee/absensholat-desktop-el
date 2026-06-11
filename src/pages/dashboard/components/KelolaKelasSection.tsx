@@ -290,6 +290,15 @@ export function KelolaKelasSection() {
     return result
   }, [filteredClasses])
 
+  const assignedWaliIds = useMemo(() => {
+    const ids = new Set<number>()
+    classes.forEach(c => {
+      const effectiveWali = pendingWaliKelas[c.id_kelas] ?? c.id_staff_wali ?? undefined
+      if (effectiveWali) ids.add(effectiveWali)
+    })
+    return ids
+  }, [classes, pendingWaliKelas])
+
   const toggleExpand = (id_kelas: number) => {
     if (expandedClass === id_kelas) {
       setExpandedClass(null)
@@ -438,7 +447,10 @@ export function KelolaKelasSection() {
                                     </SelectValue>
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {teachers.map(t => (
+                                    {teachers.filter(t => {
+                                      if (t.id_staff === currentStaffId) return true
+                                      return !assignedWaliIds.has(t.id_staff)
+                                    }).map(t => (
                                       <SelectItem key={t.id_staff} value={t.id_staff.toString()}>
                                         {t.nama} {t.nip ? `(${t.nip})` : ""}
                                       </SelectItem>

@@ -25,7 +25,7 @@ const FAQ_ADMIN: FAQItem[] = [
   },
   {
     question: "Bagaimana cara membuat Kode QR untuk absensi?",
-    answer: "Buka menu 'Kode QR', pilih jadwal dan jenis sholat, lalu klik 'Generate Kode QR'. Kode QR akan ditampilkan dan dapat diproyeksikan atau dicetak untuk dipindai oleh siswa."
+    answer: "Buka menu 'Kode QR', pilih jadwal dan jenis salat, lalu klik 'Generate Kode QR'. Kode QR akan ditampilkan dan dapat diproyeksikan atau dicetak untuk dipindai oleh siswa."
   },
   {
     question: "Bagaimana cara melihat laporan presensi?",
@@ -37,7 +37,7 @@ const FAQ_ADMIN: FAQItem[] = [
   },
   {
     question: "Bagaimana cara mengelola jadwal?",
-    answer: "Buka menu 'Jadwal' untuk menambah atau mengedit waktu sholat. Anda dapat mengatur waktu mulai, waktu akhir, dan batas keterlambatan untuk setiap sesi absensi."
+    answer: "Buka menu 'Jadwal' untuk menambah atau mengedit waktu salat. Anda dapat mengatur waktu mulai, waktu akhir, dan batas keterlambatan untuk setiap sesi absensi."
   },
   {
     question: "Apa itu fitur Siswa Belum Terdaftar?",
@@ -99,7 +99,7 @@ const FAQ_GURU: FAQItem[] = [
   },
   {
     question: "Bagaimana cara melihat jadwal?",
-    answer: "Buka menu 'Jadwal' untuk melihat jadwal waktu sholat yang telah ditentukan oleh admin. Sebagai guru, Anda dapat melihat jadwal namun tidak dapat mengubahnya."
+    answer: "Buka menu 'Jadwal' untuk melihat jadwal waktu salat yang telah ditentukan oleh admin. Sebagai guru, Anda dapat melihat jadwal namun tidak dapat mengubahnya."
   },
   {
     question: "Apa itu fitur Siswa Belum Terdaftar?",

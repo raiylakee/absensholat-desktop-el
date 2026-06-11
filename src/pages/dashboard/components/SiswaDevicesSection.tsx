@@ -1,9 +1,15 @@
 import { useState, useEffect, useRef } from "react"
-import { Search, Trash2, MonitorSmartphone, Check, X } from "lucide-react"
+import { Search, Trash2, MonitorSmartphone, Check, X, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet"
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
 import { extractData, handleApiError } from "@/lib/api-utils"
@@ -40,6 +46,7 @@ export function SiswaDevicesSection() {
   const [search, setSearch] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [tab, setTab] = useState<"devices" | "requests">("devices")
+  const [selectedRequest, setSelectedRequest] = useState<ChangeRequest | null>(null)
   const isMounted = useRef(true)
 
   const fetchDevices = async () => {
@@ -212,6 +219,9 @@ export function SiswaDevicesSection() {
                   <p className="text-xs text-muted-foreground">{formatDateTimeID(r.created_at)}</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
+                  <Button size="sm" variant="outline" onClick={() => setSelectedRequest(r)}>
+                    <Eye className="size-3.5 mr-1" /> Detail
+                  </Button>
                   <Button size="sm" onClick={() => handleApprove(r.id)}>
                     <Check className="size-3.5 mr-1" /> Setujui
                   </Button>
@@ -224,6 +234,54 @@ export function SiswaDevicesSection() {
           )}
         </div>
       )}
+      <Sheet open={selectedRequest !== null} onOpenChange={(o) => { if (!o) setSelectedRequest(null) }}>
+        <SheetContent side="right" className="w-full sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle>Detail Pengajuan Ganti Perangkat</SheetTitle>
+            <SheetDescription>informasi lengkap permintaan penggantian perangkat.</SheetDescription>
+          </SheetHeader>
+          {selectedRequest && (
+            <div className="px-4 pb-4 space-y-4 mt-4">
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">ID Pengajuan</span>
+                <span className="text-sm">{selectedRequest.id}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Surel Siswa</span>
+                <span className="text-sm">{selectedRequest.account?.email || `Account #${selectedRequest.account_id}`}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Perangkat Lama</span>
+                <span className="text-sm font-mono">{selectedRequest.old_hardware_id}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Perangkat Baru</span>
+                <span className="text-sm font-mono">{selectedRequest.new_hardware_id}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Alasan</span>
+                <span className="text-sm">{selectedRequest.alasan}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</span>
+                <span className="text-sm">{selectedRequest.status}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tanggal Pengajuan</span>
+                <span className="text-sm">{formatDateTimeID(selectedRequest.created_at)}</span>
+              </div>
+              <div className="flex gap-2 pt-4">
+                <Button className="flex-1" onClick={() => { handleApprove(selectedRequest.id); setSelectedRequest(null) }}>
+                  <Check className="size-4 mr-1.5" /> Setujui
+                </Button>
+                <Button variant="destructive" className="flex-1" onClick={() => { handleReject(selectedRequest.id); setSelectedRequest(null) }}>
+                  <X className="size-4 mr-1.5" /> Tolak
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }

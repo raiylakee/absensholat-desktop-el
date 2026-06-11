@@ -164,7 +164,7 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="border shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Jadwal Sholat Terdekat</CardTitle>
+            <CardTitle className="text-lg">Jadwal Salat Terdekat</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {currentPrayer ? (
@@ -208,7 +208,7 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
             ) : (
               !currentPrayer && (
                 <div className="text-center py-2">
-                  <p className="text-sm text-muted-foreground">tidak ada jadwal sholat untuk hari ini</p>
+                  <p className="text-sm text-muted-foreground">tidak ada jadwal salat untuk hari ini</p>
                 </div>
               )
             )}

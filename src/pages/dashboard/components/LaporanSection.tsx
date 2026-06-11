@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react"
-import { Download, Filter, FileText, FileSpreadsheet, File, Calendar as CalendarIcon, Printer } from "lucide-react"
+import { Download, Filter, FileText, FileSpreadsheet, File, Calendar as CalendarIcon } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,8 +26,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
 import { extractData, normalizeAttendance } from "@/lib/api-utils"
-import { usePrintAction } from "@/hooks/use-print-action"
-import { PrintHeader } from "@/components/print-header"
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useDownloadAction } from "@/hooks/use-download-action"
 import {
@@ -121,7 +119,6 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
   const { isDownloading, download } = useDownloadAction()
 
   // Print action
-  const { print } = usePrintAction()
 
   // Validation: custom range requires both dates
   const isCustomRangeInvalid =
@@ -377,22 +374,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
     setIsDownloadDialogOpen(false)
   }
 
-  // Build active filters for PrintHeader
-  const activeFilters = useMemo(() => {
-    const filters: Record<string, string> = {}
-    if (forcedClass) {
-      filters["Kelas"] = forcedClass
-    } else {
-      if (selectedKelasFilters.length > 0) filters["Kelas"] = selectedKelasFilters.join(", ")
-      if (selectedJurusanFilters.length > 0) filters["Konsentrasi Keahlian"] = selectedJurusanFilters.join(", ")
-    }
-    if (selectedSholatFilters.length > 0) filters["Sholat"] = selectedSholatFilters.join(", ")
-    if (startDate) filters["Dari"] = formatDateID(startDate)
-    if (endDate) filters["Sampai"] = formatDateID(endDate)
-    return filters
-  }, [forcedClass, selectedKelasFilters, selectedJurusanFilters, selectedSholatFilters, startDate, endDate])
 
-  const isPrintDisabled = records.length === 0 || isLoading
 
   return (
     <div className="space-y-6">
@@ -407,28 +389,6 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
               <Download className="mr-2 size-4" />
               Unduh Laporan
             </Button>
-
-            <TooltipProvider>
-              <UITooltip>
-                <TooltipTrigger render={<span tabIndex={isPrintDisabled ? 0 : undefined} />}>
-                  <Button
-                    variant="outline"
-                    onClick={print}
-                    disabled={isPrintDisabled}
-                  >
-                    <Printer className="mr-2 size-4" />
-                    Cetak
-                  </Button>
-                </TooltipTrigger>
-                {isPrintDisabled && (
-                  <TooltipContent>
-                    {isLoading
-                      ? "Data sedang dimuat, harap tunggu"
-                      : "Tidak ada data untuk dicetak"}
-                  </TooltipContent>
-                )}
-              </UITooltip>
-            </TooltipProvider>
 
             <div className="flex items-center gap-2 border rounded-md px-2 py-1 bg-muted/20">
               <div className="flex items-center gap-1">
@@ -520,7 +480,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                       {major}
                     </DropdownMenuCheckboxItem>
                   ))}
-                  <p className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Jenis Sholat</p>
+                  <p className="px-2 py-1 text-xs font-semibold text-muted-foreground mt-2">Jenis Salat</p>
                   {dynamicPrayerTypes.map((type) => (
                     <DropdownMenuCheckboxItem
                       key={`laporan-sholat-${type}`}
@@ -560,7 +520,6 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
           </div>
         </CardHeader>
         <CardContent>
-          <PrintHeader title="Laporan Presensi" filters={activeFilters} />
           <div className="rounded-lg border overflow-hidden">
             <div className="overflow-auto max-h-[calc(100vh-18rem)]">
             <table className="w-full min-w-[920px] text-sm">
@@ -571,7 +530,7 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
                   <th className="px-4 py-3 text-left font-medium">NIS</th>
                   <th className="px-4 py-3 text-left font-medium">Nama</th>
                   <th className="px-4 py-3 text-left font-medium">Kelas</th>
-                  <th className="px-4 py-3 text-left font-medium">Sholat</th>
+                  <th className="px-4 py-3 text-left font-medium">Salat</th>
                   <th className="px-4 py-3 text-left font-medium">Status</th>
                 </tr>
               </thead>
@@ -744,11 +703,11 @@ export function LaporanSection({ forcedClass }: LaporanSectionProps) {
 
       <Card className="border shadow-sm">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">Kehadiran per Jenis Sholat (7 Hari)</CardTitle>
+          <CardTitle className="text-base">Kehadiran per Jenis Salat (7 Hari)</CardTitle>
         </CardHeader>
         <CardContent>
           {!chartData?.prayer_breakdown?.length ? (
-            <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">Belum ada data per jenis sholat</div>
+            <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">Belum ada data per jenis salat</div>
           ) : (
             <ChartContainer config={attendanceChartConfig} className="h-56 w-full">
               <BarChart data={chartData.prayer_breakdown} margin={{ top: 4, right: 16, left: -16, bottom: 0 }}>
