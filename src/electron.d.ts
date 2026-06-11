@@ -71,6 +71,10 @@ interface ElectronAPI {
   updatePromotionConfig: (args: any) => Promise<any>;
   simulatePromotion: (args: any) => Promise<any>;
   executePromotion: (args: any) => Promise<any>;
+  getPromotionPhaseStatus: () => Promise<any>;
+  graduateGrade12: () => Promise<any>;
+  promoteGrade11: () => Promise<any>;
+  promoteGrade10: () => Promise<any>;
 
   // Attendance
   getAttendanceHistory: (args: any) => Promise<any>;

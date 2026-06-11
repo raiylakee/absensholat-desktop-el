@@ -435,6 +435,22 @@ function register(ipcMain) {
     apiRequest("POST", "/api/v2/admin/promotion/execute", { body })
   ));
 
+  ipcMain.handle("get-promotion-phase-status", handler(async () =>
+    apiRequest("GET", "/api/v2/admin/promotion/phases/status")
+  ));
+
+  ipcMain.handle("graduation-grade-12", handler(async () =>
+    apiRequest("POST", "/api/v2/admin/promotion/phases/graduate-12")
+  ));
+
+  ipcMain.handle("promote-grade-11", handler(async () =>
+    apiRequest("POST", "/api/v2/admin/promotion/phases/promote-11")
+  ));
+
+  ipcMain.handle("promote-grade-10", handler(async () =>
+    apiRequest("POST", "/api/v2/admin/promotion/phases/promote-10")
+  ));
+
   // === Attendance ===
   ipcMain.handle("get-attendance-history", handler(async (args) =>
     apiRequest("GET", "/api/v2/attendance/history", { query: args })

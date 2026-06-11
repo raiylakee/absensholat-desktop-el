@@ -72,6 +72,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   updatePromotionConfig: (args) => ipcRenderer.invoke("update-promotion-config", args),
   simulatePromotion: (args) => ipcRenderer.invoke("simulate-promotion", args),
   executePromotion: (args) => ipcRenderer.invoke("execute-promotion", args),
+  getPromotionPhaseStatus: () => ipcRenderer.invoke("get-promotion-phase-status"),
+  graduateGrade12: () => ipcRenderer.invoke("graduation-grade-12"),
+  promoteGrade11: () => ipcRenderer.invoke("promote-grade-11"),
+  promoteGrade10: () => ipcRenderer.invoke("promote-grade-10"),
 
   // Attendance
   getAttendanceHistory: (args) => ipcRenderer.invoke("get-attendance-history", args),

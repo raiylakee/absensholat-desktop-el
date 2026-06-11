@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect, useRef } from "react"
-import { Search, ChevronDown, ChevronUp, Users, UserCog, Filter, Flag } from "lucide-react"
+import { Search, ChevronDown, ChevronUp, Users, UserCog, Filter, Flag, GraduationCap, ArrowRight, Check, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
 import { extractData } from "@/lib/api-utils"
@@ -73,6 +74,78 @@ export function KelolaKelasSection() {
   
   const [selectedStudent, setSelectedStudent] = useState<{ nis: string; name: string } | null>(null)
   const isMounted = useRef(true)
+
+  // Phased promotion state
+  const [promotionDialogOpen, setPromotionDialogOpen] = useState(false)
+  const [promotionPhase, setPromotionPhase] = useState<{ phase: number; status_promosi: string; tahun_ajaran: string }>({ phase: 0, status_promosi: "", tahun_ajaran: "" })
+  const [phaseLoading, setPhaseLoading] = useState(false)
+  const [phaseResult, setPhaseResult] = useState<{ phase: string; students_affected: number; message: string } | null>(null)
+
+  const fetchPromotionStatus = async () => {
+    try {
+      const res: any = await window.electronAPI.getPromotionPhaseStatus()
+      const data = typeof res === "object" ? res : {}
+      setPromotionPhase({
+        phase: data.current_phase ?? 0,
+        status_promosi: data.status_promosi ?? "",
+        tahun_ajaran: data.tahun_ajaran ?? "",
+      })
+    } catch {
+      // ignore
+    }
+  }
+
+  const openPromotionDialog = async () => {
+    setPhaseResult(null)
+    await fetchPromotionStatus()
+    setPromotionDialogOpen(true)
+  }
+
+  const executePhase1 = async () => {
+    setPhaseLoading(true)
+    setPhaseResult(null)
+    try {
+      const res: any = await window.electronAPI.graduateGrade12()
+      setPhaseResult({ phase: "graduate_12", students_affected: res.students_affected ?? 0, message: res.message ?? "Kelas 12 berhasil diluluskan" })
+      notify(res.message ?? "Kelas 12 berhasil diluluskan", "success")
+      await fetchPromotionStatus()
+    } catch (error: any) {
+      notify("Gagal: " + (typeof error === "string" ? error : error.message), "error")
+    } finally {
+      setPhaseLoading(false)
+    }
+  }
+
+  const executePhase2 = async () => {
+    setPhaseLoading(true)
+    setPhaseResult(null)
+    try {
+      const res: any = await window.electronAPI.promoteGrade11()
+      setPhaseResult({ phase: "promote_11", students_affected: res.students_affected ?? 0, message: res.message ?? "Kelas 11 berhasil dinaikkan" })
+      notify(res.message ?? "Kelas 11 berhasil dinaikkan", "success")
+      await fetchPromotionStatus()
+    } catch (error: any) {
+      notify("Gagal: " + (typeof error === "string" ? error : error.message), "error")
+    } finally {
+      setPhaseLoading(false)
+    }
+  }
+
+  const executePhase3 = async () => {
+    setPhaseLoading(true)
+    setPhaseResult(null)
+    try {
+      const res: any = await window.electronAPI.promoteGrade10()
+      setPhaseResult({ phase: "promote_10", students_affected: res.students_affected ?? 0, message: res.message ?? "Kelas 10 berhasil dinaikkan" })
+      notify(res.message ?? "Kelas 10 berhasil dinaikkan", "success")
+      await fetchPromotionStatus()
+      fetchData()
+    } catch (error: any) {
+      notify("Gagal: " + (typeof error === "string" ? error : error.message), "error")
+    } finally {
+      setPhaseLoading(false)
+    }
+  }
 
   const fetchData = async () => {
     setIsLoading(true)
@@ -243,6 +316,10 @@ export function KelolaKelasSection() {
             <CardDescription className="mt-1">manajemen wali kelas dan daftar siswa per kelas.</CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Button variant="default" onClick={openPromotionDialog}>
+              <GraduationCap className="mr-2 size-4" />
+              Proses Kenaikan Kelas Massal
+            </Button>
             <div className="relative w-[220px]">
               <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
               <Input
@@ -507,6 +584,121 @@ export function KelolaKelasSection() {
         open={selectedStudent !== null}
         onClose={() => setSelectedStudent(null)}
       />
+
+      <Dialog open={promotionDialogOpen} onOpenChange={setPromotionDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Proses Kenaikan Kelas Massal</DialogTitle>
+            <DialogDescription>
+              {promotionPhase.phase === 3
+                ? "Semua tahap kenaikan kelas telah selesai diproses."
+                : promotionPhase.tahun_ajaran
+                  ? `Kenaikan kelas untuk tahun ajaran ${promotionPhase.tahun_ajaran}. Ikuti tahap secara berurutan.`
+                  : "Tidak ada tahun ajaran aktif."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Phase 1: Graduation */}
+            <div className={`rounded-lg border p-4 ${promotionPhase.phase === 0 ? "border-primary/40 bg-primary/10" : promotionPhase.phase > 0 ? "border-emerald-500/30 bg-emerald-500/10" : "border-muted bg-muted/20 opacity-60"}`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    {promotionPhase.phase > 0 && <Check className="size-4 text-emerald-500" />}
+                    Tahap 1: Kelulusan Kelas 12
+                  </h4>
+                  <p className="text-xs text-muted-foreground mt-1">Ubah status siswa kelas 12 menjadi Alumni.</p>
+                </div>
+                {promotionPhase.phase > 0 && (
+                  <Badge className="bg-emerald-600 text-white">Selesai</Badge>
+                )}
+              </div>
+              {phaseResult?.phase === "graduate_12" && (
+                <p className="text-xs text-emerald-500 mt-2 font-medium">{phaseResult.students_affected} siswa diluluskan</p>
+              )}
+              {promotionPhase.phase === 0 && (
+                <Button
+                  onClick={executePhase1}
+                  disabled={phaseLoading}
+                  className="mt-3 w-full"
+                >
+                  {phaseLoading && promotionPhase.phase === 0 ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
+                  Luluskan Kelas 12
+                  <ArrowRight className="size-4 ml-2" />
+                </Button>
+              )}
+            </div>
+
+            {/* Phase 2: Promote 11 to 12 */}
+            <div className={`rounded-lg border p-4 ${promotionPhase.phase === 1 ? "border-primary/40 bg-primary/10" : promotionPhase.phase > 1 ? "border-emerald-500/30 bg-emerald-500/10" : "border-muted bg-muted/20 opacity-60"}`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    {promotionPhase.phase > 1 && <Check className="size-4 text-emerald-500" />}
+                    Tahap 2: Kenaikan Kelas 11 ke 12
+                  </h4>
+                  <p className="text-xs text-muted-foreground mt-1">Naikkan siswa kelas 11 ke kelas 12.</p>
+                </div>
+                {promotionPhase.phase > 1 && (
+                  <Badge className="bg-emerald-600 text-white">Selesai</Badge>
+                )}
+              </div>
+              {phaseResult?.phase === "promote_11" && (
+                <p className="text-xs text-emerald-500 mt-2 font-medium">{phaseResult.students_affected} siswa dinaikkan</p>
+              )}
+              {promotionPhase.phase === 1 && (
+                <Button
+                  onClick={executePhase2}
+                  disabled={phaseLoading}
+                  className="mt-3 w-full"
+                >
+                  {phaseLoading && promotionPhase.phase === 1 ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
+                  Naikkan Kelas 11 ke 12
+                  <ArrowRight className="size-4 ml-2" />
+                </Button>
+              )}
+            </div>
+
+            {/* Phase 3: Promote 10 to 11 */}
+            <div className={`rounded-lg border p-4 ${promotionPhase.phase === 2 ? "border-primary/40 bg-primary/10" : promotionPhase.phase > 2 ? "border-emerald-500/30 bg-emerald-500/10" : "border-muted bg-muted/20 opacity-60"}`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    {promotionPhase.phase > 2 && <Check className="size-4 text-emerald-500" />}
+                    Tahap 3: Kenaikan Kelas 10 ke 11
+                  </h4>
+                  <p className="text-xs text-muted-foreground mt-1">Naikkan siswa kelas 10 ke kelas 11.</p>
+                </div>
+                {promotionPhase.phase > 2 && (
+                  <Badge className="bg-emerald-600 text-white">Selesai</Badge>
+                )}
+              </div>
+              {phaseResult?.phase === "promote_10" && (
+                <p className="text-xs text-emerald-500 mt-2 font-medium">{phaseResult.students_affected} siswa dinaikkan</p>
+              )}
+              {promotionPhase.phase === 2 && (
+                <Button
+                  onClick={executePhase3}
+                  disabled={phaseLoading}
+                  className="mt-3 w-full"
+                >
+                  {phaseLoading && promotionPhase.phase === 2 ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}
+                  Naikkan Kelas 10 ke 11
+                  <ArrowRight className="size-4 ml-2" />
+                </Button>
+              )}
+            </div>
+
+            {promotionPhase.phase === 3 && (
+              <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-4 text-center">
+                <Check className="size-8 mx-auto text-emerald-500 mb-2" />
+                <p className="font-semibold">Proses Kenaikan Kelas Selesai!</p>
+                <p className="text-sm text-muted-foreground mt-1">Semua tahap telah berhasil diproses. Tutup dialog ini.</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
