@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { E2eElectronApp } from './helpers/electron-app';
 
-test.describe('Presensi Sholat Desktop Production E2E Test Suite', () => {
+test.describe('Presensi Salat Desktop Production E2E Test Suite', () => {
   let e2e: E2eElectronApp;
 
   test.beforeEach(async () => {
@@ -17,7 +17,7 @@ test.describe('Presensi Sholat Desktop Production E2E Test Suite', () => {
     await e2e.launch();
 
     // Verify Splash Screen transition
-    const splashHeader = e2e.page.locator('h1:has-text("Presensi Sholat")');
+    const splashHeader = e2e.page.locator('h1:has-text("Presensi Salat")');
     await expect(splashHeader).toBeVisible();
 
     // Wait for login form to load
@@ -55,7 +55,7 @@ test.describe('Presensi Sholat Desktop Production E2E Test Suite', () => {
     await expect(e2e.page.getByRole('button', { name: 'Kelola Guru', exact: true })).toBeVisible();
     await expect(e2e.page.getByRole('button', { name: 'Kelola Siswa', exact: true })).toBeVisible();
     await expect(e2e.page.getByRole('button', { name: 'Kelola Kelas', exact: true })).toBeVisible();
-    await expect(e2e.page.getByRole('button', { name: 'QR Code', exact: true })).toBeVisible();
+    await expect(e2e.page.getByRole('button', { name: 'Kode QR', exact: true })).toBeVisible();
     await expect(e2e.page.getByRole('button', { name: 'Laporan', exact: true })).toBeVisible();
 
     // ==========================================
@@ -89,7 +89,7 @@ test.describe('Presensi Sholat Desktop Production E2E Test Suite', () => {
     // ==========================================
     // F. TEST DATA FETCHING: QR CODE GENERATOR
     // ==========================================
-    await e2e.page.getByRole('button', { name: 'QR Code', exact: true }).click();
+    await e2e.page.getByRole('button', { name: 'Kode QR', exact: true }).click();
     
     // Select verification code tab
     await e2e.page.locator('[role="tab"]:has-text("Kode Verifikasi"), button:has-text("Kode Verifikasi"), text="Kode Verifikasi"').first().click();

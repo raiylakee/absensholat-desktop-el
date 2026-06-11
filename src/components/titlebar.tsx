@@ -67,7 +67,7 @@ export function Titlebar({ hideNotifications }: TitlebarProps = {}) {
           alt="Logo Sholat"
           className={`w-5 h-5 object-contain pointer-events-none titlebar-logo ${!splashComplete ? "instant" : ""}`}
         />
-        <span className="pointer-events-none text-sm font-semibold text-primary">Presensi Sholat</span>
+        <span className="pointer-events-none text-sm font-semibold text-primary">Presensi Salat</span>
       </div>
       {!hideNotifications && (
         <div style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties} className="h-full">

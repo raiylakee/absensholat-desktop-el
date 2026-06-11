@@ -305,7 +305,7 @@ export function KelolaGuruSection() {
               size="sm"
               onClick={() => setActiveTab("wali")}
             >
-              Wali Kelas Aktif
+              Wali Kelas
             </Button>
             {activeTab === "guru" && (
               <TooltipProvider>

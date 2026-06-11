@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react"
-import { Search, ChevronDown, ChevronUp, Users, UserCog, Filter } from "lucide-react"
+import { Search, ChevronDown, ChevronUp, Users, UserCog, Filter, Flag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -68,6 +68,8 @@ export function KelolaKelasSection() {
   
   const [pendingWaliKelas, setPendingWaliKelas] = useState<Record<number, number>>({})
   const [isSaving, setIsSaving] = useState<Record<number, boolean>>({})
+  const [pendingClassStatus, setPendingClassStatus] = useState<Record<number, string>>({})
+  const [savingStatus, setSavingStatus] = useState<Record<number, boolean>>({})
   
   const [selectedStudent, setSelectedStudent] = useState<{ nis: string; name: string } | null>(null)
   const isMounted = useRef(true)
@@ -154,6 +156,41 @@ export function KelolaKelasSection() {
       delete next[id_kelas]
       return next
     })
+  }
+
+  const handleSaveStatus = async (id_kelas: number) => {
+    const status = pendingClassStatus[id_kelas]
+    if (!status) return
+    setSavingStatus(prev => ({ ...prev, [id_kelas]: true }))
+    try {
+      await window.electronAPI.updateClassStatus({ id: id_kelas, body: { status_akademik: status } })
+      notify("Status kelas berhasil diperbarui", "success")
+      setPendingClassStatus(prev => {
+        const next = { ...prev }
+        delete next[id_kelas]
+        return next
+      })
+      setClassDetails(prev => {
+        const next = { ...prev }
+        delete next[id_kelas]
+        return next
+      })
+      fetchClassDetails(id_kelas)
+    } catch (error: any) {
+      notify("Gagal memperbarui status kelas: " + (typeof error === "string" ? error : ""), "error")
+    } finally {
+      setSavingStatus(prev => ({ ...prev, [id_kelas]: false }))
+    }
+  }
+
+  const getPredominantStatus = (students: any[]): string => {
+    if (!students.length) return ""
+    const counts: Record<string, number> = {}
+    students.forEach((s: any) => {
+      const st = s.status_akademik || "AKTIF"
+      counts[st] = (counts[st] || 0) + 1
+    })
+    return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0]
   }
 
   // Derived state
@@ -281,7 +318,7 @@ export function KelolaKelasSection() {
                           <Badge variant="outline" className="bg-primary/5 hidden sm:inline-flex">
                             <Users className="mr-1 size-3" /> {kelas.siswa_count} Siswa
                           </Badge>
-                          {isPending && (
+                          {(isPending || pendingClassStatus[kelas.id_kelas] !== undefined) && (
                             <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 animate-pulse">
                               Perubahan Belum Disimpan
                             </Badge>
@@ -345,6 +382,52 @@ export function KelolaKelasSection() {
                                   <Button size="sm" variant="ghost" onClick={() => handleCancelWaliKelas(kelas.id_kelas)}>
                                     Batal
                                   </Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-4 bg-background p-4 rounded-lg border shadow-sm">
+                            <div className="flex items-center justify-center p-3 rounded-full bg-primary/10 text-primary">
+                              <Flag className="size-5" />
+                            </div>
+                            <div className="flex-1 space-y-1">
+                              <label className="text-sm font-medium leading-none">Status Kelas</label>
+                              <p className="text-xs text-muted-foreground">terapkan status akademik ke seluruh siswa di kelas ini.</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-[200px]">
+                                <Select
+                                  value={pendingClassStatus[kelas.id_kelas] ?? getPredominantStatus(students)}
+                                  onValueChange={(val) => {
+                                    const current = pendingClassStatus[kelas.id_kelas] ?? getPredominantStatus(students)
+                                    if (val === current) return
+                                    setPendingClassStatus(prev => ({ ...prev, [kelas.id_kelas]: val }))
+                                  }}
+                                >
+                                  <SelectTrigger className={pendingClassStatus[kelas.id_kelas] !== undefined ? "border-yellow-500 ring-yellow-500/20" : ""}>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {["AKTIF","PKL","KEK","MUTASI","KELUAR","ALUMNI"].map(s => (
+                                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              {pendingClassStatus[kelas.id_kelas] !== undefined && (
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleSaveStatus(kelas.id_kelas)}
+                                    disabled={savingStatus[kelas.id_kelas]}
+                                  >
+                                    {savingStatus[kelas.id_kelas] ? <Spinner className="size-3 mr-1" /> : null}
+                                    Simpan
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={() => {
+                                    setPendingClassStatus(prev => { const n = { ...prev }; delete n[kelas.id_kelas]; return n })
+                                  }}>Batal</Button>
                                 </div>
                               )}
                             </div>

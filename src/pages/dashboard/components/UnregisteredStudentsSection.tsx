@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from "react"
-import { Users, Search, Eye, Bell } from "lucide-react"
+import { useState, useEffect, useCallback, useRef, useMemo } from "react"
+import { Users, Search, Eye, Bell, AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -198,6 +198,11 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
     }
   }, [selectedNIS])
 
+  const hasSelectedWithoutWali = useMemo(() => {
+    if (selectedNIS.size === 0) return false
+    return students.some(s => selectedNIS.has(s.nis) && !s.wali_kelas_name)
+  }, [students, selectedNIS])
+
   return (
     <div className="space-y-6">
       <Card className="border">
@@ -282,13 +287,24 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
             <>
               {selectedNIS.size > 0 && !forcedClass && (
                 <div className="mb-4">
-                  <Button
-                    onClick={handleNotifyWaliKelas}
-                    disabled={isNotifying}
-                  >
-                    <Bell className="size-4 mr-2" />
-                    {isNotifying ? "Mengirim..." : `Kirim Notifikasi ke Wali Kelas (${selectedNIS.size})`}
-                  </Button>
+                  {hasSelectedWithoutWali ? (
+                    <Button
+                      variant="destructive"
+                      disabled
+                      className="opacity-70 cursor-not-allowed"
+                    >
+                      <AlertTriangle className="size-4 mr-2" />
+                      Tolong daftarkan wali kelas terlebih dahulu!
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleNotifyWaliKelas}
+                      disabled={isNotifying}
+                    >
+                      <Bell className="size-4 mr-2" />
+                      {isNotifying ? "Mengirim..." : `Kirim Notifikasi ke Wali Kelas (${selectedNIS.size})`}
+                    </Button>
+                  )}
                 </div>
               )}
               <div className="rounded-md border bg-background overflow-hidden">

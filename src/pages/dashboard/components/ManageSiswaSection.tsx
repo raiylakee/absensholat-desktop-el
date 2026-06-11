@@ -40,7 +40,6 @@ export function ManageSiswaSection() {
   const [dynamicMajorOptions, setDynamicMajorOptions] = useState<any[]>([])
   const [dynamicClassOptions, setDynamicClassOptions] = useState<any[]>([])
   const [dynamicYearOptions, setDynamicYearOptions] = useState<any[]>([])
-  const [dynamicClassMap, setDynamicClassMap] = useState<Record<string, string[]>>({})
 
   const [studentDraft, setStudentDraft] = useState<any>({
     nis: "",
@@ -61,8 +60,7 @@ export function ManageSiswaSection() {
 
   // Bulk action state
   const [bulkActionOpen, setBulkActionOpen] = useState(false)
-  const [bulkActionType, setBulkActionType] = useState<"mutasi" | "upgrade" | "downgrade" | "lulus" | "hapus" | "ubah_status" | "ubah_tahun_masuk">("mutasi")
-  const [bulkMutasiDraft, setBulkMutasiDraft] = useState({ jurusan: "", kelas: "" })
+  const [bulkActionType, setBulkActionType] = useState<"upgrade" | "downgrade" | "lulus" | "hapus" | "ubah_status" | "ubah_tahun_masuk">("ubah_status")
   const [bulkStatusDraft, setBulkStatusDraft] = useState("PKL")
   const [bulkTahunMasukDraft, setBulkTahunMasukDraft] = useState<number | undefined>(undefined)
   const isMounted = useRef(true)
@@ -119,16 +117,7 @@ export function ManageSiswaSection() {
       const classes = extractData(classesRes)
       const years = extractData(yearsRes)
       if (Array.isArray(majors)) setDynamicMajorOptions(majors)
-      if (Array.isArray(classes)) {
-        setDynamicClassOptions(classes)
-        const map: Record<string, string[]> = {}
-        classes.forEach((c: any) => {
-          const major = c.jurusan || "General"
-          if (!map[major]) map[major] = []
-          map[major].push(c.label)
-        })
-        setDynamicClassMap(map)
-      }
+      if (Array.isArray(classes)) setDynamicClassOptions(classes)
       if (Array.isArray(years)) setDynamicYearOptions(years)
     } catch (error) {
       if (!isMounted.current) return
@@ -434,18 +423,6 @@ export function ManageSiswaSection() {
           notify(`${selectedNis.length} siswa berhasil dihapus`, "success")
           break
 
-        case "mutasi":
-          await window.electronAPI.bulkStudentControl({
-            body: {
-              nis_list: selectedNis,
-              action: "set_class",
-              target_class: bulkMutasiDraft.kelas,
-              note: "Mutasi massal dari Dashboard Desktop"
-            }
-          })
-          notify(`${selectedNis.length} siswa berhasil dimutasi`, "success")
-          break
-
         case "upgrade":
           for (const nis of selectedNis) {
             const student = students.find(s => s.nis === nis)
@@ -566,7 +543,7 @@ export function ManageSiswaSection() {
         <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Kelola Siswa</CardTitle>
-            <CardDescription className="mt-1">manajemen komprehensif: mutasi, kenaikan, dan kelulusan.</CardDescription>
+            <CardDescription className="mt-1">manajemen komprehensif: kenaikan, kelulusan, dan data siswa.</CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Input
@@ -814,11 +791,10 @@ export function ManageSiswaSection() {
               <Select value={bulkActionType} onValueChange={(v) => setBulkActionType(v as typeof bulkActionType)}>
                 <SelectTrigger className="w-full">
                   <SelectValue>
-                    {{ mutasi: "Mutasi / Pindah Kelas Spesifik", upgrade: "Naik Kelas Otomatis (1 Tingkat)", downgrade: "Tinggal Kelas Otomatis (1 Tingkat)", lulus: "Luluskan Semua Siswa", ubah_status: "Ubah Status Akademik", ubah_tahun_masuk: "Ubah Tahun Masuk", hapus: "Hapus Data Siswa" }[bulkActionType]}
+                    {{ upgrade: "Naik Kelas Otomatis (1 Tingkat)", downgrade: "Tinggal Kelas Otomatis (1 Tingkat)", lulus: "Luluskan Semua Siswa", ubah_status: "Ubah Status Akademik", ubah_tahun_masuk: "Ubah Tahun Masuk", hapus: "Hapus Data Siswa" }[bulkActionType]}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="mutasi">Mutasi / Pindah Kelas Spesifik</SelectItem>
                   <SelectItem value="upgrade">Naik Kelas Otomatis (1 Tingkat)</SelectItem>
                   <SelectItem value="downgrade">Tinggal Kelas Otomatis (1 Tingkat)</SelectItem>
                   <SelectItem value="lulus">Luluskan Semua Siswa</SelectItem>
@@ -828,35 +804,6 @@ export function ManageSiswaSection() {
                 </SelectContent>
               </Select>
             </div>
-
-            {bulkActionType === "mutasi" && (
-              <div className="grid gap-4 sm:grid-cols-2 rounded-lg border p-4 bg-muted/20">
-                <div className="space-y-2">
-                  <Label className="min-h-[2.5rem] flex items-start">Konsentrasi Keahlian Tujuan</Label>
-                  <Combobox
-                    options={dynamicMajorOptions.map((m: any) => {
-                      const label = typeof m === 'string' ? m : m.nama_jurusan
-                      return { value: label, label }
-                    })}
-                    value={bulkMutasiDraft.jurusan}
-                    onValueChange={(v) => v && setBulkMutasiDraft({ jurusan: v, kelas: "" })}
-                    placeholder="Pilih Konsentrasi Keahlian"
-                    searchPlaceholder="Cari konsentrasi keahlian..."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="min-h-[2.5rem] flex items-start">Kelas Tujuan</Label>
-                  <Combobox
-                    options={(dynamicClassMap[bulkMutasiDraft.jurusan] || []).map(k => ({ value: k, label: k }))}
-                    value={bulkMutasiDraft.kelas}
-                    onValueChange={(v) => v && setBulkMutasiDraft(prev => ({ ...prev, kelas: v }))}
-                    placeholder="Pilih Kelas"
-                    searchPlaceholder="Cari kelas..."
-                    disabled={!bulkMutasiDraft.jurusan}
-                  />
-                </div>
-              </div>
-            )}
 
             {bulkActionType === "upgrade" && (
               <div className="rounded-lg border p-4 bg-emerald-50 text-emerald-800 text-sm">
@@ -957,9 +904,9 @@ export function ManageSiswaSection() {
       <Dialog open={Boolean(editingStudent) || addingStudent} onOpenChange={(open) => !open && (setEditingStudent(null), setAddingStudent(false))}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{addingStudent ? "Tambah Siswa Baru" : "Ubah / Mutasi Siswa"}</DialogTitle>
+            <DialogTitle>{addingStudent ? "Tambah Siswa Baru" : "Ubah Siswa"}</DialogTitle>
             <DialogDescription>
-              {addingStudent ? "Tambahkan data siswa ke dalam sistem." : "Perbarui data atau mutasi siswa ini."}
+              {addingStudent ? "Tambahkan data siswa ke dalam sistem." : "Perbarui data siswa ini."}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">

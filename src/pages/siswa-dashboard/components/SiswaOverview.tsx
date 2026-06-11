@@ -42,27 +42,6 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
   const { isDownloading, download } = useDownloadAction()
   const { print } = usePrintAction()
 
-  const handleDownload = useCallback(() => {
-    download({
-      filenameOptions: {
-        dataType: 'riwayat-absensi-saya',
-        format: 'xlsx',
-      },
-      fetchData: async () => {
-        const headers = ['Tanggal', 'Jenis Sholat', 'Waktu', 'Status']
-        const rows = normalizedHistory.map((r) => [
-          formatDateID(r.tanggal),
-          r.jenisSholat ?? '',
-          r.waktu ?? '',
-          r.status ?? '',
-        ])
-        const data = arrayToXlsxBase64(headers, rows)
-        return { data, encoding: 'base64' as const }
-      },
-      dialogFilters: [{ name: 'Excel Files', extensions: ['xlsx'] }],
-    })
-  }, [download, normalizedHistory])
-
   const fetchData = () => {
     setIsLoading(true)
     setError(null)
@@ -175,6 +154,27 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
       return normalized
     })
   }, [historyData, schedules])
+
+  const handleDownload = useCallback(() => {
+    download({
+      filenameOptions: {
+        dataType: 'riwayat-absensi-saya',
+        format: 'xlsx',
+      },
+      fetchData: async () => {
+        const headers = ['Tanggal', 'Jenis Sholat', 'Waktu', 'Status']
+        const rows = normalizedHistory.map((r) => [
+          formatDateID(r.tanggal),
+          r.jenisSholat ?? '',
+          r.waktu ?? '',
+          r.status ?? '',
+        ])
+        const data = arrayToXlsxBase64(headers, rows)
+        return { data, encoding: 'base64' as const }
+      },
+      dialogFilters: [{ name: 'Excel Files', extensions: ['xlsx'] }],
+    })
+  }, [download, normalizedHistory])
 
   const formatTanggal = (tanggal: string) => {
     try {

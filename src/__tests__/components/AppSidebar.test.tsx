@@ -54,7 +54,7 @@ describe("AppSidebar", () => {
 
   it("all 10 expected menu items exist", () => {
     renderSidebar();
-    const items = ["Beranda", "Jadwal", "Kelola Siswa", "Kelola Kelas", "Kelola Guru", "Presensi", "Pengajuan Izin", "Laporan", "QR Code", "Siswa Belum Terdaftar"];
+    const items = ["Beranda", "Jadwal", "Kelola Siswa", "Kelola Kelas", "Kelola Guru", "Presensi", "Pengajuan Izin", "Laporan", "Kode QR", "Siswa Belum Terdaftar"];
     items.forEach((item) => {
       expect(screen.getByText(item)).toBeInTheDocument();
     });

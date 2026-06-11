@@ -15,7 +15,7 @@ export function QRGeneratorSection() {
           className="flex-1"
           onClick={() => setActiveTab("presensi")}
         >
-          Presensi Sholat
+          Presensi Salat
         </Button>
         <Button
           variant={activeTab === "halangan" ? "default" : "ghost"}

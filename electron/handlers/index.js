@@ -76,7 +76,7 @@ const INVALIDATION_MAP = {
 
   "/jurusan": ["/jurusan", "/dhuha-schedules"],
   "/pengajuan-izin": ["/pengajuan-izin"],
-  "/admin/management/kelas": ["/admin/management/kelas", "/kelas", "/admin/management/guru", "/admin/management/wali-kelas"],
+  "/admin/management/kelas": ["/admin/management/kelas", "/kelas", "/admin/management/guru", "/admin/management/wali-kelas", "/students", "/admin/student-control"],
   "/admin/management/guru": ["/admin/management/guru", "/admin/management/wali-kelas", "/admin/management/kelas", "/lookup/staff-guru"],
   "/admin/management/wali-kelas": ["/admin/management/wali-kelas", "/admin/management/guru", "/admin/management/kelas"],
   "/admin/student-control": ["/students", "/admin/student-control"],
@@ -117,9 +117,9 @@ async function apiRequest(method, endpoint, { body, query, raw } = {}) {
   opts.headers["Connection"] = "keep-alive";
   opts.headers["X-Hardware-ID"] = hardwareId;
   if (authToken) opts.headers["Authorization"] = `Bearer ${authToken}`;
-  if (body && method !== "GET") {
+  if (method !== "GET") {
     opts.headers["Content-Type"] = "application/json";
-    opts.body = JSON.stringify(body);
+    if (body) opts.body = JSON.stringify(body);
   }
 
   // Task 1: Use fetchWithRetry instead of bare fetch
@@ -541,6 +541,10 @@ function register(ipcMain) {
 
   ipcMain.handle("update-class-homeroom", handler(async ({ id, body }) =>
     apiRequest("PUT", `/api/v2/admin/management/kelas/${id}/wali`, { body })
+  ));
+
+  ipcMain.handle("update-class-status", handler(async ({ id, body }) =>
+    apiRequest("PUT", `/api/v2/admin/management/kelas/${id}/status`, { body })
   ));
 
   ipcMain.handle("get-staff-guru-lookup", handler(async () =>

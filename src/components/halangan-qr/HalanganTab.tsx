@@ -141,7 +141,7 @@ export function HalanganTab() {
             <div>
               <CardTitle>QR Halangan</CardTitle>
               <CardDescription className="mt-1">
-                QR untuk siswi yang sedang haid — auto-refresh setiap 30 detik
+                QR untuk siswi yang sedang haid — otomatis diperbarui setiap 30 detik
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">

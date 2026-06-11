@@ -12,7 +12,7 @@ describe("notify system notifications", () => {
     notify("Test message success", "success");
 
     expect(showSystemNotificationSpy).toHaveBeenCalledWith({
-      title: "Presensi Sholat Desktop",
+      title: "Presensi Salat Desktop",
       body: "Test message success",
     });
   });
@@ -23,7 +23,7 @@ describe("notify system notifications", () => {
     notifyDialogAction("Simpan data", "confirmed");
 
     expect(showSystemNotificationSpy).toHaveBeenCalledWith({
-      title: "Presensi Sholat Desktop",
+      title: "Presensi Salat Desktop",
       body: "Simpan data — dikonfirmasi",
     });
   });
@@ -34,7 +34,7 @@ describe("notify system notifications", () => {
     notifyDialogAction("Simpan data", "cancelled");
 
     expect(showSystemNotificationSpy).toHaveBeenCalledWith({
-      title: "Presensi Sholat Desktop",
+      title: "Presensi Salat Desktop",
       body: "Simpan data — dibatalkan",
     });
   });

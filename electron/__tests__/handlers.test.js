@@ -395,13 +395,13 @@ describe("electron handlers", () => {
 
   describe("show-system-notification", () => {
     it("instantiates Notification with options and calls show", async () => {
-      await handlers["show-system-notification"](mockEvent, { title: "Presensi Sholat Desktop", body: "Hello World" });
+      await handlers["show-system-notification"](mockEvent, { title: "Presensi Salat Desktop", body: "Hello World" });
       expect(mockNotificationConstructor).toHaveBeenCalledWith({
-        title: "Presensi Sholat Desktop",
+        title: "Presensi Salat Desktop",
         body: "Hello World",
       });
       expect(mockNotificationShow).toHaveBeenCalledWith({
-        title: "Presensi Sholat Desktop",
+        title: "Presensi Salat Desktop",
         body: "Hello World",
       });
     });

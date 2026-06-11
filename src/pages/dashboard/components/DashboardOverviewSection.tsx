@@ -179,9 +179,9 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
                   <p className="text-sm text-muted-foreground">{currentPrayer.waktu_sholat?.waktu_mulai} - {currentPrayer.waktu_sholat?.waktu_selesai} WIB</p>
                 </div>
                 {onNavigate && showQrButton && (
-                  <Button variant="default" size="icon-sm" onClick={() => onNavigate("QR Code")} className="rounded-full shadow-lg shadow-primary/20">
+                  <Button variant="default" size="icon-sm" onClick={() => onNavigate("Kode QR")} className="rounded-full shadow-lg shadow-primary/20">
                     <QrCode className="size-4" />
-                    <span className="sr-only">Tampilkan QR Code</span>
+                    <span className="sr-only">Tampilkan Kode QR</span>
                   </Button>
                 )}
               </div>

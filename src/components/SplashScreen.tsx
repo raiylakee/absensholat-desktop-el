@@ -199,7 +199,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
 
         {/* App name and tagline */}
         <div className={`splash-text ${isComplete ? "hiding" : ""}`}>
-          <h1>Presensi Sholat</h1>
+          <h1>Presensi Salat</h1>
           <p>Sistem Absensi Terpadu</p>
         </div>
 

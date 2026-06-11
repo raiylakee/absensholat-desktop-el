@@ -69,7 +69,7 @@ const mainMenuItems = [
     icon: FileBarChart2,
   },
   {
-    title: "QR Code",
+    title: "Kode QR",
     icon: QrCode,
   },
   {
@@ -141,10 +141,10 @@ export function AppSidebar({ activeItem, setActiveItem, user }: AppSidebarProps)
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="pointer-events-none!">
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden shrink-0 bg-primary/10">
-                <img src={logoSrc} alt="Presensi Sholat" className="size-5 object-contain" />
+                <img src={logoSrc} alt="Presensi Salat" className="size-5 object-contain" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none overflow-hidden">
-                <span className="font-semibold text-sidebar-foreground truncate">Presensi Sholat</span>
+                <span className="font-semibold text-sidebar-foreground truncate">Presensi Salat</span>
                 {user?.role === "admin" && (
                   <span className="text-[10px] text-sidebar-foreground/70 truncate italic">Portal Administrator</span>
                 )}

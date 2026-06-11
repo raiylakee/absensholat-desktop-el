@@ -27,7 +27,7 @@ function triggerSystemNotification(message: string): void {
     typeof window.electronAPI.showSystemNotification === "function"
   ) {
     const promise = window.electronAPI.showSystemNotification({
-      title: "Presensi Sholat Desktop",
+      title: "Presensi Salat Desktop",
       body: message,
     });
     if (promise && typeof promise.catch === "function") {

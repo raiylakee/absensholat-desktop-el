@@ -99,6 +99,7 @@ interface ElectronAPI {
   getManagementClasses: () => Promise<any>;
   getManagementClassDetails: (args: any) => Promise<any>;
   updateClassHomeroom: (args: any) => Promise<any>;
+  updateClassStatus: (args: any) => Promise<any>;
   getStaffGuruLookup: () => Promise<any>;
   getAcademicYears: () => Promise<any>;
   getClasses: () => Promise<any>;

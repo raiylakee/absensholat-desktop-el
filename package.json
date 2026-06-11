@@ -1,8 +1,8 @@
 {
   "name": "presensisholat-desktop",
-  "productName": "Presensi Sholat Desktop",
+  "productName": "Presensi Salat Desktop",
   "version": "1.2.7",
-  "description": "Sistem Presensi Sholat Terpadu - Desktop",
+  "description": "Sistem Presensi Salat Terpadu - Desktop",
   "main": "electron/main.js",
   "private": true,
   "scripts": {

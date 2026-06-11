@@ -334,7 +334,7 @@ thead {
     page-break-inside: avoid;
   }
 
-  /* QR Code print formatting — minimum 150x150mm, centered */
+  /* Kode QR print formatting — minimum 150x150mm, centered */
   [data-qr-print] {
     display: flex !important;
     justify-content: center !important;

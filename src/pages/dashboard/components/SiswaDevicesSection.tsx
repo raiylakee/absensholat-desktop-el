@@ -3,7 +3,7 @@ import { Search, Trash2, MonitorSmartphone, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
+
 import { Spinner } from "@/components/ui/spinner"
 import { notify } from "@/lib/notify"
 import { extractData, handleApiError } from "@/lib/api-utils"
@@ -165,7 +165,6 @@ export function SiswaDevicesSection() {
                       <th className="px-4 py-3 text-left font-medium">Surel</th>
                       <th className="px-4 py-3 text-left font-medium">Perangkat</th>
                       <th className="px-4 py-3 text-left font-medium">Terakhir Aktif</th>
-                      <th className="px-4 py-3 text-left font-medium">Status</th>
                       <th className="px-4 py-3 text-left font-medium w-28">Aksi</th>
                     </tr>
                   </thead>
@@ -179,11 +178,6 @@ export function SiswaDevicesSection() {
                         </td>
                         <td className="px-4 py-3 text-xs text-muted-foreground">
                           {d.last_auth_at ? formatDateTimeID(d.last_auth_at) : "-"}
-                        </td>
-                        <td className="px-4 py-3">
-                          <Badge variant={d.is_verified ? "default" : "secondary"} className="text-[10px]">
-                            {d.is_verified ? "Terverifikasi" : "Belum Terverifikasi"}
-                          </Badge>
                         </td>
                         <td className="px-4 py-3">
                           <Button variant="destructive" size="sm" onClick={() => handleUnbind(d.id)}>

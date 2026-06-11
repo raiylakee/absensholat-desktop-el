@@ -109,6 +109,10 @@ export function SiswaPermitSection() {
       notify("Lengkapi semua field (alasan minimal 10 karakter)", "error")
       return
     }
+    if (permitType === "sakit" && !filePath) {
+      notify("Bukti pendukung wajib dilampirkan untuk izin sakit", "error")
+      return
+    }
     if (dateTo < dateFrom) {
       notify("Tanggal selesai tidak boleh sebelum tanggal mulai", "error")
       return
@@ -246,7 +250,7 @@ export function SiswaPermitSection() {
               </div>
 
               <div className="space-y-2">
-                <Label>Bukti (opsional)</Label>
+                <Label>Bukti {permitType === "sakit" ? "(wajib)" : "(opsional)"}</Label>
                 {fileName ? (
                   <div className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
                     <Paperclip className="size-4 text-muted-foreground shrink-0" />

@@ -100,6 +100,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getManagementClasses: () => ipcRenderer.invoke("get-management-classes"),
   getManagementClassDetails: (args) => ipcRenderer.invoke("get-management-class-details", args),
   updateClassHomeroom: (args) => ipcRenderer.invoke("update-class-homeroom", args),
+  updateClassStatus: (args) => ipcRenderer.invoke("update-class-status", args),
   getStaffGuruLookup: () => ipcRenderer.invoke("get-staff-guru-lookup"),
   getAcademicYears: () => ipcRenderer.invoke("get-academic-years"),
   getClasses: () => ipcRenderer.invoke("get-classes"),

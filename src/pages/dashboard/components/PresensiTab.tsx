@@ -107,12 +107,12 @@ export function PresensiTab() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>QR Code Presensi</CardTitle>
+              <CardTitle>Kode QR Presensi</CardTitle>
               {prayerName && (
-                <CardDescription className="mt-1">sholat {prayerName} — auto-refresh setiap 30 detik</CardDescription>
+                <CardDescription className="mt-1">sholat {prayerName} — otomatis diperbarui setiap 30 detik</CardDescription>
               )}
               {!prayerName && !isLoading && !noSchedule && (
-                <CardDescription className="mt-1">auto-refresh setiap 30 detik</CardDescription>
+                <CardDescription className="mt-1">otomatis diperbarui setiap 30 detik</CardDescription>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -159,7 +159,7 @@ export function PresensiTab() {
           )}
           {!isLoading && token && (
             <div className="flex flex-col items-center gap-4">
-              <PrintHeader title="QR Code Presensi" subtitle="Scan QR Code ini untuk mencatat kehadiran sholat" />
+              <PrintHeader title="Kode QR Presensi" subtitle="Scan Kode QR ini untuk mencatat kehadiran sholat" />
               <div className="rounded-xl border bg-white p-4">
                 <QRCodeSVG value={token} size={200} ref={qrRef} />
               </div>
@@ -174,7 +174,7 @@ export function PresensiTab() {
             <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
               <WifiOff className="size-12 opacity-30" />
               <p className="text-sm">Tidak ada jadwal sholat aktif saat ini.</p>
-              <p className="text-xs">QR Code akan otomatis muncul saat waktu sholat tiba.</p>
+              <p className="text-xs">Kode QR akan otomatis muncul saat waktu sholat tiba.</p>
             </div>
           )}
         </CardContent>

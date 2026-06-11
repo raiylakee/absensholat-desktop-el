@@ -36,7 +36,7 @@ export default function Dashboard() {
     if (activeItem === "Kelola Guru") return <KelolaGuruSection />
     if (activeItem === "Presensi") return <PresensiSection />
     if (activeItem === "Laporan") return <LaporanSection />
-    if (activeItem === "QR Code") return <QRGeneratorSection />
+    if (activeItem === "Kode QR") return <QRGeneratorSection />
     if (activeItem === "Siswa Belum Terdaftar") return <UnregisteredStudentsSection />
     if (activeItem === "Pengajuan Izin") return <PengajuanIzinSection />
     if (activeItem === "Perangkat Siswa") return <SiswaDevicesSection />

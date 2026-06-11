@@ -24,8 +24,8 @@ const FAQ_ADMIN: FAQItem[] = [
     answer: "Buka menu 'Kelola Guru' untuk melihat, menambah, atau mengedit data guru. Anda dapat menetapkan guru sebagai wali kelas dengan memilih kelas yang diampu pada data guru."
   },
   {
-    question: "Bagaimana cara membuat QR Code untuk absensi?",
-    answer: "Buka menu 'QR Code', pilih jadwal dan jenis sholat, lalu klik 'Generate QR Code'. QR Code akan ditampilkan dan dapat diproyeksikan atau dicetak untuk dipindai oleh siswa."
+    question: "Bagaimana cara membuat Kode QR untuk absensi?",
+    answer: "Buka menu 'Kode QR', pilih jadwal dan jenis sholat, lalu klik 'Generate Kode QR'. Kode QR akan ditampilkan dan dapat diproyeksikan atau dicetak untuk dipindai oleh siswa."
   },
   {
     question: "Bagaimana cara melihat laporan presensi?",
