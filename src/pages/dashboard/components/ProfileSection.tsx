@@ -20,6 +20,7 @@ interface UserProfile {
   gender?: string
   className?: string
   avatarFallback: string
+  isGuruAgama?: boolean
 }
 
 const roleLabelMap: Record<string, string> = {
@@ -124,6 +125,12 @@ export function ProfileSection({ user }: { user?: UserProfile }) {
                 <div className="flex items-center justify-between border-b pb-2">
                   <span className="text-muted-foreground">Jenis Kelamin</span>
                   <span className="font-medium">{genderLabel}</span>
+                </div>
+              )}
+              {currentUser.isGuruAgama && (
+                <div className="flex items-center justify-between border-b pb-2">
+                  <span className="text-muted-foreground">Guru Agama</span>
+                  <span className="font-medium text-emerald-600">Ya</span>
                 </div>
               )}
               {currentUser.className && (

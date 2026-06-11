@@ -19,6 +19,7 @@ export type UserProfileData = {
   major?: string
   username?: string
   avatarFallback: string
+  isGuruAgama?: boolean
 }
 
 const firstString = (...values: unknown[]): string | undefined => {
@@ -148,6 +149,7 @@ export const fetchCurrentProfile = async (): Promise<UserProfileData> => {
     major,
     username: firstString(data.username),
     avatarFallback: initialsFromName(name),
+    isGuruAgama: data.is_guru_agama === true,
   }
 }
 

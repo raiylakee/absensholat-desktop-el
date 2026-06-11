@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { PasswordInput, PASSWORD_REQUIREMENTS } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -22,6 +23,8 @@ interface GuruResponse {
   nama: string
   nip: string | null
   email: string
+  jk: string
+  is_guru_agama: boolean
   wali_kelas: string | null
   id_kelas_wali: number | null
   label_kelas: string | null
@@ -77,6 +80,7 @@ export function KelolaGuruSection() {
   const [formPassword, setFormPassword] = useState("")
   const [formNip, setFormNip] = useState("")
   const [formJk, setFormJk] = useState("")
+  const [formIsGuruAgama, setFormIsGuruAgama] = useState(false)
   const [formKelas, setFormKelas] = useState("")
   const [isSaving, setIsSaving] = useState(false)
 
@@ -160,7 +164,7 @@ export function KelolaGuruSection() {
   }
 
   const openCreate = () => {
-    setFormNama(""); setFormEmail(""); setFormPassword(""); setFormNip("")
+    setFormNama(""); setFormEmail(""); setFormPassword(""); setFormNip(""); setFormJk(""); setFormIsGuruAgama(false)
     setCreateOpen(true)
   }
 
@@ -168,7 +172,7 @@ export function KelolaGuruSection() {
     if (!formNama || !formEmail || !formPassword || !formNip) { notify("Nama, email, NIP, dan kata sandi wajib diisi", "error"); return }
     setIsSaving(true)
     try {
-      await window.electronAPI.createGuru({ body: { nama: formNama, email: formEmail, password: formPassword, nip: formNip } })
+      await window.electronAPI.createGuru({ body: { nama: formNama, email: formEmail, password: formPassword, nip: formNip, jk: formJk, is_guru_agama: formIsGuruAgama } })
       notify("Guru berhasil ditambahkan", "success")
       setCreateOpen(false)
       fetchGuru(1)
@@ -181,6 +185,8 @@ export function KelolaGuruSection() {
     setFormNama(guru.nama)
     setFormEmail(guru.email)
     setFormNip(guru.nip || "")
+    setFormJk(guru.jk || "")
+    setFormIsGuruAgama(guru.is_guru_agama || false)
     setEditOpen(true)
   }
 
@@ -189,7 +195,7 @@ export function KelolaGuruSection() {
     if (!formNama || !formEmail || !formNip) { notify("Nama, email, dan NIP wajib diisi", "error"); return }
     setIsSaving(true)
     try {
-      await window.electronAPI.updateGuru({ id: selectedGuru.id_staff, body: { nama: formNama, email: formEmail, nip: formNip } })
+      await window.electronAPI.updateGuru({ id: selectedGuru.id_staff, body: { nama: formNama, email: formEmail, nip: formNip, jk: formJk, is_guru_agama: formIsGuruAgama } })
       notify("Data guru berhasil diperbarui", "success")
       setEditOpen(false)
       fetchGuru(page)
@@ -396,6 +402,16 @@ export function KelolaGuruSection() {
                           {guru.nip}
                         </Badge>
                       )}
+                      {guru.jk && (
+                        <Badge variant="outline" className="text-xs font-normal">
+                          {guru.jk === "L" ? "Laki-laki" : "Perempuan"}
+                        </Badge>
+                      )}
+                      {guru.is_guru_agama && (
+                        <Badge variant="outline" className="text-xs font-normal bg-emerald-50 border-emerald-200 text-emerald-700">
+                          Guru Agama
+                        </Badge>
+                      )}
                       {guru.label_kelas ? (
                         <Badge variant="secondary" className="text-xs">
                           Wali {guru.label_kelas}
@@ -543,6 +559,14 @@ export function KelolaGuruSection() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="create-guru-agama"
+                checked={formIsGuruAgama}
+                onCheckedChange={(checked) => setFormIsGuruAgama(checked === true)}
+              />
+              <Label htmlFor="create-guru-agama" className="cursor-pointer">Guru Agama</Label>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Batal</Button>
@@ -582,6 +606,14 @@ export function KelolaGuruSection() {
                   <SelectItem value="P">Perempuan</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="edit-guru-agama"
+                checked={formIsGuruAgama}
+                onCheckedChange={(checked) => setFormIsGuruAgama(checked === true)}
+              />
+              <Label htmlFor="edit-guru-agama" className="cursor-pointer">Guru Agama</Label>
             </div>
           </div>
           <DialogFooter>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
 import { extractData } from "@/lib/api-utils"
+import { DAY_NAMES } from "@/lib/day-names"
 
 import logoRpl from "@/assets/logo-rpl-3.png"
 import logoTei from "@/assets/logo-tei-2.png"
@@ -69,16 +70,19 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
   const [isLoading, setIsLoading] = useState(true)
   const [statsData, setStatsData] = useState<any>(null)
   const [closestData, setClosestData] = useState<ClosestPrayerData | null>(null)
+  const [dhuhaGroups, setDhuhaGroups] = useState<Jurusan[]>([])
 
   const fetchDashboardData = async () => {
     setIsLoading(true)
     try {
-      const [statsRes, closestRes]: [any, any] = await Promise.all([
+      const [statsRes, closestRes, dhuhaRes]: [any, any, any] = await Promise.all([
         window.electronAPI.getAttendanceStatistics(),
         window.electronAPI.getClosestPrayerSchedule(),
+        window.electronAPI.getDhuhaGroups(),
       ])
       setStatsData(extractData(statsRes))
       setClosestData(extractData<ClosestPrayerData>(closestRes))
+      setDhuhaGroups(extractData<Jurusan[]>(dhuhaRes) ?? [])
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error)
     } finally {
@@ -110,7 +114,12 @@ export function DashboardOverviewSection({ onNavigate, showQrButton = true }: { 
   const nextPrayer = closestData?.next
 
   const isDhuhaActive = currentPrayer?.waktu_sholat?.jenis_sholat?.nama_jenis?.toLowerCase() === "dhuha" || currentPrayer?.waktu_sholat?.jenis_sholat?.nama_jenis?.toLowerCase() === "duha"
-  const dhuhaMajors = isDhuhaActive ? (currentPrayer?.jurusans || []) : []
+  const todayDay = DAY_NAMES[new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" })).getDay()]
+  const dhuhaMajors = isDhuhaActive
+    ? (dhuhaGroups.filter(j => j.hari_dhuha === todayDay).length > 0
+        ? dhuhaGroups.filter(j => j.hari_dhuha === todayDay)
+        : (currentPrayer?.jurusans || []))
+    : []
 
   if (isLoading) {
     return (

@@ -124,8 +124,8 @@ export function HalanganTab() {
             <WifiOff className="size-12 opacity-30" />
             <p className="text-sm font-medium">Akses Dibatasi</p>
             <p className="text-xs text-center max-w-sm">
-              Hanya admin dan guru perempuan yang dapat membuat QR Halangan.
-              Silakan hubungi admin untuk mengatur jenis kelamin pada profil guru.
+              Hanya admin, guru perempuan, dan guru agama laki-laki yang dapat membuat QR Halangan.
+              Silakan hubungi admin untuk mengatur jenis kelamin atau status guru agama pada profil guru.
             </p>
           </CardContent>
         </Card>

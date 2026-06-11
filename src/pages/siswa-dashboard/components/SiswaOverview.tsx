@@ -49,9 +49,8 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
         format: 'xlsx',
       },
       fetchData: async () => {
-        const normalized = historyData.map(normalizeAttendance)
         const headers = ['Tanggal', 'Jenis Sholat', 'Waktu', 'Status']
-        const rows = normalized.map((r) => [
+        const rows = normalizedHistory.map((r) => [
           formatDateID(r.tanggal),
           r.jenisSholat ?? '',
           r.waktu ?? '',
@@ -62,7 +61,7 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
       },
       dialogFilters: [{ name: 'Excel Files', extensions: ['xlsx'] }],
     })
-  }, [download, historyData])
+  }, [download, normalizedHistory])
 
   const fetchData = () => {
     setIsLoading(true)
@@ -160,20 +159,22 @@ export function SiswaOverview({ setActiveItem, user }: SiswaOverviewProps) {
     },
   ]
 
-  const normalizedHistory = historyData.map((item) => {
-    const normalized = normalizeAttendance(item)
-    if (!normalized.waktu && normalized.tanggal && normalized.jenisSholat) {
-      const date = new Date(normalized.tanggal)
-      const dayName = DAY_NAMES[date.getDay()]
-      const match = schedules.find(
-        (s: any) => s.jenis_sholat === normalized.jenisSholat && s.hari === dayName
-      )
-      if (match?.waktu_mulai) {
-        normalized.waktu = match.waktu_mulai
+  const normalizedHistory = useMemo(() => {
+    return historyData.map((item) => {
+      const normalized = normalizeAttendance(item)
+      if (!normalized.waktu && normalized.tanggal && normalized.jenisSholat) {
+        const date = new Date(normalized.tanggal)
+        const dayName = DAY_NAMES[date.getDay()]
+        const match = schedules.find(
+          (s: any) => s.jenis_sholat === normalized.jenisSholat && s.hari === dayName
+        )
+        if (match?.waktu_mulai) {
+          normalized.waktu = match.waktu_mulai
+        }
       }
-    }
-    return normalized
-  })
+      return normalized
+    })
+  }, [historyData, schedules])
 
   const formatTanggal = (tanggal: string) => {
     try {
