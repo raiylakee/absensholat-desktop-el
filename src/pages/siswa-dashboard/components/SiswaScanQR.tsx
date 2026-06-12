@@ -22,6 +22,7 @@ export function SiswaScanQR({ user }: { user?: UserProfileData }) {
   const [manualInput, setManualInput] = useState("")
   const [cameraActive, setCameraActive] = useState(false)
   const [isCameraError, setIsCameraError] = useState(false)
+  const [isHalangan, setIsHalangan] = useState(false)
 
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const scannerContainerId = "qr-scanner-container"
@@ -42,16 +43,17 @@ export function SiswaScanQR({ user }: { user?: UserProfileData }) {
     setPrayerName(null)
     setPrayerDate(null)
     setErrorMessage(null)
+    const detectedHalangan = isHalanganToken(token)
+    setIsHalangan(detectedHalangan)
     try {
-      const isHalangan = isHalanganToken(token)
       let response: any
-      if (isHalangan) {
+      if (detectedHalangan) {
         response = await window.electronAPI.verifyHalanganQr({ body: { token } })
       } else {
         response = await window.electronAPI.verifyQr({ body: { token } })
       }
       setState("success")
-      if (isHalangan) {
+      if (detectedHalangan) {
         setPrayerName(response?.message ?? "Pengajuan halangan")
         setPrayerDate(response?.data?.tanggal ?? null)
       } else {
@@ -128,6 +130,7 @@ export function SiswaScanQR({ user }: { user?: UserProfileData }) {
   const verifyCode = useCallback(async (code: string) => {
     setState("verifying")
     setErrorMessage(null)
+    setIsHalangan(false)
     try {
       const response: any = await window.electronAPI.verifyAttendanceCode({ body: { code } })
       setState("success")
@@ -155,6 +158,7 @@ export function SiswaScanQR({ user }: { user?: UserProfileData }) {
     setPrayerDate(null)
     setManualInput("")
     setIsCameraError(false)
+    setIsHalangan(false)
     setState("idle")
   }
 
@@ -165,8 +169,8 @@ export function SiswaScanQR({ user }: { user?: UserProfileData }) {
     setMode(newMode)
   }
 
-  const title = "Pindai Kode QR Presensi"
-  const subtitle = "arahkan kamera ke kode qr atau masukkan kode presensi secara manual"
+  const title = "Pindai Kode QR"
+  const subtitle = "arahkan kamera ke kode qr presensi atau halangan, atau masukkan kode secara manual"
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-6">
@@ -206,8 +210,9 @@ export function SiswaScanQR({ user }: { user?: UserProfileData }) {
                 <CheckCircle2 className="size-12 text-emerald-600" />
               </div>
               <div className="space-y-1">
-                <p className="font-bold text-xl">Presensi Berhasil!</p>
-                {prayerName && <p className="text-sm font-medium">Sholat: {prayerName}</p>}
+                <p className="font-bold text-xl">{isHalangan ? "Pengajuan Halangan Berhasil!" : "Presensi Berhasil!"}</p>
+                {prayerName && !isHalangan && <p className="text-sm font-medium">Sholat: {prayerName}</p>}
+                {prayerName && isHalangan && <p className="text-sm font-medium">{prayerName}</p>}
                 {prayerDate && <p className="text-sm text-muted-foreground">tanggal: {formatDateID(prayerDate)}</p>}
               </div>
               <Button variant="outline" className="mt-4" onClick={handleReset}>
@@ -224,7 +229,7 @@ export function SiswaScanQR({ user }: { user?: UserProfileData }) {
                 <AlertCircle className="size-12 text-red-600" />
               </div>
               <div className="space-y-1">
-                <p className="font-bold text-xl">Verifikasi Gagal</p>
+                <p className="font-bold text-xl">{isHalangan ? "Pengajuan Halangan Gagal" : "Verifikasi Gagal"}</p>
                 <p className="text-sm text-muted-foreground max-w-xs">
                   {errorMessage ?? "Token tidak valid atau sudah kedaluwarsa."}
                 </p>
@@ -249,7 +254,7 @@ export function SiswaScanQR({ user }: { user?: UserProfileData }) {
           {state === "verifying" && (
             <div className="flex flex-col items-center gap-4 text-center">
               <Spinner size="lg" />
-              <p className="text-sm text-muted-foreground">memverifikasi presensi...</p>
+              <p className="text-sm text-muted-foreground">{isHalangan ? "memverifikasi pengajuan halangan..." : "memverifikasi presensi..."}</p>
             </div>
           )}
 
@@ -268,7 +273,7 @@ export function SiswaScanQR({ user }: { user?: UserProfileData }) {
               )}
               {cameraActive && (
                 <p className="text-xs text-muted-foreground text-center">
-                  Arahkan kamera ke Kode QR presensi
+                  Arahkan kamera ke Kode QR presensi atau halangan
                 </p>
               )}
               <Button variant="ghost" size="sm" onClick={() => switchMode("manual")} className="gap-2 text-muted-foreground">
