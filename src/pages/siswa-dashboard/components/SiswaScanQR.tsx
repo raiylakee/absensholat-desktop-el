@@ -26,16 +26,38 @@ export function SiswaScanQR({ user }: { user?: UserProfileData }) {
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const scannerContainerId = "qr-scanner-container"
 
+  const isHalanganToken = useCallback((token: string): boolean => {
+    try {
+      const parts = token.split(".")
+      if (parts.length !== 2) return false
+      const payload = atob(parts[0])
+      return payload.startsWith("halangan|")
+    } catch {
+      return false
+    }
+  }, [])
+
   const verifyToken = useCallback(async (token: string) => {
     setState("verifying")
     setPrayerName(null)
     setPrayerDate(null)
     setErrorMessage(null)
     try {
-      const response: any = await window.electronAPI.verifyQr({ body: { token } })
+      const isHalangan = isHalanganToken(token)
+      let response: any
+      if (isHalangan) {
+        response = await window.electronAPI.verifyHalanganQr({ body: { token } })
+      } else {
+        response = await window.electronAPI.verifyQr({ body: { token } })
+      }
       setState("success")
-      setPrayerName(response?.data?.jenis_sholat ?? null)
-      setPrayerDate(response?.data?.tanggal ?? null)
+      if (isHalangan) {
+        setPrayerName(response?.message ?? "Pengajuan halangan")
+        setPrayerDate(response?.data?.tanggal ?? null)
+      } else {
+        setPrayerName(response?.data?.jenis_sholat ?? null)
+        setPrayerDate(response?.data?.tanggal ?? null)
+      }
     } catch (err: any) {
       setState("error")
       const msg = handleApiError(err)
@@ -45,7 +67,7 @@ export function SiswaScanQR({ user }: { user?: UserProfileData }) {
         setErrorMessage(msg)
       }
     }
-  }, [])
+  }, [isHalanganToken])
 
   const startCamera = useCallback(async () => {
     if (scannerRef.current) return
