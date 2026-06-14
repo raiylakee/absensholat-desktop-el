@@ -17,21 +17,21 @@ const waliUser = { name: "Wali Test", role: "wali_kelas", email: "wali@smk.id", 
 describe("ProfileSection", () => {
   const user = userEvent.setup();
 
-  it("admin user: DeviceManagementSection rendered, UserDeviceCard NOT rendered", () => {
+  it("device sections are NOT rendered (removed from profile)", () => {
     render(<ProfileSection user={adminUser} />);
-    expect(screen.getByTestId("device-management-section")).toBeInTheDocument();
+    expect(screen.queryByTestId("device-management-section")).not.toBeInTheDocument();
     expect(screen.queryByTestId("user-device-card")).not.toBeInTheDocument();
   });
 
-  it("guru user: UserDeviceCard rendered, DeviceManagementSection NOT rendered", () => {
+  it("guru user: device sections NOT rendered", () => {
     render(<ProfileSection user={guruUser} />);
-    expect(screen.getByTestId("user-device-card")).toBeInTheDocument();
+    expect(screen.queryByTestId("user-device-card")).not.toBeInTheDocument();
     expect(screen.queryByTestId("device-management-section")).not.toBeInTheDocument();
   });
 
-  it("wali_kelas user: UserDeviceCard rendered", () => {
+  it("wali_kelas user: device sections NOT rendered", () => {
     render(<ProfileSection user={waliUser} />);
-    expect(screen.getByTestId("user-device-card")).toBeInTheDocument();
+    expect(screen.queryByTestId("user-device-card")).not.toBeInTheDocument();
   });
 
   it("displays user name and email", () => {

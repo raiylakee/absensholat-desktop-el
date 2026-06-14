@@ -312,12 +312,14 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
                   <table className="w-full text-sm">
                     <thead className="bg-card border-b sticky top-0 z-10">
                       <tr>
+                        {!forcedClass && (
                         <th className="px-4 py-3 text-left w-12">
                           <Checkbox
                             checked={students.length > 0 && selectedNIS.size === students.length}
                             onCheckedChange={toggleSelectAll}
                           />
                         </th>
+                        )}
                         <th className="px-4 py-3 text-left font-medium w-32">NIS</th>
                         <th className="px-4 py-3 text-left font-medium">Nama</th>
                         <th className="px-4 py-3 text-left font-medium w-32">Kelas</th>
@@ -329,12 +331,14 @@ export function UnregisteredStudentsSection({ forcedClass }: { forcedClass?: str
                     <tbody>
                       {students.map((student) => (
                         <tr key={student.nis} className="border-b last:border-0 hover:bg-muted/30">
+                          {!forcedClass && (
                           <td className="px-4 py-3">
                             <Checkbox
                               checked={selectedNIS.has(student.nis)}
                               onCheckedChange={() => toggleSelectStudent(student.nis)}
                             />
                           </td>
+                          )}
                           <td className="px-4 py-3 font-medium">{student.nis}</td>
                           <td className="px-4 py-3">{student.nama_siswa}</td>
                           <td className="px-4 py-3">{student.kelas || "-"}</td>

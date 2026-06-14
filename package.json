@@ -29,8 +29,7 @@
       "electron/**/*"
     ],
     "directories": {
-      "output": "dist-electron",
-      "buildResources": "build"
+      "output": "dist-electron"
     },
     "mac": {
       "target": [
@@ -43,7 +42,7 @@
       ]
     },
     "win": {
-      "icon": "build/icon.ico",
+      "icon": null,
       "target": [
         {
           "target": "msi"

@@ -44,9 +44,9 @@ describe("SiswaProfile", () => {
     expect(screen.getByText("Perempuan")).toBeInTheDocument();
   });
 
-  it("UserDeviceCard is rendered", () => {
+  it("UserDeviceCard is NOT rendered (removed from profile)", () => {
     render(<SiswaProfile user={mockUser} />);
-    expect(screen.getByTestId("user-device-card")).toBeInTheDocument();
+    expect(screen.queryByTestId("user-device-card")).not.toBeInTheDocument();
   });
 
   it("change password dialog works", async () => {
